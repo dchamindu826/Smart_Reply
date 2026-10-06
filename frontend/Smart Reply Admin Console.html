@@ -1,0 +1,1898 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Reply Admin Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Poppins:wght@500;600;700&family=Noto+Sans+Sinhala:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#002D70; --blue:#0B6FD4; --magenta:#C810B0; --pink:#E40675;
+  --paper:#F1F5FA; --card:#FFFFFF; --card-2:#F5F8FC;
+  --ink:#062043; --ink-2:#5B7191; --ink-3:#8DA0BA;
+  --rule:#E0E7F0; --rule-2:#C7D4E4;
+  --ok:#0B8A5C; --ok-bg:#E0F3EB;
+  --warn:#A96C08; --warn-bg:#FBEFD6;
+  --bad:#BE3220; --bad-bg:#FBE3DE;
+  --info:#0B6FD4; --info-bg:#E4EFFC;
+  --r:10px; --r-sm:7px; --rail:246px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#050F1F; --card:#0B1D35; --card-2:#112845;
+  --ink:#E8EFF8; --ink-2:#93A9C6; --ink-3:#6C83A3;
+  --rule:#1A3252; --rule-2:#27476E;
+  --blue:#4FA6F8; --magenta:#EE72DA; --pink:#FF69A8;
+  --ok:#4CCB92; --ok-bg:#0D3228; --warn:#E0AF59; --warn-bg:#392C11;
+  --bad:#F08370; --bad-bg:#3B1B15; --info:#4FA6F8; --info-bg:#102E4C;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --paper:#050F1F; --card:#0B1D35; --card-2:#112845;
+  --ink:#E8EFF8; --ink-2:#93A9C6; --ink-3:#6C83A3;
+  --rule:#1A3252; --rule-2:#27476E;
+  --blue:#4FA6F8; --magenta:#EE72DA; --pink:#FF69A8;
+  --ok:#4CCB92; --ok-bg:#0D3228; --warn:#E0AF59; --warn-bg:#392C11;
+  --bad:#F08370; --bad-bg:#3B1B15; --info:#4FA6F8; --info-bg:#102E4C;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--paper);color:var(--ink);font-family:'Archivo','Noto Sans Sinhala',system-ui,sans-serif;font-size:14.5px;line-height:1.5;font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+h1,h2,h3,.num{font-family:'Poppins','Noto Sans Sinhala',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+button{background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:4px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+a{color:var(--blue)}
+
+/* shell */
+.shell{display:flex;min-height:100vh}
+.rail{width:var(--rail);flex:0 0 var(--rail);background:var(--card);border-right:1px solid var(--rule);position:fixed;inset:0 auto 0 0;z-index:40;display:flex;flex-direction:column;transition:transform .2s}
+.brand{padding:14px 16px 12px;border-bottom:1px solid var(--rule);position:relative}
+.brand::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--pink),var(--magenta) 40%,var(--blue))}
+.brand img{width:100%;max-width:196px;height:auto;display:block}
+.nav{padding:8px 9px 26px;overflow-y:auto;flex:1}
+.nav h2{font-size:10.5px;font-weight:700;color:var(--ink-3);padding:15px 9px 5px;letter-spacing:.05em}
+.nav button{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:var(--r-sm);width:100%;text-align:left;font-size:14px;position:relative;color:var(--ink)}
+.nav button:hover{background:var(--card-2)}
+.nav button.on{background:var(--info-bg);color:var(--blue);font-weight:600}
+.nav button.on::before{content:"";position:absolute;left:-9px;top:6px;bottom:6px;width:3px;background:var(--blue);border-radius:0 3px 3px 0}
+.nav .ic{width:16px;text-align:center;flex:none;font-size:13px;opacity:.85}
+.nav .ct{margin-left:auto;font-size:10.5px;font-weight:700;background:var(--bad-bg);color:var(--bad);padding:1px 6px;border-radius:9px}
+.nav .ct.n{background:var(--card-2);color:var(--ink-2)}
+.main{flex:1;min-width:0;margin-left:var(--rail)}
+
+.top{position:sticky;top:0;z-index:30;background:var(--card);border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:11px;padding:10px 20px;min-height:57px}
+.burger{display:none;padding:6px;border-radius:var(--r-sm)}
+.burger svg{width:19px;height:19px;display:block}
+.pick{position:relative;display:flex}
+.pick select{appearance:none;border:1px solid var(--rule-2);background:var(--card);padding:6px 28px 6px 10px;border-radius:var(--r-sm);font-size:13.5px;font-weight:500;max-width:min(48vw,260px);cursor:pointer}
+.pick::after{content:"";position:absolute;right:10px;top:50%;width:6px;height:6px;border-right:1.6px solid var(--ink-2);border-bottom:1.6px solid var(--ink-2);transform:translateY(-4px) rotate(45deg);pointer-events:none}
+.top .sp{margin-left:auto}
+.tbtn{width:32px;height:32px;border-radius:var(--r-sm);display:grid;place-items:center;color:var(--ink-2);position:relative}
+.tbtn:hover{background:var(--card-2);color:var(--ink)}
+.tbtn svg{width:17px;height:17px}
+.tbtn .bdg{position:absolute;top:2px;right:2px;min-width:14px;height:14px;padding:0 3px;border-radius:7px;background:var(--pink);color:#fff;font-size:9px;font-weight:700;display:grid;place-items:center;border:2px solid var(--card)}
+.who{display:flex;align-items:center;gap:8px;padding-left:10px;border-left:1px solid var(--rule)}
+.who b{font-size:13px;font-weight:600;display:block;line-height:1.2}
+.who span{font-size:11px;color:var(--ink-2)}
+.who i{width:30px;height:30px;border-radius:50%;background:var(--info-bg);color:var(--blue);display:grid;place-items:center;font-weight:700;font-size:12px;font-style:normal;flex:none}
+
+.page{padding:20px 20px 60px;max-width:1460px}
+.ph{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.ph h1{font-size:23px;font-weight:700;letter-spacing:-.025em;line-height:1.15}
+.ph p{color:var(--ink-2);font-size:13.5px;margin-top:2px;max-width:76ch}
+.ph .acts{display:flex;gap:7px;flex-wrap:wrap}
+
+/* atoms */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:var(--r-sm);font-size:13.5px;font-weight:600;border:1px solid var(--rule-2);background:var(--card)}
+.btn:hover{border-color:var(--ink-3)}
+.btn.pri{background:var(--blue);color:#fff;border-color:var(--blue)}
+:root[data-theme="dark"] .btn.pri{color:#04203F}
+.btn.sm{padding:4px 9px;font-size:12px;border-radius:5px}
+.btn.dgr{color:var(--bad);border-color:var(--bad)}
+
+.chip{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--card-2);color:var(--ink-2);white-space:nowrap}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}
+.chip.w{background:var(--warn-bg);color:var(--warn)}
+.chip.b{background:var(--bad-bg);color:var(--bad)}
+.chip.i{background:var(--info-bg);color:var(--info)}
+.chip.law{background:var(--bad-bg);color:var(--bad);border-radius:4px;font-family:ui-monospace,Menlo,monospace;font-size:10.5px}
+
+.card{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
+.card-h{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:12px 15px;border-bottom:1px solid var(--rule)}
+.card-h h2{font-size:14.5px;font-weight:600}
+.card-h .sp{margin-left:auto}
+.card-b{padding:14px 15px}
+
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.gmain{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);align-items:start}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--rule);border-radius:var(--r);overflow:hidden;background:var(--card);margin-bottom:14px}
+.stat{padding:14px 16px;border-right:1px solid var(--rule)}
+.stat:last-child{border-right:0}
+.stat span{font-size:12.5px;color:var(--ink-2)}
+.stat b{display:block;font-family:'Poppins',sans-serif;font-size:26px;font-weight:700;letter-spacing:-.03em;margin-top:4px;line-height:1}
+.stat small{font-size:11.5px;color:var(--ink-2);display:block;margin-top:5px}
+.stat.ok b{color:var(--ok)} .stat.w b{color:var(--warn)} .stat.b b{color:var(--bad)} .stat.i b{color:var(--blue)}
+
+table{width:100%;border-collapse:collapse}
+.tw{overflow-x:auto}
+thead th{text-align:left;font-size:11.5px;font-weight:600;color:var(--ink-2);padding:9px 15px;border-bottom:1px solid var(--rule);white-space:nowrap;background:var(--card-2)}
+tbody td{padding:10px 15px;border-bottom:1px solid var(--rule);font-size:13.5px;vertical-align:middle}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--card-2)}
+td.r,th.r{text-align:right}
+.emp{display:flex;align-items:center;gap:9px}
+.emp i{width:28px;height:28px;border-radius:50%;background:var(--info-bg);color:var(--blue);display:grid;place-items:center;font-size:11px;font-weight:700;font-style:normal;flex:none}
+.emp b{display:block;font-weight:600;font-size:13.5px}
+.emp span{font-size:11px;color:var(--ink-2)}
+
+.ln{display:flex;justify-content:space-between;gap:10px;padding:8px 0;font-size:13.5px;border-bottom:1px solid var(--rule)}
+.ln:last-child{border-bottom:0}
+.ln span{color:var(--ink-2)}
+.ln b{font-weight:600}
+.ln.neg b{color:var(--bad)}
+.tot{display:flex;justify-content:space-between;margin-top:9px;padding-top:11px;border-top:2px solid var(--rule-2);font-size:15px;font-weight:700}
+
+.note{display:flex;gap:10px;padding:11px 13px;border-radius:var(--r-sm);font-size:13px;margin-bottom:13px;align-items:flex-start}
+.note.w{background:var(--warn-bg);color:var(--warn)}
+.note.b{background:var(--bad-bg);color:var(--bad)}
+.note.i{background:var(--info-bg);color:var(--info)}
+.note.k{background:var(--ok-bg);color:var(--ok)}
+.note b{display:block;font-weight:600}
+.note .ic{flex:none;font-size:14px;line-height:1.3}
+
+.meter{height:6px;border-radius:3px;background:var(--card-2);border:1px solid var(--rule);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--blue)}
+
+.list-row{display:flex;gap:11px;align-items:flex-start;padding:11px 15px;border-bottom:1px solid var(--rule)}
+.list-row:last-child{border-bottom:0}
+.list-row .dot{width:7px;height:7px;border-radius:50%;margin-top:6px;flex:none;background:var(--ink-3)}
+.list-row .dot.ok{background:var(--ok)} .list-row .dot.w{background:var(--warn)} .list-row .dot.b{background:var(--bad)} .list-row .dot.i{background:var(--blue)}
+.list-row .bd{flex:1;min-width:0}
+.list-row .bd b{display:block;font-size:13.5px;font-weight:600}
+.list-row .bd span{font-size:12px;color:var(--ink-2)}
+.list-row .rt{flex:none;display:flex;gap:6px;align-items:center}
+
+label.f{display:block;font-size:12px;font-weight:600;color:var(--ink-2);margin:12px 0 4px}
+.f-in{width:100%;padding:8px 10px;border:1px solid var(--rule-2);border-radius:var(--r-sm);background:var(--card);font-size:13.5px}
+textarea.f-in{resize:vertical;min-height:62px;font-family:inherit}
+.f-row{display:grid;gap:10px}
+.f2{grid-template-columns:1fr 1fr}
+.hint{font-size:11.5px;color:var(--ink-3);margin-top:4px}
+
+.seg{display:inline-flex;border:1px solid var(--rule-2);border-radius:var(--r-sm);overflow:hidden;background:var(--card)}
+.seg button{padding:6px 11px;font-size:12.5px;font-weight:500;color:var(--ink-2)}
+.seg button+button{border-left:1px solid var(--rule)}
+.seg button[aria-pressed="true"]{background:var(--blue);color:#fff}
+:root[data-theme="dark"] .seg button[aria-pressed="true"]{color:#04203F}
+
+.empty{padding:44px 20px;text-align:center;color:var(--ink-2);font-size:13.5px}
+.empty b{display:block;color:var(--ink);font-size:15px;font-weight:600;margin-bottom:4px;font-family:'Poppins',sans-serif}
+
+/* steps / wizard */
+.steps{display:flex;gap:0;margin-bottom:16px;flex-wrap:wrap}
+.step{flex:1;min-width:130px;padding:10px 12px;border:1px solid var(--rule);border-right:0;background:var(--card);font-size:12.5px;color:var(--ink-2)}
+.step:first-child{border-radius:var(--r) 0 0 var(--r)}
+.step:last-child{border-right:1px solid var(--rule);border-radius:0 var(--r) var(--r) 0}
+.step b{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-top:1px}
+.step.on{background:var(--info-bg);border-color:var(--blue)}
+.step.on b{color:var(--blue)}
+.step.dn{background:var(--ok-bg)}
+.step.dn b{color:var(--ok)}
+.step .n{font-family:ui-monospace,monospace;font-size:10.5px;opacity:.7}
+
+/* timeline */
+.tl{position:relative;padding-left:22px}
+.tl::before{content:"";position:absolute;left:5px;top:5px;bottom:5px;width:2px;background:var(--rule)}
+.tl-i{position:relative;padding-bottom:15px}
+.tl-i:last-child{padding-bottom:0}
+.tl-i::before{content:"";position:absolute;left:-21px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--card);border:2px solid var(--rule-2)}
+.tl-i.hi::before{border-color:var(--blue);background:var(--blue)}
+.tl-i b{display:block;font-size:13.5px;font-weight:600}
+.tl-i span{font-size:12px;color:var(--ink-2)}
+
+/* org chart */
+.org{overflow-x:auto;padding:8px 0}
+.org-l{display:flex;gap:10px;justify-content:center;flex-wrap:nowrap;min-width:min-content;margin-bottom:24px;position:relative}
+.org-n{border:1px solid var(--rule);background:var(--card);border-radius:var(--r-sm);padding:9px 12px;min-width:132px;text-align:center;position:relative}
+.org-n b{display:block;font-size:12.5px;font-weight:600;white-space:nowrap}
+.org-n span{font-size:10.5px;color:var(--ink-2);white-space:nowrap}
+.org-n.hd{border-color:var(--blue);background:var(--info-bg)}
+.org-l::after{content:"";position:absolute;left:50%;bottom:-13px;width:1px;height:13px;background:var(--rule-2)}
+.org-l:last-child::after{display:none}
+
+/* kanban */
+.kb{display:grid;grid-template-columns:repeat(5,minmax(160px,1fr));gap:10px;overflow-x:auto;padding-bottom:6px}
+.kb-c{background:var(--card-2);border:1px solid var(--rule);border-radius:var(--r-sm);padding:9px;min-width:160px}
+.kb-c h3{font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:8px;display:flex;justify-content:space-between}
+.kb-i{background:var(--card);border:1px solid var(--rule);border-radius:6px;padding:8px 9px;margin-bottom:6px}
+.kb-i b{display:block;font-size:12.5px;font-weight:600}
+.kb-i span{font-size:10.5px;color:var(--ink-2)}
+
+/* toast + sheet */
+/* roster cells */
+.rcell{border-radius:6px;padding:5px 7px;font-size:11.5px;line-height:1.35;min-width:104px}
+.rcell b{display:block;font-size:12px;font-weight:600}
+.rcell span{color:var(--ink-2);display:block}
+.rcell .mode{display:inline-flex;align-items:center;gap:3px;margin-top:3px;font-size:10.5px;font-weight:600}
+.rcell.office{background:var(--info-bg)}
+.rcell.office .mode{color:var(--info)}
+.rcell.wfh{background:var(--ok-bg)}
+.rcell.wfh .mode{color:var(--ok)}
+.rcell.split{background:linear-gradient(105deg,var(--info-bg) 0 48%,var(--ok-bg) 48% 100%)}
+.rcell.off{background:var(--card-2);color:var(--ink-3)}
+.rcell.hol{background:var(--warn-bg);color:var(--warn)}
+.rcell.bad{outline:2px solid var(--bad);outline-offset:-2px}
+
+/* approval strip */
+.appr{display:flex;gap:0;margin-bottom:14px;flex-wrap:wrap}
+.appr-s{flex:1;min-width:150px;padding:11px 13px;border:1px solid var(--rule);border-right:0;background:var(--card);font-size:12px;color:var(--ink-2)}
+.appr-s:first-child{border-radius:var(--r) 0 0 var(--r)}
+.appr-s:last-child{border-right:1px solid var(--rule);border-radius:0 var(--r) var(--r) 0}
+.appr-s b{display:block;font-size:13px;font-weight:600;color:var(--ink);margin-top:1px}
+.appr-s.dn{background:var(--ok-bg);border-color:transparent}
+.appr-s.dn b{color:var(--ok)}
+.appr-s.now{background:var(--info-bg);border-color:var(--blue)}
+.appr-s.now b{color:var(--blue)}
+.appr-s .who{font-size:10.5px;opacity:.85;border:0;padding:0;margin-top:2px;display:block}
+
+/* session rows */
+tr.sess td{background:var(--card-2);font-size:12.5px;padding-top:7px;padding-bottom:7px;color:var(--ink-2);border-bottom:1px dashed var(--rule)}
+tr.sess td:first-child{padding-left:38px;position:relative}
+tr.sess td:first-child::before{content:"↳";position:absolute;left:20px;color:var(--ink-3)}
+tr.sess.last td{border-bottom:1px solid var(--rule)}
+.exp{width:20px;height:20px;border-radius:4px;border:1px solid var(--rule-2);display:inline-grid;place-items:center;font-size:11px;color:var(--ink-2);margin-right:7px;vertical-align:middle;line-height:1}
+.mchip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:1px 7px;border-radius:10px}
+.mchip.o{background:var(--info-bg);color:var(--info)}
+.mchip.w{background:var(--ok-bg);color:var(--ok)}
+
+/* pay calendar */
+.pc{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.pc-h{text-align:center;font-size:11px;font-weight:700;color:var(--ink-3);padding-bottom:4px}
+.pc-d{border:1px solid var(--rule);border-radius:7px;padding:7px 8px;min-height:74px;background:var(--card);text-align:left;display:flex;flex-direction:column;gap:3px}
+.pc-d:hover{border-color:var(--ink-3)}
+.pc-d .n{font-size:13px;font-weight:600}
+.pc-d .t{font-size:10.5px;line-height:1.25;color:var(--ink-2)}
+.pc-d .x{margin-top:auto;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:9px;align-self:flex-start}
+.pc-d.pad{border-color:transparent;background:transparent;min-height:0}
+.pc-d.wk{background:var(--card-2)}
+.pc-d.half{background:var(--card-2)}
+.pc-d.poya{background:var(--warn-bg);border-color:transparent}
+.pc-d.poya .n,.pc-d.poya .t{color:var(--warn)}
+.pc-d.pub{background:var(--bad-bg);border-color:transparent}
+.pc-d.pub .n,.pc-d.pub .t{color:var(--bad)}
+.pc-d.co{background:var(--info-bg);border-color:transparent}
+.pc-d.co .n,.pc-d.co .t{color:var(--info)}
+.pc-d.sel{outline:2px solid var(--blue);outline-offset:-2px}
+.x2{background:var(--bad);color:#fff}
+.x15{background:var(--warn);color:#fff}
+.x1{background:var(--rule-2);color:var(--ink-2)}
+
+/* payslip designer */
+.slipwrap{background:var(--card-2);border:1px solid var(--rule);border-radius:var(--r);padding:18px;overflow-x:auto}
+.slip{background:#fff;color:#14203a;width:640px;max-width:100%;margin:0 auto;padding:26px 28px;
+  border-radius:3px;box-shadow:0 2px 14px rgba(10,25,50,.14);font-size:12px;line-height:1.45}
+.slip *{border-color:#d8dfe9}
+.slip-top{display:flex;gap:14px;align-items:flex-start;border-bottom:2px solid #14203a;padding-bottom:13px;margin-bottom:14px}
+.slip-top img{width:112px;height:auto;flex:none}
+.slip-co{flex:1;min-width:0}
+.slip-co b{display:block;font-size:16px;font-weight:700;letter-spacing:-.02em;line-height:1.2}
+.slip-co span{display:block;font-size:11px;color:#5d6d85;margin-top:2px}
+.slip-ttl{text-align:right;flex:none}
+.slip-ttl b{display:block;font-size:12.5px;font-weight:700;letter-spacing:.06em}
+.slip-ttl span{font-size:11px;color:#5d6d85}
+.slip-meta{display:grid;grid-template-columns:1fr 1fr;gap:2px 18px;margin-bottom:14px}
+.slip-meta div{display:flex;justify-content:space-between;font-size:11.5px;padding:2px 0}
+.slip-meta span{color:#5d6d85}
+.slip-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;margin-bottom:12px}
+.slip-cols h4{font-size:10.5px;font-weight:700;letter-spacing:.07em;color:#5d6d85;border-bottom:1px solid #d8dfe9;padding-bottom:4px;margin-bottom:5px}
+.slip-r{display:flex;justify-content:space-between;padding:2.5px 0;font-size:11.5px}
+.slip-r.sum{border-top:1px solid #d8dfe9;margin-top:4px;padding-top:5px;font-weight:700}
+.slip-net{display:flex;justify-content:space-between;align-items:center;background:#eef3fa;border:1px solid #d8dfe9;border-radius:4px;padding:11px 14px;margin-bottom:12px}
+.slip-net span{font-size:11.5px;color:#5d6d85;display:block}
+.slip-net b{font-size:12.5px;font-weight:700;display:block}
+.slip-net .amt{font-size:21px;font-weight:700;letter-spacing:-.02em}
+.slip-x{border-top:1px solid #d8dfe9;padding-top:9px;margin-bottom:9px}
+.slip-x h4{font-size:10.5px;font-weight:700;letter-spacing:.07em;color:#5d6d85;margin-bottom:4px}
+.slip-x p{font-size:11px;color:#3d4b63}
+.slip-foot{border-top:1px solid #d8dfe9;padding-top:9px;font-size:10px;color:#7a89a0;text-align:center}
+.slip[data-lang="si"]{font-family:'Noto Sans Sinhala','Archivo',sans-serif}
+.slip.center .slip-top{flex-direction:column;align-items:center;text-align:center}
+.slip.center .slip-ttl{text-align:center}
+.tgl{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--rule);font-size:13.5px;cursor:pointer}
+.tgl:last-child{border-bottom:0}
+.tgl input{width:16px;height:16px;accent-color:var(--blue);flex:none;cursor:pointer}
+.tgl span{flex:1}
+.tgl small{color:var(--ink-3);font-size:11px}
+
+/* plan tiers */
+.tier{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);padding:16px 17px;display:flex;flex-direction:column}
+.tier.on{border-color:var(--blue);border-width:2px;padding:15px 16px}
+.tier h3{font-family:'Poppins',sans-serif;font-size:17px;font-weight:600;letter-spacing:-.02em}
+.tier .sz{font-size:12px;color:var(--ink-2);margin-top:1px}
+.tier .pr{font-family:'Poppins',sans-serif;font-size:26px;font-weight:700;letter-spacing:-.03em;margin:11px 0 1px;line-height:1}
+.tier .pr small{font-size:12.5px;font-weight:500;color:var(--ink-2);letter-spacing:0}
+.tier ul{list-style:none;padding:0;margin:12px 0 0;font-size:13px;color:var(--ink-2);flex:1}
+.tier li{padding:3px 0 3px 17px;position:relative}
+.tier li::before{content:"\2713";position:absolute;left:0;color:var(--ok);font-weight:700;font-size:11px}
+.tier li.no{color:var(--ink-3)}
+.tier li.no::before{content:"\2013";color:var(--ink-3)}
+.tier .cnt{margin-top:12px;padding-top:11px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--ink-2)}
+.tier .cnt b{color:var(--ink);font-weight:600}
+#nav button.dim{opacity:.32}
+#nav button.dim .ct{display:none}
+
+.toasts{position:fixed;bottom:16px;right:16px;z-index:80;display:flex;flex-direction:column;gap:7px;max-width:340px}
+.toast{background:var(--ink);color:var(--paper);padding:10px 13px;border-radius:var(--r-sm);font-size:13px;font-weight:500;animation:ti .2s ease}
+@keyframes ti{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.scrim{position:fixed;inset:0;background:rgba(4,17,38,.5);z-index:50;display:none}
+.scrim.on{display:block}
+.sheet{position:fixed;top:0;right:0;bottom:0;width:min(520px,100%);background:var(--card);border-left:1px solid var(--rule);z-index:51;transform:translateX(100%);transition:transform .25s cubic-bezier(.32,.72,0,1);overflow-y:auto;padding:18px 20px 40px}
+.sheet.on{transform:none}
+.sheet h2{font-size:18px;font-weight:600;letter-spacing:-.02em;margin-bottom:4px}
+.sheet .sub{font-size:13px;color:var(--ink-2);margin-bottom:14px}
+.sheet .x{position:absolute;top:14px;right:16px;font-size:20px;color:var(--ink-2);line-height:1}
+
+@media (max-width:1180px){.g4{grid-template-columns:repeat(2,1fr)}.gmain{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.stat:nth-child(2){border-right:0}.stat:nth-child(-n+2){border-bottom:1px solid var(--rule)}}
+@media (max-width:900px){
+  .rail{transform:translateX(-100%);box-shadow:0 0 40px rgba(0,0,0,.25)}
+  .rail.open{transform:none}
+  .main{margin-left:0}
+  .burger{display:grid;place-items:center}
+  .who b,.who span{display:none}
+  .page{padding:16px 13px 50px}
+  .top{padding:9px 13px}
+  .g2,.g3{grid-template-columns:1fr}
+}
+@media (max-width:620px){.stats{grid-template-columns:1fr}.stat{border-right:0;border-bottom:1px solid var(--rule)}.stat:last-child{border-bottom:0}.g4{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+/* ── Smart Reply additions ───────────────────── */
+.grid>*{min-width:0}
+.logo{display:flex;align-items:center;gap:10px}
+.logo svg{width:40px;height:40px;flex:none}
+.logo b{display:block;font-family:'Poppins',sans-serif;font-size:21px;font-weight:700;letter-spacing:-.03em;line-height:1.05;color:var(--navy)}
+:root[data-theme="dark"] .logo b{color:#fff}
+.logo b em{font-style:normal;background:linear-gradient(90deg,#00A8E8,#1B6FC4 40%,#8E3FA0 75%,#E6287A);-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo span{display:block;font-size:10.5px;font-weight:600;color:var(--ink-2);letter-spacing:.02em}
+.logo span i{font-style:normal;font-weight:800;color:var(--blue)}
+.logo span u{text-decoration:none;font-weight:800;color:var(--magenta)}
+
+.wa{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--ok);background:var(--ok-bg);padding:5px 10px;border-radius:20px;white-space:nowrap}
+.wa::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.rolesw{display:inline-flex;border:1px solid var(--rule-2);border-radius:var(--r-sm);overflow:hidden}
+.rolesw button{padding:6px 11px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.rolesw button+button{border-left:1px solid var(--rule)}
+.rolesw button[aria-pressed="true"]{background:var(--navy);color:#fff}
+:root[data-theme="dark"] .rolesw button[aria-pressed="true"]{background:var(--blue);color:#04203F}
+
+.av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;font-style:normal;flex:none;background:var(--info-bg);color:var(--blue)}
+.av.lg{width:64px;height:64px;font-size:22px}
+.av.md{width:38px;height:38px;font-size:13px}
+.av.a1{background:#F7E4D6;color:#8A3F12}.av.a2{background:#E8E1F7;color:#4B2E8F}.av.a3{background:#DDE7F8;color:#23458A}
+.av.a4{background:#E0F3EB;color:#0B6446}.av.a5{background:#FBE3EF;color:#8A1F4E}.av.a6{background:#E6E9F0;color:#2E3550}.av.a7{background:#FBEFD6;color:#7A4300}
+:root[data-theme="dark"] .av{filter:saturate(.9) brightness(.92)}
+.st{position:relative}
+.st::after{content:"";position:absolute;right:-1px;bottom:-1px;width:9px;height:9px;border-radius:50%;border:2px solid var(--card);background:var(--ok)}
+.st.busy::after,.st.away::after{background:var(--warn)}.st.call::after{background:var(--bad)}
+
+/* inbox: list · thread · customer */
+.ib{display:grid;grid-template-columns:310px minmax(0,1fr) 290px;background:var(--card);border:1px solid var(--rule);border-radius:var(--r);overflow:hidden;height:calc(100vh - 57px - 120px);min-height:560px}
+.ib-l{border-right:1px solid var(--rule);display:flex;flex-direction:column;min-height:0}
+.ib-l .hd{padding:12px;border-bottom:1px solid var(--rule);display:flex;flex-direction:column;gap:9px}
+.ib-l .items{overflow-y:auto;flex:1}
+.cv{display:flex;gap:10px;align-items:flex-start;padding:11px 12px;border-bottom:1px solid var(--rule);width:100%;text-align:left;border-left:3px solid transparent}
+.cv:hover{background:var(--card-2)}
+.cv.on{background:var(--info-bg);border-left-color:var(--blue)}
+.cv .bd{flex:1;min-width:0}
+.cv .l1{display:flex;justify-content:space-between;gap:6px}
+.cv .l1 b{font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cv .l1 small{font-size:11px;color:var(--ink-3);flex:none}
+.cv .pv{font-size:12.5px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;margin:1px 0 4px}
+.cv.un .l1 b{font-weight:700}.cv.un .pv{color:var(--ink);font-weight:500}.cv.un .l1 small{color:var(--blue);font-weight:700}
+.cv .tags{display:flex;gap:4px;flex-wrap:wrap}
+.cv .n{background:var(--blue);color:#fff;font-size:10.5px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;padding:0 5px;flex:none;margin-top:18px}
+
+.ib-t{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--card-2)}
+.ib-t .hd{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card);border-bottom:1px solid var(--rule)}
+.ib-t .hd .bd{flex:1;min-width:0}
+.ib-t .hd .bd b{display:block;font-size:14.5px;font-weight:600}
+.win{font-size:11.5px;font-weight:600;color:var(--ok)}
+.win.x{color:var(--warn)}
+.msgs{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:7px}
+.day{align-self:center;font-size:11px;font-weight:600;color:var(--ink-2);background:var(--card);border:1px solid var(--rule);padding:2px 10px;border-radius:10px}
+.bb{max-width:76%;padding:7px 11px 5px;border-radius:12px;font-size:13.5px;line-height:1.45;border:1px solid var(--rule);background:var(--card)}
+.bb.in{align-self:flex-start;border-top-left-radius:3px}
+.bb.out{align-self:flex-end;background:var(--info-bg);border-color:transparent;border-top-right-radius:3px}
+.bb .by{display:block;font-size:10.5px;font-weight:700;color:var(--blue)}
+.bb .tp{display:block;font-size:10.5px;font-weight:700;color:var(--magenta)}
+.bb .mt{display:block;text-align:right;font-size:10.5px;color:var(--ink-3);margin-top:1px}
+.bb .mt .rd{color:var(--blue);font-weight:700;margin-left:3px}
+.bb .bt{display:flex;margin:6px -11px -5px;border-top:1px solid var(--rule-2)}
+.bb .bt span{flex:1;text-align:center;padding:7px 4px;font-size:12.5px;font-weight:600;color:var(--blue)}
+.bb .bt span+span{border-left:1px solid var(--rule-2)}
+.nt{align-self:center;width:80%;background:var(--warn-bg);border:1px dashed var(--warn);border-radius:var(--r-sm);padding:7px 11px;font-size:12.5px;color:var(--ink)}
+.nt b{display:block;font-size:10.5px;color:var(--warn);font-weight:700}
+.sys{align-self:center;font-size:11.5px;color:var(--ink-2);background:var(--card);border:1px solid var(--rule);padding:4px 10px;border-radius:12px}
+.sys.b{color:var(--bad)}
+.cmp{border-top:1px solid var(--rule);background:var(--card);padding:9px 12px 11px}
+.cmp .qk{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+/* attachments */
+.att{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start}
+.bb .att{margin:3px 0 5px}
+.att-img{position:relative;display:block}
+.att-img img{width:72px;height:72px;border-radius:8px;object-fit:cover;border:1px solid var(--rule);display:block;background:var(--card-2)}
+.bb .att-img img{width:230px;height:auto;max-height:230px}
+.att-file{display:flex;align-items:center;gap:9px;border:1px solid var(--rule);border-radius:8px;padding:7px 10px;background:var(--card);max-width:260px;position:relative}
+.att-file .ext{width:30px;height:36px;border-radius:5px;background:var(--bad-bg);color:var(--bad);font-size:9px;font-weight:800;display:grid;place-items:center;flex:none;letter-spacing:.02em}
+.att-file .ext.x{background:var(--ok-bg);color:var(--ok)}.att-file .ext.w{background:var(--info-bg);color:var(--info)}
+.att-file b{display:block;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.att-file span{font-size:11px;color:var(--ink-2)}
+.att-voice{display:flex;align-items:center;gap:8px;border:1px solid var(--rule);border-radius:22px;padding:5px 12px 5px 5px;background:var(--card);min-width:210px;position:relative}
+.att-voice .pl{width:30px;height:30px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;flex:none;display:grid;place-items:center}
+:root[data-theme="dark"] .att-voice .pl{color:#04203F}
+.att-voice small{font-size:11px;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.att-voice audio{height:32px;max-width:230px}
+.wave{display:flex;align-items:center;gap:2px;flex:1;height:24px}
+.wave i{display:block;width:3px;border-radius:2px;background:var(--rule-2);transition:background .2s}
+.att-voice.play .wave i{background:var(--blue);animation:wv 1s ease-in-out infinite alternate}
+.att-voice.play .wave i:nth-child(2n){animation-delay:.2s}.att-voice.play .wave i:nth-child(3n){animation-delay:.4s}
+@keyframes wv{from{transform:scaleY(.55)}to{transform:scaleY(1)}}
+.att .rm{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--paper);font-size:12px;line-height:1;display:grid;place-items:center}
+.attb{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.attb label{cursor:pointer}
+.attb input{display:none}
+.recon{color:var(--bad)!important;border-color:var(--bad)!important;background:var(--bad-bg)!important}
+.pend{display:flex;gap:10px;flex-wrap:wrap;margin:2px 0 10px;padding-top:6px}
+.qa{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--card-2);color:var(--ink-2);margin:2px 4px 2px 0;white-space:nowrap}
+
+.cmp .row{display:flex;gap:8px;align-items:center}
+.cmp .f-in{flex:1}
+.cmp.nmode .f-in{background:var(--warn-bg);border-color:var(--warn)}
+.cmp .tbtn.on{background:var(--warn-bg);color:var(--warn)}
+
+.ib-c{border-left:1px solid var(--rule);overflow-y:auto;padding:14px}
+.ib-c .who2{text-align:center;padding:4px 0 12px}
+.ib-c .who2 .av{margin:0 auto 8px}
+.ib-c .who2 b{display:block;font-size:15px;font-weight:600}
+.ib-c .who2 span{font-size:12px;color:var(--ink-2);display:block}
+.ib-c h3{font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.05em;margin:14px 0 6px;text-transform:uppercase}
+.ib-c .tags{display:flex;gap:5px;flex-wrap:wrap}
+.acts4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.acts4 button{border:1px solid var(--rule);border-radius:var(--r-sm);padding:7px 2px;font-size:11.5px;font-weight:600;color:var(--blue);display:flex;flex-direction:column;align-items:center;gap:2px}
+.acts4 button span{font-size:15px}
+.acts4 button.dg{color:var(--bad)}
+
+/* incoming call banner */
+.ring{display:flex;align-items:center;gap:13px;padding:13px 15px;border-radius:var(--r);margin-bottom:14px;color:#fff;background:linear-gradient(120deg,#0A2458,#2E3192 60%,#6B3A9E)}
+.ring .bd{flex:1;min-width:0}
+.ring small{display:block;font-size:10.5px;font-weight:700;letter-spacing:.06em;color:#7FD1F5}
+.ring b{display:block;font-size:15.5px;font-weight:600}
+.ring span{font-size:12px;color:#C9D3F0}
+.ring .btn{border:0}
+.ring .yes{background:#0B8A5C;color:#fff}.ring .no{background:#BE3220;color:#fff}
+
+/* active call sheet */
+.callv{margin:-18px -20px -40px;min-height:100vh;padding:22px 20px 30px;color:#fff;background:linear-gradient(180deg,#0A2458,#1E2470 70%,#3A2A80);display:flex;flex-direction:column;align-items:center;text-align:center}
+.callv .av{margin:18px 0 10px}
+.callv h2{font-size:22px;color:#fff}
+.callv .tm{font-size:15px;color:#C9D3F0;font-variant-numeric:tabular-nums}
+.callv .rec{font-size:11.5px;font-weight:600;color:#FFB4AB;background:rgba(255,120,110,.14);padding:3px 11px;border-radius:12px;margin-top:8px}
+.tr{align-self:stretch;text-align:left;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:13px 14px;margin:18px 0}
+.tr h4{font-size:11px;letter-spacing:.06em;color:#7FD1F5;margin-bottom:8px}
+.tr p{font-size:13px;margin-bottom:8px}
+.tr p b{display:block;font-size:10.5px;color:#C9D3F0}
+.tr .sg{background:rgba(127,209,245,.13);border-radius:var(--r-sm);padding:8px 10px;font-size:12.5px}
+.cbtns{display:flex;gap:18px;margin:6px 0 18px}
+.cbtns button{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.12);color:#fff;font-size:18px}
+.cbtns button.on{background:#fff;color:#0A2458}
+.endc{width:64px;height:64px;border-radius:50%;background:#D93A2F;color:#fff;font-size:24px}
+
+/* catalog */
+.prod{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);overflow:hidden}
+.prod .art{height:128px;background:var(--card-2);display:grid;place-items:center;border-bottom:1px solid var(--rule)}
+.prod .art svg{width:150px;height:110px}
+.prod .in{padding:11px 13px 13px}
+.prod b{display:block;font-size:13.5px;font-weight:600}
+.prod .pr{font-family:'Poppins',sans-serif;font-size:17px;font-weight:700;color:var(--blue);letter-spacing:-.02em;margin-top:2px}
+.prod .pr s{font-size:12px;color:var(--ink-3);font-weight:500;margin-left:6px}
+.prod span{font-size:12px;color:var(--ink-2)}
+
+/* template preview */
+.tpv{background:var(--card-2);border:1px solid var(--rule);border-radius:var(--r-sm);padding:14px}
+.tpv .bb{max-width:100%}
+code.cmd{font-family:ui-monospace,Menlo,monospace;font-size:12px;font-weight:700;background:var(--info-bg);color:var(--blue);padding:2px 7px;border-radius:5px}
+
+/* bars */
+.bars{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;align-items:end;height:150px;padding-top:8px}
+.bars div{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px;font-size:11px;color:var(--ink-2)}
+.bars i{display:block;width:100%;border-radius:5px 5px 2px 2px;background:var(--info-bg);border:1px solid var(--rule)}
+.bars .hi i{background:var(--blue);border-color:var(--blue)}
+.split{display:flex;height:10px;border-radius:5px;overflow:hidden;gap:2px;margin:6px 0 8px}
+.split i{display:block}
+
+@media (max-width:1180px){.ib{grid-template-columns:280px minmax(0,1fr)}.ib-c{display:none}}
+@media (max-width:760px){.ib{grid-template-columns:1fr;height:auto}.ib-l .items{max-height:320px}.ib-t{min-height:520px}.top .wa,.rolesw{display:none}}
+
+
+/* ── v2: statuses, owners, 24h window, IVR, call controls ── */
+:root{--g:#0B8A5C;--g-bg:#DDF3E8;--y:#9A6A00;--y-bg:#FFF1C2;--r:#C62828;--r-bg:#FDE1DE}
+:root[data-theme="dark"]{--g:#4CCB92;--g-bg:#0D3228;--y:#F2C94C;--y-bg:#3A300D;--r:#FF7A6E;--r-bg:#44170F}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--g:#4CCB92;--g-bg:#0D3228;--y:#F2C94C;--y-bg:#3A300D;--r:#FF7A6E;--r-bg:#44170F}}
+.wt{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.wt b{font-weight:700;display:inline!important;font-size:inherit!important;color:inherit!important}
+.wt.g{background:var(--g-bg);color:var(--g)}.wt.y{background:var(--y-bg);color:var(--y)}.wt.r{background:var(--r);color:#fff;animation:wpulse 1.6s infinite}.wt.x{background:var(--card-2);color:var(--ink-3)}
+@keyframes wpulse{50%{box-shadow:0 0 0 4px var(--r-bg)}}
+.cv.wg{box-shadow:inset 4px 0 0 var(--g)}.cv.wy{box-shadow:inset 4px 0 0 var(--y)}.cv.wr{box-shadow:inset 4px 0 0 var(--r);background-image:linear-gradient(90deg,var(--r-bg),transparent 45%)}
+.wleg{display:flex;gap:11px;flex-wrap:wrap;font-size:11px;color:var(--ink-2);margin-top:8px}
+.wleg span{display:flex;align-items:center;gap:4px}
+.wleg i{width:9px;height:9px;border-radius:3px}
+.wleg i.g{background:var(--g)}.wleg i.y{background:var(--y)}.wleg i.r{background:var(--r)}.wleg i.x{background:var(--ink-3)}
+.sc{display:inline-flex;align-items:center;gap:4px}
+.sc .tmr{font-weight:700;opacity:.85}
+.scs{display:inline-flex;gap:5px;flex-wrap:wrap}
+.mst{display:flex;gap:4px;padding:3px;border-radius:20px;border:1px solid var(--rule-2);background:var(--card)}
+.mst:hover{border-color:var(--blue)}
+.chb{border:1px solid var(--rule);border-radius:var(--r);padding:11px 13px;margin-bottom:10px}
+.chh{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.chh b{font-size:14.5px}
+.chh span{margin-left:auto;font-size:12.5px;color:var(--ink-2);font-weight:600}
+.sopts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.sopts button{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 2px;border-radius:var(--r-sm);border:1px solid var(--rule);font-size:12px;font-weight:600;color:var(--ink-2)}
+.sopts button[aria-pressed="true"]{border-color:var(--blue);background:var(--info-bg);color:var(--ink)}
+.sdot{width:11px;height:11px;border-radius:50%;background:var(--ok)}
+.sdot.sbrk{background:var(--warn)}.sdot.saway{background:var(--ink-3)}.sdot.sdnd{background:var(--bad)}
+.chb .hint{margin:7px 0 0}
+.bulk{display:flex;align-items:center;gap:8px;padding:9px 14px;background:var(--info-bg);border-bottom:1px solid var(--rule);font-size:13px;flex-wrap:wrap}
+.bulk[hidden]{display:none}
+.bulk .sp{flex:1}
+.bulk select{max-width:190px}
+select.own{max-width:190px;padding:5px 8px;font-size:13px;display:inline-block;width:auto}
+.ck{width:16px;height:16px;accent-color:var(--blue)}
+button.lk{text-align:left}
+button.lk:hover b{color:var(--blue)}
+.btn.dg{color:var(--bad)}
+select.key{font-family:Poppins,sans-serif;font-weight:700;text-align:center;padding:6px 4px}
+.keyb{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;background:var(--navy);color:#fff;font-weight:700;font-size:12px;margin-right:7px;font-family:Poppins,sans-serif}
+:root[data-theme="dark"] .keyb{background:var(--blue);color:#04203F}
+.flow{font-size:13px}
+.fn{background:var(--card-2);border-radius:var(--r-sm);padding:8px 10px;font-weight:600}
+.fa{width:2px;height:12px;background:var(--rule-2);margin:2px 0 2px 18px}
+.fb{border-left:2px solid var(--rule-2);margin-left:18px;padding-left:12px;display:flex;flex-direction:column;gap:6px}
+.fb em{font-style:normal;color:var(--ink-2)}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:260px}
+.keys button{height:50px;border-radius:12px;background:var(--card-2);font-size:19px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:Poppins,sans-serif}
+.keys button:hover{background:var(--info-bg)}
+.keys button small{font-size:9.5px;font-weight:600;color:var(--ink-2);font-family:Archivo,sans-serif;margin-top:-3px}
+.keys button.off{opacity:.4}
+.ring .btn.gh{background:rgba(255,255,255,.14);color:#fff}
+.callv .rec.off{color:#C9D3F0;background:rgba(255,255,255,.1)}
+.cpan{width:100%;max-width:360px;background:rgba(255,255,255,.12);border-radius:12px;padding:10px 12px;margin-top:12px;font-size:12.5px;text-align:left;color:#DCE3F7}
+.cpan b{display:block;font-size:14px;color:#fff}
+.cbt{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.cbt button{background:#fff;color:#0A2458;font-weight:700;font-size:12px;padding:6px 10px;border-radius:14px}
+.cbt button.gh{background:rgba(255,255,255,.16);color:#fff}
+.cbt button:disabled{opacity:.4;cursor:not-allowed}
+.cgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px 10px;margin:14px 0 18px;width:100%;max-width:340px}
+.cgrid button{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11.5px;color:#DCE3F7}
+.cgrid i{font-style:normal;width:50px;height:50px;border-radius:50%;background:rgba(255,255,255,.12);display:grid;place-items:center;font-size:17px;color:#fff}
+.cgrid button.on i{background:#fff;color:#0A2458}
+.who b,.who span{white-space:nowrap}
+#ivT input{min-width:190px}
+@media (max-width:760px){.mst{display:none}}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <aside class="rail" id="rail">
+    <div class="brand"><div class="logo" aria-label="Smart Reply by LUMI AI">
+      <svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><defs><linearGradient id="lgB" x1="4" y1="6" x2="44" y2="42" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#00A8E8"/><stop offset=".55" stop-color="#1B6FC4"/><stop offset="1" stop-color="#2E3192"/></linearGradient><linearGradient id="lgP" x1="12" y1="12" x2="36" y2="36" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#E6287A"/><stop offset="1" stop-color="#8E3FA0"/></linearGradient></defs><path d="M24 4.5c10.8 0 19.5 8.3 19.5 18.8S34.8 42 24 42c-2.9 0-5.7-.6-8.2-1.7L6 43.5l3-8.3A18.4 18.4 0 0 1 4.5 23.3C4.5 12.8 13.2 4.5 24 4.5z" stroke="url(#lgB)" stroke-width="3.6" stroke-linejoin="round"/><path d="M24 34V15.5M24 25l-6-6v-2.6M24 28l6-6v-3.4M18 32v-4l-3.6-3.6M30 32v-3.5l3.6-3.6" stroke="url(#lgP)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><g stroke="url(#lgP)" stroke-width="1.8" fill="#fff"><circle cx="24" cy="13.4" r="2.1"/><circle cx="18" cy="14.3" r="2.1"/><circle cx="30" cy="16.5" r="2.1"/><circle cx="13" cy="23" r="2.1"/><circle cx="35" cy="23.5" r="2.1"/></g></svg>
+      <div><b>Smart<em>Reply</em></b><span>by <i>LUMI</i> <u>AI</u></span></div>
+    </div></div>
+    <nav class="nav" id="nav" aria-label="Main"></nav>
+  </aside>
+
+  <div class="main">
+    <header class="top">
+      <button class="burger" id="burger" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div class="pick">
+        <label class="sr" for="co">Business</label>
+        <select id="co"><option>Madushan Aluminium — 3 staff</option><option>Kandy Tiles &amp; Bath — 6 staff</option><option>Ceylon Kitchen Works — 12 staff</option></select>
+      </div>
+      <span class="wa" title="WhatsApp Business number">+94 77 123 4567 · Quality High</span>
+      <span class="sp"></span>
+      <div class="rolesw" role="group" aria-label="View as"><button aria-pressed="true" data-role="manager">Manager</button><button aria-pressed="false" data-role="staff">Staff</button></div>
+      <button class="tbtn" id="theme" aria-label="Theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5Z"/></svg></button>
+      <button class="tbtn" id="bell" data-toast="5 items need your attention." aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="bdg">5</span></button>
+      <div class="who" id="who"><div><b>Madushan P.</b><span>Owner · Manager</span></div><i>MP</i></div>
+    </header>
+    <main class="page" id="page"></main>
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="sheet" id="sheet" role="dialog" aria-modal="true"><button class="x" id="sx" aria-label="Close">×</button><div id="sheetBody"></div></aside>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+(function(){
+"use strict";
+var S={get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+var root=document.documentElement;
+root.setAttribute('data-theme', S.get('sr.a.theme') || (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'));
+document.getElementById('theme').addEventListener('click',function(){
+  var n=root.getAttribute('data-theme')==='dark'?'light':'dark';
+  root.setAttribute('data-theme',n); S.set('sr.a.theme',n);
+});
+
+var tw=document.getElementById('toasts');
+function toast(m){var e=document.createElement('div');e.className='toast';e.textContent=m;tw.appendChild(e);setTimeout(function(){e.remove()},3000);}
+document.addEventListener('click',function(ev){var b=ev.target.closest('[data-toast]');if(b)toast(b.getAttribute('data-toast'));});
+
+var rail=document.getElementById('rail'),scrim=document.getElementById('scrim');
+document.getElementById('burger').addEventListener('click',function(){rail.classList.toggle('open');scrim.classList.toggle('on',rail.classList.contains('open'));});
+
+var sheet=document.getElementById('sheet'),sbody=document.getElementById('sheetBody');
+function openSheet(h){sbody.onclick=null;sbody.innerHTML=h;sheet.classList.add('on');scrim.classList.add('on');}
+function closeAll(){sheet.classList.remove('on');scrim.classList.remove('on');rail.classList.remove('open');if(window.__onClose){var f=window.__onClose;window.__onClose=null;f();}}
+scrim.addEventListener('click',closeAll);
+document.getElementById('sx').addEventListener('click',closeAll);
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAll();});
+window.__sheet=openSheet; window.__toast=toast; window.__close=closeAll;
+
+/* generic segmented control + row filter: <div class="seg" data-filter="tbl"><button data-v="all"> ; rows carry data-k */
+document.addEventListener('click',function(ev){
+  var b=ev.target.closest('.seg button'); if(!b) return;
+  var seg=b.parentNode;
+  seg.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+  var t=seg.getAttribute('data-filter'); if(!t) return;
+  var v=b.getAttribute('data-v')||'all';
+  document.querySelectorAll('#'+t+' [data-k]').forEach(function(r){
+    r.style.display=(v==='all'||(' '+r.getAttribute('data-k')+' ').indexOf(' '+v+' ')>-1)?'':'none';
+  });
+});
+
+/* ── navigation map ─────────────────────────── */
+var NAV={
+ manager:[
+  ['Today',[['dash','◧','Dashboard','']]],
+  ['Inbox',[
+    ['inbox','✉','Chat & Call','3'],
+    ['calls','☏','Call log','2'],
+    ['contacts','☰','Customers & owners','1'],
+    ['labels','◈','Labels','']
+  ]],
+  ['Team',[
+    ['status','◉','Live status',''],
+    ['staff','⚇','Staff manage',''],
+    ['routing','⇄','Assignment rules',''],
+    ['progress','↗','Progress','']
+  ]],
+  ['WhatsApp',[
+    ['templates','▤','Message templates','1'],
+    ['catalog','▣','Catalog & pricing',''],
+    ['broadcasts','⌁','Broadcasts',''],
+    ['quick','⌘','Quick replies','']
+  ]],
+  ['Calls',[
+    ['callset','◷','Call settings',''],
+    ['ivr','⌗','IVR menu',''],
+    ['fwd','⇄','Call forwarding','']
+  ]],
+  ['Insights',[
+    ['reports','▩','Reports',''],
+    ['billing','₨','Meta usage & billing','']
+  ]],
+  ['Setup',[
+    ['business','⌗','Business profile',''],
+    ['number','◎','Number & quality',''],
+    ['roles','◐','Roles & users',''],
+    ['integrations','⧉','Webhooks & API',''],
+    ['audit','⊙','Audit log','']
+  ]]
+ ],
+ staff:[
+  ['Today',[['mydash','◧','My day','']]],
+  ['Inbox',[
+    ['inbox','✉','My chats & calls','2'],
+    ['calls','☏','Call log','1'],
+    ['fwd','⇄','Call forwarding','']
+  ]],
+  ['Me',[
+    ['myperf','↗','My performance',''],
+    ['quick','⌘','Quick replies',''],
+    ['templates','▤','Message templates',''],
+    ['profile','◐','Profile settings','']
+  ]]
+ ]
+};
+var WHO={manager:['Madushan P.','Owner · Manager','MP'],staff:['Nimal Bandara','Staff · Sales','NB']};
+var navEl=document.getElementById('nav');
+function buildNav(role){
+  navEl.innerHTML='';
+  NAV[role].forEach(function(g){
+    var h=document.createElement('h2');h.textContent=g[0];navEl.appendChild(h);
+    g[1].forEach(function(it){
+      var b=document.createElement('button');
+      b.setAttribute('data-go',it[0]);
+      b.innerHTML='<span class="ic">'+it[1]+'</span><span>'+it[2]+'</span>'+(it[3]?'<span class="ct">'+it[3]+'</span>':'');
+      navEl.appendChild(b);
+    });
+  });
+  var w=WHO[role];
+  document.getElementById('who').innerHTML='<div><b>'+w[0]+'</b><span>'+w[1]+'</span></div><i>'+w[2]+'</i>';
+}
+window.ROLE='manager';
+document.querySelectorAll('[data-role]').forEach(function(b){
+  b.addEventListener('click',function(){
+    var r=b.getAttribute('data-role'); if(r===window.ROLE) return;
+    window.ROLE=r;
+    document.querySelectorAll('[data-role]').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});
+    buildNav(r); go(r==='manager'?'dash':'mydash');
+    toast(r==='manager'?'Manager view: the whole business.':'Staff view: signed in as Nimal. Only chats assigned to him.');
+  });
+});
+
+var page=document.getElementById('page');
+function go(k){
+  var f=window.SCREENS[k]; if(!f) return;
+  page.onclick=null;
+  page.innerHTML=f();
+  document.querySelectorAll('#nav button').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-go')===k);});
+  window.scrollTo(0,0); closeAll();
+  if(window.AFTER && window.AFTER[k]) window.AFTER[k]();
+}
+document.addEventListener('click',function(ev){var b=ev.target.closest('[data-go]');if(b){ev.preventDefault();go(b.getAttribute('data-go'));}});
+window.__go=go;
+window.SCREENS={}; window.AFTER={};
+window.__boot=function(){ buildNav('manager'); go('dash'); };
+})();
+</script>
+
+<script>
+/* ═══════════════════════════════════════════════
+   DATA — demo tenant: Madushan Aluminium
+   ═══════════════════════════════════════════════ */
+(function(){
+var D=window.DATA={};
+D.staff=[
+ {id:'s1',n:'Nimal Bandara',i:'NB',st:'call',stt:'On a call',open:5,rep:'2m 10s',calls:18,done:78,res:64,miss:2},
+ {id:'s2',n:'Sachini Wickrama',i:'SW',st:'',stt:'Available',open:4,rep:'3m 05s',calls:15,done:64,res:52,miss:3},
+ {id:'s3',n:'Ruwan Kumara',i:'RK',st:'away',stt:'Away',open:3,rep:'5m 20s',calls:9,done:35,res:31,miss:4}
+];
+D.contacts={
+ c1:{n:'Kasun Perera',i:'KP',a:'a1',ph:'+94 77 234 5678',since:'Mar 2026',city:'Kandy',to:'s1',perm:true,labels:[['Quotation','i'],['Hot lead','b'],['Kandy','w']]},
+ c2:{n:'Mohamed Rizwan',i:'MR',a:'a2',ph:'+94 71 456 7788',since:'Sep 2026',city:'Colombo 06',to:null,perm:false,labels:[['Wardrobe','']]},
+ c3:{n:'Dilani Fernando',i:'DF',a:'a3',ph:'+94 76 332 1144',since:'Aug 2026',city:'Negombo',to:'s2',perm:true,labels:[['Site visit','w']]},
+ c4:{n:'Tharindu Silva',i:'TS',a:'a4',ph:'+94 70 998 2211',since:'Jul 2026',city:'Kurunegala',to:'s2',perm:false,labels:[['Advance paid','ok']]},
+ c5:{n:'Anjali Rao',i:'AR',a:'a5',ph:'+94 77 881 4590',since:'Jun 2026',city:'Colombo 05',to:'s1',perm:true,labels:[['Installation','i']]},
+ c6:{n:'Chamara Jayasuriya',i:'CJ',a:'a6',ph:'+94 75 120 3344',since:'May 2026',city:'Galle',to:'s3',perm:false,labels:[]},
+ c7:{n:'Priya Nadarajah',i:'PN',a:'a7',ph:'+94 77 665 0012',since:'Sep 2026',city:'Jaffna',to:'s1',perm:true,labels:[['Wardrobe','']]}
+};
+D.convs=[
+ {id:'v1',c:'c1',pv:'කිචන් කබඩ් quotation එක කවදද?',t:'10:42',un:2,win:23,msgs:[
+   ['in','text','ආයුබෝවන්, මට අලුමිනියම් කිචන් කබඩ් එකක් ඕනේ','10:38'],
+   ['in','text','කිචන් කබඩ් quotation එක කවදද?','10:42'],
+   ['note','note','Site measurement Saturday 10am, Kandy. Soft-close hinges ahuwa','10:43','Nimal'],
+   ['out','text','Hi Kasun! 10ft pantry cupboard ekata quotation Q-1042 eka ready. Aluminium frame + glass shutters.','10:45','Nimal',1],
+   ['out','tpl','Your quotation Q-1042 is ready: Rs. 185,000. Valid until 30 Sep.','10:45','quotation_ready',1,['View quote','Call us']],
+   ['out','text','Colour card eka attach kala. Kamathi colour eka kiyanna.','10:45','Nimal',1,null,[{type:'image',name:'Colour_card.jpg',size:348160,url:'__CC__'}]],
+   ['in','text','හරි, thanks!','10:46'],
+   ['sys','call','↗ Voice call · 4:32 · Nimal · recording saved','10:50']
+ ]},
+ {id:'v2',c:'c2',pv:'Wardrobe ekak gana call kala, miss una',t:'10:01',un:1,win:24,msgs:[
+   ['sys','miss','↙ Missed voice call','09:58'],
+   ['out','text','Sorry we missed your call! A team member will call you back shortly.','09:58','Auto-reply',1],
+   ['in','text','Wardrobe ekak gana call kala, miss una','10:01']
+ ]},
+ {id:'v3',c:'c3',pv:'▶ Voice message · 0:24',t:'10:15',un:0,win:22,msgs:[
+   ['in','text','▶ Voice message · 0:24','10:15'],
+   ['note','note','Site visit Negombo Thursday 3pm. Bring vanity samples.','10:20','Sachini']
+ ]},
+ {id:'v4',c:'c4',pv:'Catalog order · Bathroom vanity',t:'09:30',un:0,win:21,msgs:[
+   ['in','text','🛍 Order from catalog · Bathroom Vanity 36" × 1','09:28'],
+   ['in','text','Advance eka dammaa, slip eka attach kala','09:30'],
+   ['out','text','Received, thank you! Installation date eka heta confirm karannam.','09:34','Sachini',1]
+ ]},
+ {id:'v5',c:'c5',pv:'Installation Saturday 9am confirmed',t:'Yesterday',un:0,win:null,msgs:[
+   ['out','tpl','Your installation is scheduled for Saturday 9am.','Yesterday','installation_reminder',1],
+   ['out','text','Installation Saturday 9am confirmed','Yesterday','Nimal',1]
+ ]},
+ {id:'v6',c:'c6',pv:'හරි, ස්තුතියි!',t:'Sun',un:0,win:null,msgs:[
+   ['in','text','Overhead cabinet colours tika evanna puluwanda?','Sun'],
+   ['out','text','Colour card eka attach kala. 12 colours thiyenawa.','Sun','Ruwan',1],
+   ['in','text','හරි, ස්තුතියි!','Sun']
+ ]}
+];
+D.calls=[
+ {c:'c7',d:'ringing',t:'now'},
+ {c:'c2',d:'missed',t:'Today 09:58',note:'Auto-reply sent',by:'—'},
+ {c:'c1',d:'outgoing',t:'Today 10:50',dur:'4:32',by:'Nimal',rec:1,ai:1},
+ {c:'c5',d:'incoming',t:'Today 11:20',dur:'2:10',by:'Sachini',rec:1},
+ {c:'c3',d:'rejected',t:'Today 08:40',note:'Sachini was busy',by:'Sachini'},
+ {c:'c4',d:'incoming',t:'Yesterday 16:05',dur:'6:48',by:'Sachini',rec:1,ai:1},
+ {c:'c6',d:'missed',t:'Yesterday 19:20',note:'After hours',by:'—'}
+];
+D.tpls=[
+ {n:'quotation_ready',cat:'Utility',lang:'English',st:'ok',stt:'Approved',q:'High',used:48,body:'Your quotation {{1}} is ready: Rs. {{2}}. Valid until {{3}}.',btn:['View quote','Call us']},
+ {n:'advance_payment_si',cat:'Utility',lang:'Sinhala',st:'w',stt:'In review',q:'—',used:0,body:'ඔබගේ ඇණවුම ආරම්භ කිරීමට {{1}} අත්තිකාරම් ගෙවන්න. ගිණුම් අංකය {{2}}.'},
+ {n:'avurudu_offer',cat:'Marketing',lang:'English',st:'b',stt:'Rejected',q:'—',used:0,body:'Avurudu offer! 10% off all bathroom vanities until {{1}}.',why:'Image header quality too low. Use a clearer photo.'},
+ {n:'call_permission',cat:'Utility',lang:'English',st:'ok',stt:'Approved',q:'High',used:22,body:'Can our team call you on WhatsApp about your order?',btn:['Allow calls','Not now']},
+ {n:'installation_reminder',cat:'Utility',lang:'English',st:'ok',stt:'Approved',q:'Medium',used:31,body:'Reminder: installation at {{1}} on {{2}}. Please keep the site clear.'},
+ {n:'missed_call_si',cat:'Utility',lang:'Sinhala',st:'ok',stt:'Approved',q:'High',used:17,body:'ඔබගේ ඇමතුම මග හැරුණා. අපි ඉක්මනින් නැවත අමතන්නම්.'}
+];
+D.products=[
+ {n:'Pantry Cupboard 10ft',col:'Kitchen',p:'Rs. 185,000',note:'Aluminium frame + glass · made to order',k:'pantry',sku:'MA-K-1042',st:'ok'},
+ {n:'Bathroom Vanity 36"',col:'Bathroom',p:'Rs. 38,250',old:'Rs. 42,500',note:'Avurudu offer · 10% off',k:'vanity',sku:'MA-B-0360',st:'ok'},
+ {n:'Sliding Wardrobe 3-door',col:'Wardrobes',p:'Rs. 145,000',note:'Made to measure · mirror centre panel',k:'wardrobe',sku:'MA-W-0300',st:'ok'},
+ {n:'Overhead Kitchen Cabinet',col:'Kitchen',p:'Rs. 12,500 / ft',note:'Powder-coated · 12 colours',k:'overhead',sku:'MA-K-0012',st:'ok'},
+ {n:'Bathroom Vanity 24"',col:'Bathroom',p:'Rs. 29,500',note:'Compact · single door',k:'vanity',sku:'MA-B-0240',st:'w'},
+ {n:'Hinged Wardrobe 2-door',col:'Wardrobes',p:'Rs. 98,000',note:'Aluminium + laminate',k:'wardrobe',sku:'MA-W-0200',st:'ok'}
+];
+D.ART=function(k){
+ var F='#AEB7C7',PN='#EEF1F6',GL='#D3E8F8',H='#6E7890',T='#8B94A8';
+ var a={
+  pantry:'<rect x="15" y="12" width="120" height="30" rx="2" fill="'+PN+'" stroke="'+F+'" stroke-width="2"/><path d="M55 12v30M95 12v30" stroke="'+F+'" stroke-width="2"/><rect x="21" y="17" width="28" height="20" fill="'+GL+'"/><rect x="61" y="17" width="28" height="20" fill="'+GL+'"/><rect x="101" y="17" width="28" height="20" fill="'+GL+'"/><rect x="10" y="60" width="130" height="5" rx="1" fill="'+T+'"/><rect x="15" y="65" width="120" height="36" rx="2" fill="'+PN+'" stroke="'+F+'" stroke-width="2"/><path d="M55 65v36M95 65v36M15 77h40" stroke="'+F+'" stroke-width="2"/><path d="M29 71h12M50 84v10M90 72v10M100 72v10" stroke="'+H+'" stroke-width="2.4" stroke-linecap="round"/><rect x="68" y="55" width="16" height="5" rx="1" fill="'+H+'"/>',
+  vanity:'<rect x="50" y="6" width="50" height="38" rx="6" fill="'+GL+'" stroke="'+F+'" stroke-width="2"/><path d="M58 14l10-6M58 22l18-12" stroke="#fff" stroke-width="2" stroke-linecap="round"/><rect x="30" y="54" width="90" height="7" rx="2" fill="'+T+'"/><ellipse cx="75" cy="54" rx="18" ry="4" fill="#fff" stroke="'+F+'" stroke-width="2"/><path d="M75 44v6M71 44h8" stroke="'+H+'" stroke-width="2.4" stroke-linecap="round"/><rect x="34" y="61" width="82" height="40" rx="2" fill="'+PN+'" stroke="'+F+'" stroke-width="2"/><path d="M75 61v40" stroke="'+F+'" stroke-width="2"/><path d="M69 74v12M81 74v12" stroke="'+H+'" stroke-width="2.4" stroke-linecap="round"/>',
+  wardrobe:'<rect x="28" y="6" width="94" height="96" rx="2" fill="'+PN+'" stroke="'+F+'" stroke-width="2"/><path d="M59 6v96M91 6v96" stroke="'+F+'" stroke-width="2"/><rect x="63" y="12" width="24" height="84" fill="'+GL+'"/><path d="M68 22l12-8M68 32l16-12" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M54 44v20M96 44v20" stroke="'+H+'" stroke-width="2.4" stroke-linecap="round"/><path d="M24 4h102" stroke="'+T+'" stroke-width="3" stroke-linecap="round"/>',
+  overhead:'<path d="M10 8h130" stroke="'+T+'" stroke-width="3" stroke-linecap="round"/><rect x="15" y="12" width="120" height="44" rx="2" fill="'+PN+'" stroke="'+F+'" stroke-width="2"/><path d="M45 12v44M75 12v44M105 12v44" stroke="'+F+'" stroke-width="2"/><rect x="50" y="17" width="20" height="34" fill="'+GL+'"/><rect x="80" y="17" width="20" height="34" fill="'+GL+'"/><path d="M30 46v6M60 46v6M90 46v6M120 46v6" stroke="'+H+'" stroke-width="2.4" stroke-linecap="round"/><rect x="10" y="84" width="130" height="5" rx="1" fill="'+T+'"/><rect x="15" y="89" width="120" height="14" fill="'+PN+'" stroke="'+F+'" stroke-width="2"/>'
+ };
+ return '<svg viewBox="0 0 150 110" fill="none" role="img" aria-label="'+k+'">'+a[k]+'</svg>';
+};
+D.staffById=function(id){for(var i=0;i<D.staff.length;i++){if(D.staff[i].id===id)return D.staff[i];}return null;};
+D.esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+/* demo colour-card image for the /colours quick reply */
+D.colourCard=(function(){
+ var cols=[['#F4F4F2','White'],['#C9CCD1','Silver'],['#6E7275','Grey'],['#2B2D30','Black'],['#7B4B2A','Teak'],['#B08A5B','Oak'],['#1F3B5B','Navy'],['#8E1B1B','Maroon'],['#D8C3A5','Beige'],['#3E5641','Olive'],['#C0A062','Champagne'],['#4A4E69','Slate']];
+ var sw=cols.map(function(c,i){var x=20+(i%4)*95,y=56+Math.floor(i/4)*78;return '<rect x="'+x+'" y="'+y+'" width="80" height="48" rx="6" fill="'+c[0]+'" stroke="#d0d6e2"/><text x="'+(x+40)+'" y="'+(y+64)+'" font-size="11" text-anchor="middle" fill="#3b4463" font-family="sans-serif">'+c[1]+'</text>';}).join('');
+ var svg='<svg xmlns="http://www.w3.org/2000/svg" width="420" height="300" viewBox="0 0 420 300"><rect width="420" height="300" fill="#fff"/><rect width="420" height="6" fill="#1B6FC4"/><text x="20" y="38" font-size="18" font-weight="700" fill="#13296B" font-family="sans-serif">Madushan Aluminium · Powder-coat colours</text>'+sw+'</svg>';
+ return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+})();
+D.quick=[
+ {cmd:'/price-list',t:'Kitchen & wardrobe price list',x:'Madushan Aluminium price list 2026 attach kala. Measurement ekata passe final quotation ekak dennam.',att:[{type:'file',name:'Madushan_Price_List_2026.pdf',size:1258291}],used:37,by:'Madushan P.'},
+ {cmd:'/colours',t:'Powder-coat colour card',x:'Colours 12k thiyenawa. Kamathi colour eka kiyanna.',att:[{type:'image',name:'Colour_card.jpg',size:348160,url:D.colourCard}],used:22,by:'Nimal'},
+ {cmd:'/hello',t:'Welcome voice note (Sinhala)',x:'',att:[{type:'voice',name:'welcome_si.ogg',size:61440,dur:'0:18'}],used:15,by:'Madushan P.'},
+ {cmd:'/measure',t:'Book a free site measurement',x:'Site measurement eka free. Address eka saha podi welawak evanna, dawas 2-3k athulata enawa.',att:[],used:29,by:'Sachini'},
+ {cmd:'/bank-details',t:'Bank details + slip request',x:'Commercial Bank · Kadawatha · A/C 1234 5678 90 · Madushan Aluminium. Advance eka dammama slip eka evanna.',att:[],used:18,by:'Madushan P.'},
+ {cmd:'/warranty',t:'Warranty terms',x:'Aluminium frame ekata 10 year warranty, hinges 2 years. Details attach kala.',att:[{type:'file',name:'Warranty_Terms.pdf',size:215040},{type:'image',name:'Colour_card.jpg',size:348160,url:D.colourCard}],used:6,by:'Madushan P.'}
+];
+D.convs.forEach(function(v){v.msgs.forEach(function(m){(m[7]||[]).forEach(function(a){if(a.url==='__CC__')a.url=D.colourCard;});});});
+D.size=function(b){return b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';};
+D.LIMIT={image:5*1048576,voice:16*1048576,file:100*1048576};
+D.att=function(a,i,removable){
+ var rm=removable?'<button class="rm" data-rm="'+i+'" aria-label="Remove">×</button>':'';
+ if(a.type==='image')return '<span class="att-img">'+(a.url?'<img src="'+a.url+'" alt="'+D.esc(a.name)+'">':'<img alt="">')+rm+'</span>';
+ if(a.type==='voice'){
+  if(a.real&&a.url)return '<span class="att-voice"><audio controls src="'+a.url+'"></audio>'+rm+'</span>';
+  var bars='';for(var k=0;k<22;k++){bars+='<i style="height:'+(6+((k*37)%17))+'px"></i>';}
+  return '<span class="att-voice"><button class="pl" data-vp aria-label="Play voice note">▶</button><span class="wave">'+bars+'</span><small>'+(a.dur||'0:12')+'</small>'+rm+'</span>';
+ }
+ var ext=(a.name.split('.').pop()||'FILE').toUpperCase().slice(0,4),cl=/XLS|CSV/.test(ext)?' x':/DOC|TXT/.test(ext)?' w':'';
+ return '<span class="att-file"><span class="ext'+cl+'">'+ext+'</span><span><b>'+D.esc(a.name)+'</b><span>'+D.size(a.size||0)+'</span></span>'+rm+'</span>';
+};
+D.attList=function(list,removable){return list&&list.length?'<div class="att">'+list.map(function(a,i){return D.att(a,i,removable);}).join('')+'</div>':'';};
+D.qa=function(list){return (list||[]).map(function(a){return '<span class="qa">'+({image:'🖼 Image',voice:'🎙 Voice',file:'📎 '+(a.name.split('.').pop()||'').toUpperCase()})[a.type]+'</span>';}).join('');};
+/* reads picked files into attachment objects, enforcing WhatsApp media limits */
+D.readFiles=function(files,type){
+ var out=[];
+ Array.prototype.forEach.call(files,function(f){
+  var t=type||(/^image\//.test(f.type)?'image':/^audio\//.test(f.type)?'voice':'file');
+  if(f.size>D.LIMIT[t]){__toast(f.name+' is '+D.size(f.size)+'. WhatsApp allows '+D.size(D.LIMIT[t])+' for '+(t==='file'?'documents':t==='voice'?'audio':'images')+'.');return;}
+  var o={type:t,name:f.name,size:f.size};
+  try{o.url=URL.createObjectURL(f);}catch(e){}
+  if(t==='voice'){o.real=true;}
+  out.push(o);
+ });
+ return out;
+};
+/* voice recorder: resolves with an attachment, or null if the mic is unavailable */
+D.recorder=null;
+D.toggleRecord=function(btn,onDone){
+ if(D.recorder){D.recorder.stop();return;}
+ if(!navigator.mediaDevices||!window.MediaRecorder){__toast('Recording isn’t available in this browser. Upload an audio file instead.');return;}
+ navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+  var chunks=[],rec=new MediaRecorder(stream),t0=Date.now();
+  D.recorder=rec;btn.classList.add('recon');btn.textContent='■ Stop';
+  rec.ondataavailable=function(e){chunks.push(e.data);};
+  rec.onstop=function(){
+   stream.getTracks().forEach(function(t){t.stop();});
+   D.recorder=null;btn.classList.remove('recon');btn.textContent='● Record';
+   var blob=new Blob(chunks,{type:rec.mimeType||'audio/webm'}),s=Math.round((Date.now()-t0)/1000);
+   onDone({type:'voice',name:'voice_note.ogg',size:blob.size,url:URL.createObjectURL(blob),real:true,dur:Math.floor(s/60)+':'+String(s%60).padStart(2,'0')});
+  };
+  rec.start();__toast('Recording… press Stop when done.');
+ }).catch(function(){__toast('Microphone permission was blocked. Upload an audio file instead.');});
+};
+document.addEventListener('click',function(e){var b=e.target.closest('[data-vp]');if(!b)return;var w=b.parentNode;w.classList.toggle('play');b.textContent=w.classList.contains('play')?'❚❚':'▶';});
+})();
+</script>
+<script>
+/* ═══════════════════════════════════════════════
+   SCREENS — each returns the page HTML
+   ═══════════════════════════════════════════════ */
+(function(){
+var SC=window.SCREENS, D=window.DATA;
+function head(t,d,acts){
+  return '<div class="ph"><div><h1>'+t+'</h1><p>'+d+'</p></div><div class="acts">'+(acts||'')+'</div></div>';
+}
+function av(c,cls){return '<i class="av '+c.a+(cls?' '+cls:'')+'">'+c.i+'</i>';}
+function chips(ls){return ls.map(function(l){return '<span class="chip '+l[1]+'">'+l[0]+'</span>';}).join(' ');}
+function who(c){var s=D.staffById(c.to);return s?s.n.split(' ')[0]:'<span class="chip b">Unassigned</span>';}
+var TODAY='Wednesday 30 September 2026';
+
+/* ── DASHBOARD ── */
+SC.dash=function(){return head('Today at a glance',TODAY+' · Madushan Aluminium',
+  '<button class="btn" data-toast="Today’s chat report exported as XLSX.">Export today</button><button class="btn pri" data-go="inbox">Open inbox</button>')+
+`<div class="stats">
+  <div class="stat i"><span>Open chats</span><b>24</b><small>6 new since 08:00 · 3 unread</small></div>
+  <div class="stat b"><span>Unassigned</span><b>1</b><small>Waiting 12 min · round-robin paused</small></div>
+  <div class="stat ok"><span>Calls answered</span><b>46 / 52</b><small>4 missed · 2 rejected</small></div>
+  <div class="stat w"><span>Avg first reply</span><b>3m 40s</b><small>Target under 5 min · Ruwan 5m 20s</small></div>
+</div>
+<div class="grid gmain">
+ <div>
+  <div class="card"><div class="card-h"><h2>Needs a decision</h2><span class="chip b">5</span><span class="sp"></span><button class="btn sm" data-go="inbox">Go to inbox</button></div>
+   <div class="list-row"><span class="dot b"></span><div class="bd"><b>2 missed calls not returned</b><span>Mohamed Rizwan 09:58 · Chamara Jayasuriya yesterday 19:20 (after hours)</span></div><div class="rt"><button class="btn sm" data-go="calls">Call log</button></div></div>
+   <div class="list-row"><span class="dot w"></span><div class="bd"><b>Template “avurudu_offer” rejected by Meta</b><span>Image header quality too low · the campaign is on hold</span></div><div class="rt"><button class="btn sm" data-go="templates">Fix</button></div></div>
+   ${SR.expRow()}${SR.noOwner()}
+   <div class="list-row"><span class="dot i"></span><div class="bd"><b>2 chats have no label</b><span>Labelled chats show up in reports and broadcasts</span></div><div class="rt"><button class="btn sm" data-go="labels">Labels</button></div></div>
+  </div>
+  <div class="card"><div class="card-h"><h2>Live queue</h2><span class="chip">6 of 24 shown</span><span class="sp"></span><button class="btn sm" data-go="inbox">Full inbox</button></div>
+   <div class="tw"><table><thead><tr><th>Customer</th><th>Last message</th><th>Owner</th><th>Reply window</th><th>Label</th></tr></thead><tbody>
+   ${D.convs.map(function(v){var c=D.contacts[v.c];return '<tr><td style="white-space:nowrap"><div class="emp">'+av(c)+'<span><b>'+c.n+'</b></span></div></td><td style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+v.pv+'</td><td>'+who(c)+'</td><td>'+SR.winChip(v)+'</td><td>'+(c.labels[0]?chips([c.labels[0]]):'—')+'</td></tr>';}).join('')}
+   </tbody></table></div></div>
+ </div>
+ <div>
+  <div class="card"><div class="card-h"><h2>Team right now</h2><span class="sp"></span><button class="btn sm" data-go="status">Live status</button></div>
+   ${D.staff.map(function(s){return '<div class="list-row"><i class="av st '+s.st+'">'+s.i+'</i><div class="bd"><b>'+s.n+'</b><span>'+SR.both(s)+'</span><span>'+s.open+' open chats · avg reply '+s.rep+'</span></div></div>';}).join('')}
+  </div>
+  <div class="card"><div class="card-h"><h2>Business number</h2><span class="chip ok">Connected</span></div><div class="card-b">
+   <div class="ln"><span>Number</span><b>+94 77 123 4567</b></div>
+   <div class="ln"><span>Quality rating</span><b style="color:var(--ok)">High</b></div>
+   <div class="ln"><span>Messaging limit</span><b>1,000 customers / day</b></div>
+   <div class="ln"><span>Calling</span><b>On · 9:00–18:00 Mon–Sat</b></div>
+   <div class="ln"><span>Reply window open</span><b>4 chats</b></div>
+   <button class="btn" style="width:100%;justify-content:center;margin-top:12px" data-go="number">Number & quality</button>
+  </div></div>
+  <div class="card"><div class="card-h"><h2>Meta cost this month</h2></div><div class="card-b">
+   <div class="ln"><span>Marketing templates</span><b>Rs 2,450</b></div>
+   <div class="ln"><span>Utility templates</span><b>Rs 860</b></div>
+   <div class="ln"><span>Authentication</span><b>Rs 120</b></div>
+   <div class="ln"><span>Replies inside 24h window</span><b style="color:var(--ok)">Free</b></div>
+   <div class="tot"><span>Month to date</span><span>Rs 3,430</span></div>
+  </div></div>
+ </div>
+</div>`;};
+
+/* ── INBOX (interactive) ── */
+SC.inbox=function(){
+ var mine=window.ROLE==='staff';
+ return head(mine?'My chats & calls':'Chat & Call',
+  mine?'Only customers assigned to you. Notes stay inside the team.':'One WhatsApp number, the whole team. Replies are free for 24 hours after the customer writes; after that only approved templates go.',
+  '<button class="btn" data-go="templates">Templates</button><button class="btn pri" data-toast="New chat: pick a customer and an approved template.">New chat</button>')+
+`<div class="ring" id="ring"><i class="av a7 md">PN</i><div class="bd"><small>INCOMING WHATSAPP CALL · ${SR.ivrPick()?'IVR '+SR.ivrPick().k+' · '+SR.ivrPick().t.toUpperCase():'RINGING SALES QUEUE'}</small><b>Priya Nadarajah</b><span>Nimal’s customer · last chat: sliding wardrobe colours · +94 77 665 0012</span></div><button class="btn gh" data-w="ringfwd">⇄ Forward</button><button class="btn gh" data-w="ringmsg">✉ Message</button><button class="btn no" data-w="ringno">Decline</button><button class="btn yes" data-w="ringans">Answer</button></div>
+<div class="ib">
+ <section class="ib-l">
+  <div class="hd">
+   <div class="seg" id="ibTab"><button aria-pressed="true" data-t="chats">Chats 3</button><button aria-pressed="false" data-t="calls">Calls 2</button></div>
+   <input class="f-in" id="ibQ" placeholder="Search name or number" aria-label="Search">
+   <div class="seg" id="ibF" style="flex-wrap:wrap"></div>${SR.legend}
+  </div>
+  <div class="items" id="ibList"></div>
+ </section>
+ <section class="ib-t" id="ibThread"></section>
+ <aside class="ib-c" id="ibCust"></aside>
+</div>`;};
+
+window.AFTER.inbox=function(){
+ var mine=window.ROLE==='staff';
+ var st={tab:'chats',f:'all',q:'',sel:null,note:false,pend:[]};
+ var convs=D.convs.filter(function(v){return !mine||D.contacts[v.c].to==='s1';});
+ st.sel=convs[0].id;
+ var L=document.getElementById('ibList'),T=document.getElementById('ibThread'),C=document.getElementById('ibCust'),F=document.getElementById('ibF');
+ function filters(){
+  var o=st.tab==='chats'?[['unread','Unread'],['all','All'],['exp','Expiring'],['labeled','Labeled']].concat(mine?[]:[['none','No owner']]):[['missed','Missed'],['rejected','Rejected'],['all','All']];
+  F.innerHTML=o.map(function(x){return '<button aria-pressed="'+(st.f===x[0])+'" data-f="'+x[0]+'">'+x[1]+'</button>';}).join('');
+ }
+ function list(){
+  var q=st.q.toLowerCase();
+  if(st.tab==='chats'){
+   L.innerHTML=convs.filter(function(v){var c=D.contacts[v.c];
+     if(q&&c.n.toLowerCase().indexOf(q)<0&&c.ph.indexOf(q)<0)return false;
+     if(st.f==='unread')return v.un>0; if(st.f==='labeled')return c.labels.length>0; if(st.f==='exp')return SR.winCls(v)==='r'; if(st.f==='none')return !c.to; return true;})
+   .map(function(v){var c=D.contacts[v.c],s=D.staffById(c.to);
+     return '<button class="cv w'+SR.winCls(v)+(v.un?' un':'')+(v.id===st.sel?' on':'')+'" data-v="'+v.id+'">'+av(c,'md')+'<div class="bd"><div class="l1"><b>'+c.n+'</b><small>'+v.t+'</small></div><span class="pv">'+D.esc(v.pv)+'</span><div class="tags">'+(c.labels[0]?chips([c.labels[0]]):'')+(s?' <span class="chip">'+s.n.split(' ')[0]+'</span>':' <span class="chip b">No owner</span>')+' '+SR.winChip(v)+'</div></div>'+(v.un?'<span class="n">'+v.un+'</span>':'')+'</button>';}).join('')||'<div class="empty"><b>Nothing here</b>Try another filter.</div>';
+  }else{
+   L.innerHTML=D.calls.filter(function(k){if(k.d==='ringing')return false; if(mine&&D.contacts[k.c].to!=='s1')return false; return st.f==='all'||k.d===st.f;})
+   .map(function(k){var c=D.contacts[k.c],bad=k.d==='missed'||k.d==='rejected',ic={missed:'↙',rejected:'⊘',incoming:'↙',outgoing:'↗'}[k.d];
+     var v=convs.filter(function(x){return x.c===k.c;})[0];
+     return '<button class="cv'+(v&&v.id===st.sel?' on':'')+'" '+(v?'data-v="'+v.id+'"':'')+'>'+av(c,'md')+'<div class="bd"><div class="l1"><b'+(k.d==='missed'?' style="color:var(--bad)"':'')+'>'+c.n+'</b><small>'+k.t.replace('Today ','')+'</small></div><span class="pv"><span style="color:'+(bad?'var(--bad)':'var(--ok)')+'">'+ic+'</span> '+k.d.charAt(0).toUpperCase()+k.d.slice(1)+(k.dur?' · '+k.dur:'')+' · '+(k.by||'')+'</span><div class="tags">'+(k.ai?'<span class="chip i">AI summary</span>':'')+(k.rec?' <span class="chip">Recorded</span>':'')+(k.note?' <span class="chip">'+k.note+'</span>':'')+'</div></div></button>';}).join('')||'<div class="empty"><b>No calls</b>Try another filter.</div>';
+  }
+ }
+ function msg(m){
+  if(m[0]==='note')return '<div class="nt"><b>Internal note · '+m[4]+' · customer can’t see</b>'+D.attList(m[7])+D.esc(m[2])+'</div>';
+  if(m[0]==='sys')return '<div class="sys'+(m[1]==='miss'?' b':'')+'">'+m[2]+' · '+m[3]+'</div>';
+  var out=m[0]==='out';
+  return '<div class="bb '+(out?'out':'in')+'">'+(m[1]==='tpl'?'<span class="tp">Template · '+m[4]+'</span>':(out&&m[4]?'<span class="by">'+m[4]+'</span>':''))+D.attList(m[7])+D.esc(m[2])+'<span class="mt">'+m[3]+(out?'<span class="rd">'+(m[5]?'✓✓':'✓')+'</span>':'')+'</span>'+(m[6]?'<div class="bt">'+m[6].map(function(b){return '<span>'+b+'</span>';}).join('')+'</div>':'')+'</div>';
+ }
+ function thread(){
+  var v=convs.filter(function(x){return x.id===st.sel;})[0]; if(!v){T.innerHTML='';C.innerHTML='';return;}
+  var c=D.contacts[v.c],open=SR.isOpen(v);
+  T.innerHTML='<div class="hd">'+av(c,'md')+'<div class="bd"><b>'+c.n+'</b><span class="win" style="color:var(--ink-2)">Reply window '+SR.winChip(v)+(open?' free replies':' approved templates only')+'</span></div><button class="btn sm" id="thCall">☏ Call</button><button class="btn sm" data-toast="Chat marked resolved.">Resolve</button></div>'+
+   '<div class="msgs" id="msgs"><span class="day">Today</span>'+v.msgs.map(msg).join('')+'</div>'+
+   '<div class="cmp'+(st.note?' nmode':'')+'"><div class="qk">'+D.quick.slice(0,5).map(function(q,i){return '<button class="btn sm" data-qr="'+i+'" title="'+D.esc(q.t)+'">'+q.cmd+(q.att.length?' <span style="opacity:.6">'+(q.att[0].type==='image'?'🖼':q.att[0].type==='voice'?'🎙':'📎')+'</span>':'')+'</button>';}).join('')+'<button class="btn sm" id="thTpl">▤ Template</button><button class="btn sm" data-go="catalog">▣ Catalog</button></div>'+'<div class="pend" id="thPend"'+(st.pend.length?'':' hidden')+'>'+D.attList(st.pend,true)+'</div>'+
+   '<form class="row" id="thForm" style="flex-wrap:nowrap;gap:6px"><input class="f-in" id="thIn" style="flex:1;min-width:0" autocomplete="off" '+(!open&&!st.note?'disabled ':'')+'placeholder="'+(st.note?'Internal note: only your team sees this':(open?'Reply to '+c.n.split(' ')[0]+', or type / for commands':'Window closed: send an approved template'))+'" aria-label="Message"><label class="tbtn" title="Attach image, voice or file" aria-label="Attach" style="cursor:pointer'+(!open&&!st.note?';opacity:.4;pointer-events:none':'')+'">📎<input type="file" id="thFile" multiple accept="image/jpeg,image/png,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" hidden></label><button type="button" class="tbtn" id="thRec" title="Record voice note" aria-label="Record voice note"'+(!open&&!st.note?' disabled':'')+'>🎙</button><button type="button" class="tbtn'+(st.note?' on':'')+'" id="thNote" aria-label="Internal note" title="Internal note">✎</button><button class="btn pri" type="submit" style="flex:none">Send</button></form></div>';
+  var box=document.getElementById('msgs'); box.scrollTop=box.scrollHeight;
+  var s=D.staffById(c.to);
+  var hist=D.calls.filter(function(k){return k.c===v.c&&k.d!=='ringing';});
+  C.innerHTML='<div class="who2">'+av(c,'lg')+'<b>'+c.n+'</b><span>'+c.ph+'</span><span>'+c.city+' · customer since '+c.since+'</span></div>'+
+   '<div class="acts4"><button id="cuCall"><span>☏</span>Call</button><button id="cuAssign"><span>⚇</span>Owner</button><button data-toast="Label picker opened."><span>◈</span>Label</button><button class="dg" data-toast="Blocked numbers can’t message or call."><span>⊘</span>Block</button></div>'+
+   '<h3>Customer owner</h3><select class="f-in" id="cuTo"><option value="">'+(mine?'Release to the team':'Unassigned')+'</option>'+D.staff.map(function(x){return '<option value="'+x.id+'"'+(x.id===c.to?' selected':'')+'>'+x.n+' · '+x.stt+'</option>';}).join('')+'</select><p class="hint" style="margin-top:5px">The owner gets every chat and call from '+c.ph+'.</p>'+
+   '<h3>Owner history</h3>'+SR.ownerHist(c)+
+   '<h3>Labels</h3><div class="tags">'+(chips(c.labels)||'<span class="hint">No labels</span>')+' <button class="chip" data-toast="Label added.">+ Add</button></div>'+
+   '<h3>Chat history</h3><div class="ln"><span>Quotation Q-1042</span><b class="chip ok">Open</b></div><div class="ln"><span>Vanity install · 12 Aug</span><b class="chip">Resolved</b></div><div class="ln"><span>Price list · 03 Mar</span><b class="chip">Resolved</b></div>'+
+   '<h3>Call history '+(c.perm?'<span class="chip i" style="text-transform:none;letter-spacing:0">Call permission ✓</span>':'')+'</h3>'+(hist.map(function(k){return '<div class="ln"><span>'+k.d.charAt(0).toUpperCase()+k.d.slice(1)+(k.dur?' '+k.dur:'')+'</span><b style="font-weight:500;font-size:12px">'+k.t+'</b></div>';}).join('')||'<p class="hint">No calls yet</p>');
+ }
+ function render(){filters();list();thread();}
+ render();
+ document.getElementById('ibTab').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;st.tab=b.getAttribute('data-t');st.f='all';filters();list();});
+ F.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;st.f=b.getAttribute('data-f');filters();list();});
+ document.getElementById('ibQ').addEventListener('input',function(e){st.q=e.target.value;list();});
+ L.addEventListener('click',function(e){var b=e.target.closest('[data-v]');if(!b)return;st.sel=b.getAttribute('data-v');convs.forEach(function(v){if(v.id===st.sel)v.un=0;});list();thread();});
+ T.addEventListener('click',function(e){
+  var qr=e.target.closest('[data-qr]');
+  if(qr){useQuick(D.quick[+qr.getAttribute('data-qr')]);return;}
+  var rm=e.target.closest('[data-rm]');
+  if(rm&&e.target.closest('#thPend')){st.pend.splice(+rm.getAttribute('data-rm'),1);pend();return;}
+  if(e.target.closest('#thRec')){var b=e.target.closest('#thRec');D.toggleRecord(b,function(a){st.pend.push(a);pend();});return;}
+  if(e.target.closest('#thNote')){st.note=!st.note;thread();document.getElementById('thIn').focus();return;}
+  if(e.target.closest('#thCall')){callSheet(D.convs.filter(function(x){return x.id===st.sel;})[0].c);return;}
+  if(e.target.closest('#thTpl')){tplSheet();}
+ });
+ function pend(){var p=document.getElementById('thPend');if(!p)return;p.innerHTML=D.attList(st.pend,true);p.hidden=!st.pend.length;}
+ function useQuick(q){
+  var i=document.getElementById('thIn');
+  if(i.disabled){__toast('Reply window closed. Send an approved template instead.');return;}
+  if(q.x)i.value=q.x;
+  st.pend=q.att.map(function(a){return Object.assign({},a);});pend();i.focus();
+  __toast(q.cmd+' ready'+(q.att.length?' with '+q.att.length+' attachment'+(q.att.length>1?'s':''):'')+'. Edit if needed, then Send.');
+ }
+ T.addEventListener('change',function(e){
+  if(e.target.id!=='thFile')return;
+  st.pend=st.pend.concat(D.readFiles(e.target.files));e.target.value='';pend();
+ });
+ T.addEventListener('input',function(e){
+  if(e.target.id!=='thIn')return;var v=e.target.value.trim();
+  var q=D.quick.filter(function(x){return x.cmd===v;})[0];
+  if(q)useQuick(q);
+ });
+ T.addEventListener('submit',function(e){
+  e.preventDefault();var i=document.getElementById('thIn'),t=i.value.trim();
+  if(!t&&!st.pend.length)return;
+  var v=convs.filter(function(x){return x.id===st.sel;})[0],d=new Date(),tm=d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+  var atts=st.pend.slice();st.pend=[];
+  v.msgs.push(st.note?['note','note',t,tm,'You',null,null,atts]:['out','text',t,tm,'You',0,null,atts]);
+  if(!st.note){v.pv=t||(atts[0]?({image:'🖼 Photo',voice:'🎙 Voice message',file:'📎 '+atts[0].name})[atts[0].type]:'');v.t=tm;}
+  thread();list();
+  __toast(st.note?'Note saved. The customer can’t see it.':(atts.length?'Sent on WhatsApp: '+atts.length+' attachment'+(atts.length>1?'s':'')+(t?' + text':'')+'.':'Sent on WhatsApp.'));
+ });
+ C.addEventListener('change',function(e){if(e.target.id!=='cuTo')return;var v=convs.filter(function(x){return x.id===st.sel;})[0],c=D.contacts[v.c];SR.setOwner(v.c,e.target.value||null);var s=D.staffById(c.to);list();thread();__toast(s?c.n+' assigned to '+s.n+'. They get a push notification.':c.n+' unassigned. Chats and calls go to the Sales queue.');});
+ C.addEventListener('click',function(e){
+  if(e.target.closest('#cuCall')){callSheet(D.convs.filter(function(x){return x.id===st.sel;})[0].c);}
+  if(e.target.closest('#cuAssign')){document.getElementById('cuTo').focus();}
+ });
+ function tplSheet(){
+  var ok=D.tpls.filter(function(t){return t.st==='ok';});
+  __sheet('<h2>Send an approved template</h2><p class="sub">Templates can go any time, even after the 24-hour window closes. Meta charges per template delivered.</p>'+
+   ok.map(function(t){return '<div class="list-row" style="padding-left:0;padding-right:0"><div class="bd"><b>'+t.n+'</b><span>'+t.cat+' · '+t.lang+'</span><div class="tpv" style="margin-top:6px"><div class="bb out">'+D.esc(t.body)+'</div></div></div><div class="rt"><button class="btn sm pri" data-send="'+t.n+'">Send</button></div></div>';}).join(''));
+  document.getElementById('sheetBody').onclick=(function(e){
+   var b=e.target.closest('[data-send]');if(!b)return;var t=D.tpls.filter(function(x){return x.n===b.getAttribute('data-send');})[0];
+   var v=convs.filter(function(x){return x.id===st.sel;})[0],d=new Date(),tm=d.getHours()+':'+String(d.getMinutes()).padStart(2,'0');
+   v.msgs.push(['out','tpl',t.body,tm,t.n,0,t.btn]);__close();thread();__toast('Template “'+t.n+'” sent.');
+  });
+ }
+};
+
+function callSheet(cid){return window.__call2(cid);}
+function callSheetOld(cid){
+ var c=D.contacts[cid],sec=0;
+ __sheet('<div class="callv"><span style="font-size:12px;color:#C9D3F0">🔒 WhatsApp voice call · business line</span>'+av(c,'lg')+'<h2>'+c.n+'</h2><span class="tm" id="ctm">00:00</span><span class="rec">● Recording · customer notified</span>'+
+  '<div class="tr"><h4>✦ LIVE TRANSCRIPT</h4><p><b>'+c.n.split(' ')[0]+'</b>Pantry eke doors walata soft-close hinges danna puluwanda?</p><p><b>You</b>Ow puluwan. Saturday measurement ekata awama samples pennannam.</p><div class="sg"><b style="font-size:10.5px;color:#7FD1F5;display:block">Suggested follow-up</b>Send a revised quote with soft-close hinges</div></div>'+
+  '<div class="cbtns"><button data-tg aria-label="Speaker">🔊</button><button data-tg aria-label="Mute">🎙</button><button data-toast="Keypad opened." aria-label="Keypad">⌗</button><button data-toast="Transfer: pick a teammate." aria-label="Transfer">⇄</button></div><button class="endc" id="endc" aria-label="End call">✕</button></div>');
+ var el=document.getElementById('ctm');
+ var iv=setInterval(function(){sec++;if(el)el.textContent=String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');},1000);
+ window.__onClose=function(){clearInterval(iv);};
+ document.getElementById('sheetBody').onclick=(function(e){
+  var t=e.target.closest('[data-tg]');if(t)t.classList.toggle('on');
+  if(e.target.closest('#endc')){__close();__toast('Call ended · '+el.textContent+' · recording and transcript saved to '+c.n.split(' ')[0]+'’s chat.');}
+ });
+}
+
+
+/* ── CALL LOG ── */
+SC.calls=function(){
+ var mine=window.ROLE==='staff';
+ var rows=D.calls.filter(function(k){return k.d!=='ringing'&&(!mine||D.contacts[k.c].to==='s1');});
+ return head('Call log','Every WhatsApp call on the business number, with who took it. Missed calls get an automatic WhatsApp reply.',
+  '<button class="btn" data-go="callset">Call settings</button><button class="btn pri" data-toast="Call-back list sent to available staff.">Call back missed</button>')+
+`<div class="stats">
+  <div class="stat ok"><span>Answered</span><b>46</b><small>Avg 3m 12s · 31 recorded</small></div>
+  <div class="stat b"><span>Missed</span><b>4</b><small>2 not returned yet</small></div>
+  <div class="stat w"><span>Rejected</span><b>2</b><small>Staff busy on another call</small></div>
+  <div class="stat i"><span>Call permission</span><b>38</b><small>Customers who allow business calls</small></div>
+</div>
+<div class="card"><div class="card-h">
+  <div class="seg" data-filter="callT"><button aria-pressed="false" data-v="missed">Missed</button><button aria-pressed="false" data-v="rejected">Rejected</button><button aria-pressed="true" data-v="all">All</button></div>
+  <span class="sp"></span><button class="btn sm" data-toast="Call log exported.">Export</button></div>
+ <div class="tw"><table id="callT"><thead><tr><th>Customer</th><th>Type</th><th>When</th><th>Duration</th><th>Handled by</th><th>Notes</th><th class="r"></th></tr></thead><tbody>
+ ${rows.map(function(k){var c=D.contacts[k.c],m={missed:['b','↙ Missed'],rejected:['w','⊘ Rejected'],incoming:['ok','↙ Incoming'],outgoing:['i','↗ Outgoing']}[k.d];
+  return '<tr data-k="'+k.d+'"><td><div class="emp">'+av(c)+'<span><b>'+c.n+'</b><span>'+c.ph+'</span></span></div></td><td><span class="chip '+m[0]+'">'+m[1]+'</span></td><td>'+k.t+'</td><td>'+(k.dur||'—')+'</td><td>'+(k.by||'—')+'</td><td>'+(k.ai?'<span class="chip i">AI summary</span> ':'')+(k.note||'')+'</td><td class="r">'+(k.rec?'<button class="btn sm" data-toast="Playing recording…">▶ Play</button>':'<button class="btn sm pri" data-callc="'+k.c+'">☏ Call back</button>')+'</td></tr>';}).join('')}
+ </tbody></table></div></div>
+ <div class="note i"><span class="ic">◈</span><div><b>Calling needs the customer’s permission</b>A business can only call a customer who has allowed it, through the call_permission template or by calling the business first. Recording always plays an announcement.</div></div>`;};
+window.AFTER.calls=function(){document.getElementById('page').onclick=function(e){var b=e.target.closest('[data-callc]');if(b)callSheet(b.getAttribute('data-callc'));};};
+
+/* ── CUSTOMERS ── */
+SC.contacts=function(){return head('Customers','Everyone who has messaged or called the business number.',
+  '<button class="btn" data-toast="Import: CSV with name and number.">Import CSV</button><button class="btn pri" data-toast="New customer form opened.">Add customer</button>')+
+`<div class="card"><div class="card-h"><input class="f-in" style="max-width:250px" placeholder="Name or number" aria-label="Search">
+ <div class="seg" data-filter="cuT"><button aria-pressed="true" data-v="all">All 7</button><button aria-pressed="false" data-v="lead">Leads</button><button aria-pressed="false" data-v="cust">Customers</button><button aria-pressed="false" data-v="perm">Call permission</button></div><span class="sp"></span><button class="btn sm" data-toast="7 rows exported.">Export</button></div>
+ <div class="tw"><table id="cuT"><thead><tr><th>Customer</th><th>City</th><th>Labels</th><th>Assigned</th><th>Since</th><th>Calls</th></tr></thead><tbody>
+ ${Object.keys(D.contacts).map(function(id){var c=D.contacts[id],lead=c.labels.some(function(l){return /lead|Quotation|Wardrobe/.test(l[0]);});
+  return '<tr data-k="'+(lead?'lead':'cust')+(c.perm?' perm':'')+'"><td><div class="emp">'+av(c)+'<span><b>'+c.n+'</b><span>'+c.ph+'</span></span></div></td><td>'+c.city+'</td><td>'+(chips(c.labels)||'—')+'</td><td>'+who(c)+'</td><td>'+c.since+'</td><td>'+(c.perm?'<span class="chip ok">Allowed</span>':'<span class="chip">Not yet</span>')+'</td></tr>';}).join('')}
+ </tbody></table></div></div>`;};
+
+/* ── LABELS ── */
+SC.labels=function(){return head('Labels','Labels sort chats in the inbox and pick audiences for broadcasts.',
+  '<button class="btn pri" data-toast="New label created.">New label</button>')+
+`<div class="card"><div class="tw"><table><thead><tr><th>Label</th><th>Meaning</th><th class="r">Chats</th><th>Auto-apply rule</th><th class="r"></th></tr></thead><tbody>
+ <tr><td><span class="chip i">Quotation</span></td><td>Customer asked for a price</td><td class="r">9</td><td>When a quotation_ready template is sent</td><td class="r"><button class="btn sm" data-toast="Label editor opened.">Edit</button></td></tr>
+ <tr><td><span class="chip w">Site visit</span></td><td>Measurement visit booked</td><td class="r">4</td><td>When /measure is used</td><td class="r"><button class="btn sm" data-toast="Label editor opened.">Edit</button></td></tr>
+ <tr><td><span class="chip ok">Advance paid</span></td><td>50% advance received</td><td class="r">6</td><td>Manual</td><td class="r"><button class="btn sm" data-toast="Label editor opened.">Edit</button></td></tr>
+ <tr><td><span class="chip i">Installation</span></td><td>Installation date fixed</td><td class="r">3</td><td>When installation_reminder is sent</td><td class="r"><button class="btn sm" data-toast="Label editor opened.">Edit</button></td></tr>
+ <tr><td><span class="chip b">Hot lead</span></td><td>Likely to order this week</td><td class="r">2</td><td>Manual</td><td class="r"><button class="btn sm" data-toast="Label editor opened.">Edit</button></td></tr>
+ <tr><td><span class="chip">Wardrobe</span></td><td>Asked about wardrobes</td><td class="r">5</td><td>Message contains “wardrobe”</td><td class="r"><button class="btn sm" data-toast="Label editor opened.">Edit</button></td></tr>
+</tbody></table></div></div>`;};
+
+/* ── STAFF ── */
+SC.staff=function(){return head('Staff manage','Who answers chats and calls on +94 77 123 4567. Each person logs in to the app with their own account.',
+  '<button class="btn pri" data-toast="Invite sent by SMS and email.">Add staff</button>')+
+`<div class="card"><div class="tw"><table><thead><tr><th>Member</th><th>Role</th><th>Status</th><th class="r">Open chats</th><th class="r">Avg reply</th><th class="r">Calls today</th><th>Can</th><th class="r"></th></tr></thead><tbody>
+ <tr><td><div class="emp"><i class="av">MP</i><span><b>Madushan P.</b><span>Owner · 077 123 4567</span></span></div></td><td><span class="chip i">Manager</span></td><td><span class="chip ok">Available</span></td><td class="r">0</td><td class="r">—</td><td class="r">0</td><td>Everything</td><td class="r"><button class="btn sm" data-toast="Profile opened.">Edit</button></td></tr>
+ ${D.staff.map(function(s){return '<tr><td><div class="emp"><i class="av st '+s.st+'">'+s.i+'</i><span><b>'+s.n+'</b><span>Staff · Sales</span></span></div></td><td><span class="chip">Staff</span></td><td>'+SR.both(s)+'</td><td class="r">'+s.open+'</td><td class="r">'+s.rep+'</td><td class="r">'+s.calls+'</td><td>Own chats · calls · templates</td><td class="r"><button class="btn sm" data-toast="Profile opened.">Edit</button></td></tr>';}).join('')}
+</tbody></table></div></div>
+<div class="grid g2">
+ <div class="card"><div class="card-h"><h2>What staff can do</h2></div><div class="card-b">
+  <label class="tgl"><input type="checkbox" checked><span>Reply and call customers assigned to them</span></label>
+  <label class="tgl"><input type="checkbox" checked><span>Send approved templates</span></label>
+  <label class="tgl"><input type="checkbox"><span>See chats assigned to others</span><small>Off</small></label>
+  <label class="tgl"><input type="checkbox"><span>Create or edit templates</span><small>Manager only</small></label>
+  <label class="tgl"><input type="checkbox" checked><span>Export their own performance</span></label>
+ </div></div>
+ <div class="card"><div class="card-h"><h2>Seats</h2><span class="chip">Growth plan</span></div><div class="card-b">
+  <div class="ln"><span>Used</span><b>4 of 5</b></div>
+  <div class="meter" style="margin:6px 0 10px"><i style="width:80%"></i></div>
+  <div class="ln"><span>Mobile app</span><b>Android + iOS</b></div>
+  <div class="ln"><span>Web dashboard</span><b>Included</b></div>
+ </div></div>
+</div>`;};
+
+/* ── ASSIGNMENT RULES ── */
+SC.routing=function(){return head('Assignment rules','How new chats and calls find a person.',
+  '<button class="btn pri" data-toast="Rules saved.">Save rules</button>')+
+`<div class="grid g2">
+ <div class="card"><div class="card-h"><h2>New chats</h2></div><div class="card-b">
+  <label class="tgl"><input type="checkbox" checked><span>Auto-assign round-robin to available staff</span></label>
+  <label class="tgl"><input type="checkbox" checked><span>Returning customer goes to their last staff member</span></label>
+  <label class="tgl"><input type="checkbox"><span>Skip staff with more than 8 open chats</span></label>
+  <label class="f">Unassigned alert after</label><select class="f-in"><option>10 minutes</option><option>5 minutes</option><option>15 minutes</option></select>
+ </div></div>
+ <div class="card"><div class="card-h"><h2>Incoming calls</h2></div><div class="card-b">
+  <label class="tgl"><input type="checkbox" checked><span>Ring free staff first; skip anyone on a call</span></label>
+  <label class="tgl"><input type="checkbox" checked><span>Ring the assigned staff member first for known customers</span></label>
+  <label class="tgl"><input type="checkbox" checked><span>Missed call: send the missed_call_si template</span></label>
+  <label class="f">Ring for</label><select class="f-in"><option>30 seconds, then next person</option><option>20 seconds</option></select>
+ </div></div>
+</div>
+<div class="card"><div class="card-h"><h2>Keyword rules</h2><span class="sp"></span><button class="btn sm" data-toast="New keyword rule.">Add rule</button></div>
+ <div class="tw"><table><thead><tr><th>If message contains</th><th>Then</th><th class="r">Matched this month</th></tr></thead><tbody>
+ <tr><td><code class="cmd">wardrobe</code> <code class="cmd">almirah</code></td><td>Label <span class="chip">Wardrobe</span> · assign Nimal</td><td class="r">14</td></tr>
+ <tr><td><code class="cmd">vanity</code> <code class="cmd">bathroom</code></td><td>Label <span class="chip">Bathroom</span> · assign Sachini</td><td class="r">9</td></tr>
+ <tr><td><code class="cmd">price</code> <code class="cmd">මිල</code></td><td>Reply with /price-list</td><td class="r">37</td></tr>
+ </tbody></table></div></div>`;};
+
+/* ── PROGRESS ── */
+SC.progress=function(){return head('Progress','Each person against their weekly target of resolved chats.',
+  '<div class="seg"><button aria-pressed="false">Today</button><button aria-pressed="true">This week</button><button aria-pressed="false">Month</button></div>')+
+`<div class="card"><div class="tw"><table><thead><tr><th>Member</th><th>Target progress</th><th class="r">Resolved</th><th class="r">Avg first reply</th><th class="r">Calls answered</th><th class="r">Missed</th></tr></thead><tbody>
+ ${D.staff.map(function(s){return '<tr><td><div class="emp"><i class="av">'+s.i+'</i><span><b>'+s.n+'</b><span>'+s.stt+'</span></span></div></td><td style="min-width:200px"><div class="meter"><i style="width:'+s.done+'%"></i></div><span class="hint">'+s.done+' of 100</span></td><td class="r">'+s.res+'</td><td class="r">'+s.rep+'</td><td class="r">'+s.calls+'</td><td class="r">'+s.miss+'</td></tr>';}).join('')}
+</tbody></table></div></div>
+<div class="note w"><span class="ic">⚠</span><div><b>Ruwan’s first reply is 5m 20s</b>Above the 5-minute target on 3 of 5 days. Most slow replies were after 17:00.</div></div>`;};
+
+/* ── TEMPLATES ── */
+SC.templates=function(){
+ var ro=window.ROLE==='staff';
+ return head('Message templates','Needed to message a customer after the 24-hour window closes. Meta reviews each template, usually within minutes.',
+  ro?'':'<button class="btn pri" id="tNew">New template</button>')+
+`<div class="card"><div class="card-h"><div class="seg" data-filter="tT"><button aria-pressed="true" data-v="all">All ${D.tpls.length}</button><button aria-pressed="false" data-v="ok">Approved</button><button aria-pressed="false" data-v="w">In review</button><button aria-pressed="false" data-v="b">Rejected</button></div></div>
+ <div class="tw"><table id="tT"><thead><tr><th>Name</th><th>Category</th><th>Language</th><th>Body</th><th>Status</th><th>Quality</th><th class="r">Sent</th><th class="r"></th></tr></thead><tbody>
+ ${D.tpls.map(function(t){return '<tr data-k="'+t.st+'"><td><b>'+t.n+'</b></td><td>'+t.cat+'</td><td>'+t.lang+'</td><td style="max-width:320px;font-size:12.5px;color:var(--ink-2)">'+D.esc(t.body)+(t.why?'<div style="color:var(--bad);margin-top:3px">Meta: '+t.why+'</div>':'')+'</td><td><span class="chip '+t.st+'">'+t.stt+'</span></td><td>'+t.q+'</td><td class="r">'+t.used+'</td><td class="r">'+(ro?'':(t.st==='b'?'<button class="btn sm pri" data-toast="Resubmitted to Meta for review.">Fix & resubmit</button>':'<button class="btn sm" data-toast="Template editor opened.">Edit</button>'))+'</td></tr>';}).join('')}
+ </tbody></table></div></div>
+ <div class="note i"><span class="ic">◈</span><div><b>Categories decide the price</b>Utility (order updates, reminders) costs less than Marketing (offers). Authentication is for login codes. Replies inside the 24-hour window are free.</div></div>`;};
+window.AFTER.templates=function(){var b=document.getElementById('tNew');if(!b)return;b.addEventListener('click',function(){
+ __sheet('<h2>New template</h2><p class="sub">Goes to Meta for review before it can be sent.</p><label class="f">Name</label><input class="f-in" value="site_visit_confirm"><div class="f-row f2"><div><label class="f">Category</label><select class="f-in"><option>Utility</option><option>Marketing</option><option>Authentication</option></select></div><div><label class="f">Language</label><select class="f-in"><option>English</option><option>Sinhala</option><option>Tamil</option></select></div></div><label class="f">Body</label><textarea class="f-in" rows="4">Hi {{1}}, our team will visit {{2}} on {{3}} to take measurements.</textarea><p class="hint">{{1}}, {{2}} … are filled in when you send.</p><label class="f">Buttons</label><input class="f-in" value="Confirm, Change time"><label class="f">Preview</label><div class="tpv"><div class="bb out">Hi Kasun, our team will visit Kandy on Saturday 10am to take measurements.<div class="bt"><span>Confirm</span><span>Change time</span></div></div></div><button class="btn pri" style="width:100%;justify-content:center;margin-top:14px" data-toast="Submitted to Meta for review.">Submit for review</button>');
+});};
+
+/* ── CATALOG ── */
+SC.catalog=function(){return head('Catalog & pricing','Products customers can browse and order inside WhatsApp. Synced with Meta Commerce 2 minutes ago.',
+  '<button class="btn" data-toast="Catalog link copied: wa.me/c/94771234567">Share catalog link</button><button class="btn pri" data-toast="New product form opened.">Add product</button>')+
+`<div class="card"><div class="card-h"><div class="seg" data-filter="pG"><button aria-pressed="true" data-v="all">All ${D.products.length}</button><button aria-pressed="false" data-v="Kitchen">Kitchen</button><button aria-pressed="false" data-v="Bathroom">Bathroom</button><button aria-pressed="false" data-v="Wardrobes">Wardrobes</button></div><span class="sp"></span><span class="chip ok">Synced</span></div>
+ <div class="card-b"><div class="grid g3" id="pG">
+ ${D.products.map(function(p){return '<div class="prod" data-k="'+p.col+'"><div class="art">'+D.ART(p.k)+'</div><div class="in"><b>'+p.n+'</b><div class="pr">'+p.p+(p.old?'<s>'+p.old+'</s>':'')+'</div><span>'+p.note+'</span><div style="display:flex;justify-content:space-between;align-items:center;margin-top:9px"><span class="chip '+(p.st==='ok'?'ok':'w')+'">'+(p.st==='ok'?'In catalog':'Hidden')+'</span><span class="hint" style="margin:0">'+p.sku+'</span></div></div></div>';}).join('')}
+ </div></div></div>
+ <div class="note i"><span class="ic">◈</span><div><b>Prices shown are demo figures</b>Replace them with Madushan Aluminium’s real price list and product photos before the client demo.</div></div>`;};
+
+/* ── BROADCASTS ── */
+SC.broadcasts=function(){return head('Broadcasts','Send an approved marketing template to a labelled group. Only customers who opted in receive it.',
+  '<button class="btn pri" data-toast="New broadcast: pick a label and an approved template.">New broadcast</button>')+
+`<div class="card"><div class="tw"><table><thead><tr><th>Campaign</th><th>Audience</th><th>Template</th><th class="r">Sent</th><th class="r">Read</th><th class="r">Replied</th><th>Status</th></tr></thead><tbody>
+ <tr><td><b>Avurudu vanity offer</b></td><td><span class="chip">Bathroom</span> 64 people</td><td>avurudu_offer</td><td class="r">—</td><td class="r">—</td><td class="r">—</td><td><span class="chip b">Template rejected</span></td></tr>
+ <tr><td><b>Installation reminders · week 39</b></td><td><span class="chip i">Installation</span> 3 people</td><td>installation_reminder</td><td class="r">3</td><td class="r">3</td><td class="r">2</td><td><span class="chip ok">Done</span></td></tr>
+ <tr><td><b>Quotation follow-up</b></td><td><span class="chip i">Quotation</span> 9 people</td><td>quotation_ready</td><td class="r">9</td><td class="r">7</td><td class="r">4</td><td><span class="chip ok">Done</span></td></tr>
+ </tbody></table></div></div>
+ <div class="note w"><span class="ic">⚠</span><div><b>Keep broadcasts relevant</b>If many people block or report the number, Meta lowers the quality rating and the daily messaging limit.</div></div>`;};
+
+/* ── QUICK REPLIES ── */
+SC.quick=function(){return head('Quick replies & /commands','Saved answers with photos, voice notes and files. Type the /command in a chat, or tap it above the message box.',
+  '<button class="btn pri" id="qAdd">Add quick reply</button>')+
+`<div class="stats">
+ <div class="stat i"><span>Quick replies</span><b>${D.quick.length}</b><small>${D.quick.filter(function(q){return q.att.length;}).length} with attachments</small></div>
+ <div class="stat ok"><span>Used this week</span><b>${D.quick.reduce(function(n,q){return n+q.used;},0)}</b><small>Saves about 2 minutes each</small></div>
+ <div class="stat"><span>Most used</span><b style="font-size:20px">/price-list</b><small>37 times · PDF attached</small></div>
+ <div class="stat"><span>Media limits</span><b style="font-size:20px">5 · 16 · 100 MB</b><small>Images · voice/audio · documents</small></div>
+</div>
+<div class="card"><div class="card-h"><div class="seg" data-filter="qT"><button aria-pressed="true" data-v="all">All</button><button aria-pressed="false" data-v="image">With image</button><button aria-pressed="false" data-v="voice">With voice</button><button aria-pressed="false" data-v="file">With file</button><button aria-pressed="false" data-v="text">Text only</button></div></div>
+ <div class="tw"><table id="qT"><thead><tr><th>Command</th><th>Reply</th><th>Attachments</th><th class="r">Used</th><th>Added by</th><th class="r"></th></tr></thead><tbody>
+ ${D.quick.map(function(q,i){var k=q.att.length?q.att.map(function(a){return a.type;}).join(' '):'text';
+  return '<tr data-k="'+k+'"><td><code class="cmd">'+q.cmd+'</code></td><td style="max-width:380px"><b style="display:block;font-size:13.5px">'+D.esc(q.t)+'</b><span style="font-size:12.5px;color:var(--ink-2)">'+(q.x?D.esc(q.x):'<i>No text · attachment only</i>')+'</span></td><td>'+(q.att.length?D.attList(q.att):'<span class="hint" style="margin:0">—</span>')+'</td><td class="r">'+q.used+'</td><td>'+q.by+'</td><td class="r" style="white-space:nowrap"><button class="btn sm" data-qe="'+i+'">Edit</button> <button class="btn sm dgr" data-qd="'+i+'">Delete</button></td></tr>';}).join('')}
+ </tbody></table></div></div>
+<div class="note i"><span class="ic">◈</span><div><b>How attachments go out on WhatsApp</b>Each photo, voice note or file is sent as its own message. The reply text becomes the caption of the first photo or file. Voice notes go without a caption, so the text follows as a separate message.</div></div>`;};
+window.AFTER.quick=function(){
+ var pg=document.getElementById('page');
+ function form(i){
+  var q=i==null?{cmd:'/',t:'',x:'',att:[]}:D.quick[i],att=q.att.map(function(a){return Object.assign({},a);});
+  __sheet('<h2>'+(i==null?'New quick reply':'Edit '+q.cmd)+'</h2><p class="sub">Staff type the command in a chat, or tap it above the message box.</p>'+
+   '<div class="f-row f2"><div><label class="f" for="qCmd">Command</label><input class="f-in" id="qCmd" value="'+D.esc(q.cmd)+'"></div><div><label class="f" for="qWho">Who can use it</label><select class="f-in" id="qWho"><option>Everyone</option><option>Only me</option><option>Managers</option></select></div></div>'+
+   '<label class="f" for="qT2">Title</label><input class="f-in" id="qT2" value="'+D.esc(q.t)+'" placeholder="e.g. Kitchen price list">'+
+   '<label class="f" for="qX">Message text</label><textarea class="f-in" id="qX" rows="3" placeholder="Optional when you attach something">'+D.esc(q.x)+'</textarea>'+
+   '<label class="f">Attachments</label><div class="attb">'+
+    '<label class="btn sm">🖼 Image<input type="file" id="qImg" accept="image/jpeg,image/png" multiple></label>'+
+    '<label class="btn sm">🎙 Voice file<input type="file" id="qAud" accept="audio/*"></label>'+
+    '<button type="button" class="btn sm" id="qRec">● Record</button>'+
+    '<label class="btn sm">📎 File<input type="file" id="qFile" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" multiple></label></div>'+
+   '<div class="att" id="qAtt" style="min-height:10px;padding-top:6px"></div>'+
+   '<p class="hint">WhatsApp limits: JPG or PNG images up to 5 MB · voice and audio (OGG, MP3, M4A, AAC) up to 16 MB · PDF, Word, Excel and PowerPoint files up to 100 MB.</p>'+
+   '<label class="f">Preview in chat</label><div class="tpv" id="qPrev"></div>'+
+   '<button class="btn pri" id="qSave" style="width:100%;justify-content:center;margin-top:14px">Save quick reply</button>');
+  var box=document.getElementById('sheetBody');
+  function draw(){
+   document.getElementById('qAtt').innerHTML=att.map(function(a,k){return D.att(a,k,true);}).join('')||'<span class="hint" style="margin:0">No attachments yet</span>';
+   var x=document.getElementById('qX').value.trim();
+   document.getElementById('qPrev').innerHTML='<div class="bb out" style="max-width:100%"><span class="by">You</span>'+D.attList(att)+(x?D.esc(x):'')+'<span class="mt">now<span class="rd">✓</span></span></div>';
+  }
+  draw();
+  box.onchange=function(e){
+   var t={qImg:'image',qAud:'voice',qFile:'file'}[e.target.id];if(!t)return;
+   att=att.concat(D.readFiles(e.target.files,t));e.target.value='';draw();
+  };
+  box.oninput=function(e){if(e.target.id==='qX')draw();};
+  box.onclick=function(e){
+   var r=e.target.closest('[data-rm]');if(r){att.splice(+r.getAttribute('data-rm'),1);draw();return;}
+   if(e.target.closest('#qRec')){D.toggleRecord(e.target.closest('#qRec'),function(a){att.push(a);draw();});return;}
+   if(e.target.closest('#qSave')){
+    var cmd=document.getElementById('qCmd').value.trim().replace(/\s+/g,'-');if(cmd.charAt(0)!=='/')cmd='/'+cmd;
+    var x=document.getElementById('qX').value.trim(),t=document.getElementById('qT2').value.trim()||cmd;
+    if(cmd.length<2){__toast('Give the quick reply a command, e.g. /colours');return;}
+    if(!x&&!att.length){__toast('Add some text or at least one attachment.');return;}
+    var dup=D.quick.some(function(o,k){return o.cmd===cmd&&k!==i;});if(dup){__toast(cmd+' already exists.');return;}
+    var rec={cmd:cmd,t:t,x:x,att:att,used:i==null?0:D.quick[i].used,by:window.ROLE==='staff'?'Nimal':'Madushan P.'};
+    if(i==null)D.quick.unshift(rec);else D.quick[i]=rec;
+    __go('quick');__toast(cmd+' saved'+(att.length?' with '+att.length+' attachment'+(att.length>1?'s':''):'')+'.');
+   }
+  };
+ }
+ document.getElementById('qAdd').addEventListener('click',function(){form(null);});
+ pg.onclick=function(e){
+  var ed=e.target.closest('[data-qe]');if(ed){form(+ed.getAttribute('data-qe'));return;}
+  var dl=e.target.closest('[data-qd]');if(dl){var q=D.quick.splice(+dl.getAttribute('data-qd'),1)[0];__go('quick');__toast(q.cmd+' deleted.');}
+ };
+};
+
+/* ── CALL SETTINGS ── */
+SC.callset=function(){return head('Call settings','WhatsApp Calling on the business number.',
+  '<button class="btn pri" data-toast="Call settings saved to Meta.">Save</button>')+
+`<div class="grid g2">
+ <div class="card"><div class="card-h"><h2>Calling</h2><span class="chip ok">On</span></div><div class="card-b">
+  <label class="tgl"><input type="checkbox" checked><span>Show the call button in customer chats</span></label>
+  <label class="tgl"><input type="checkbox" checked><span>Allow business-initiated calls (with permission)</span></label>
+  <label class="tgl"><input type="checkbox" checked><span>Record calls</span><small>Announcement plays first</small></label>
+  <label class="tgl"><input type="checkbox" checked><span>Transcribe and summarise calls</span></label>
+ </div></div>
+ <div class="card"><div class="card-h"><h2>Call hours</h2><span class="chip">Asia/Colombo</span></div><div class="card-b">
+  <div class="ln"><span>Monday – Friday</span><b>09:00 – 18:00</b></div>
+  <div class="ln"><span>Saturday</span><b>09:00 – 18:00</b></div>
+  <div class="ln"><span>Sunday & Poya</span><b>Closed</b></div>
+  <div class="ln"><span>Outside hours</span><b>Missed-call template + callback next morning</b></div>
+ </div></div>
+</div>`;};
+
+/* ── REPORTS ── */
+SC.reports=function(){var d=[45,62,55,80,70,92,35],n=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],mx=92;
+ return head('Reports','This week · Madushan Aluminium',
+  '<div class="seg"><button aria-pressed="false">Today</button><button aria-pressed="true">This week</button><button aria-pressed="false">Month</button></div><button class="btn" data-toast="Report exported as PDF.">Export PDF</button>')+
+`<div class="stats">
+ <div class="stat i"><span>Conversations</span><b>184</b><small>+12% on last week</small></div>
+ <div class="stat ok"><span>Resolved</span><b>162</b><small>88% of conversations</small></div>
+ <div class="stat w"><span>Avg first reply</span><b>3m 40s</b><small>Target 5 min</small></div>
+ <div class="stat"><span>Quotations sent</span><b>21</b><small>9 converted to advance paid</small></div>
+</div>
+<div class="grid gmain">
+ <div class="card"><div class="card-h"><h2>Chats per day</h2></div><div class="card-b"><div class="bars">
+ ${d.map(function(v,i){return '<div class="'+(v===mx?'hi':'')+'">'+v+'<i style="height:'+Math.round(v/mx*100)+'%"></i>'+n[i]+'</div>';}).join('')}
+ </div></div></div>
+ <div>
+  <div class="card"><div class="card-h"><h2>Calls</h2></div><div class="card-b">
+   <div class="split"><i style="flex:46;background:var(--blue)"></i><i style="flex:4;background:var(--bad)"></i><i style="flex:2;background:var(--warn)"></i></div>
+   <div class="ln"><span>Answered</span><b>46 · 88%</b></div><div class="ln"><span>Missed</span><b>4</b></div><div class="ln"><span>Rejected</span><b>2</b></div>
+  </div></div>
+  <div class="card"><div class="card-h"><h2>Top enquiries</h2></div><div class="card-b">
+   <div class="ln"><span>Kitchen cabinets</span><b>41%</b></div><div class="ln"><span>Wardrobes</span><b>33%</b></div><div class="ln"><span>Bathroom vanities</span><b>19%</b></div><div class="ln"><span>Other</span><b>7%</b></div>
+  </div></div>
+ </div>
+</div>`;};
+
+/* ── BILLING ── */
+SC.billing=function(){return head('Meta usage & billing','Meta charges per delivered template. Replies inside the 24-hour window are free.',
+  '<button class="btn" data-toast="Invoice downloaded.">Download invoice</button>')+
+`<div class="stats">
+ <div class="stat"><span>Month to date</span><b>Rs 3,430</b><small>Meta messaging</small></div>
+ <div class="stat ok"><span>Free replies</span><b>1,284</b><small>Inside the 24h window</small></div>
+ <div class="stat i"><span>Templates delivered</span><b>118</b><small>Utility 96 · Marketing 18 · Auth 4</small></div>
+ <div class="stat"><span>Smart Reply plan</span><b>Growth</b><small>5 seats · renews 1 Oct</small></div>
+</div>
+<div class="card"><div class="tw"><table><thead><tr><th>Category</th><th class="r">Delivered</th><th class="r">Cost</th><th>Used for</th></tr></thead><tbody>
+ <tr><td><span class="chip">Marketing</span></td><td class="r">18</td><td class="r">Rs 2,450</td><td>Offers, broadcasts</td></tr>
+ <tr><td><span class="chip i">Utility</span></td><td class="r">96</td><td class="r">Rs 860</td><td>Quotations, reminders, missed calls</td></tr>
+ <tr><td><span class="chip">Authentication</span></td><td class="r">4</td><td class="r">Rs 120</td><td>Login codes</td></tr>
+ <tr><td><span class="chip ok">Service</span></td><td class="r">1,284</td><td class="r">Free</td><td>Replies inside the window</td></tr>
+</tbody></table></div></div>
+<p class="hint">Rates are demo figures. Meta publishes per-country prices; Sri Lanka numbers are billed at the Rest of Asia Pacific rate.</p>`;};
+
+/* ── BUSINESS PROFILE ── */
+SC.business=function(){return head('Business profile','What customers see when they open the chat.',
+  '<button class="btn pri" data-toast="Profile updated on WhatsApp.">Save</button>')+
+`<div class="grid g2">
+ <div class="card"><div class="card-h"><h2>Profile</h2></div><div class="card-b">
+  <label class="f">Display name</label><input class="f-in" value="Madushan Aluminium">
+  <label class="f">About</label><input class="f-in" value="Kitchen cabinets · vanities · wardrobes">
+  <label class="f">Address</label><input class="f-in" value="No. 45, Kandy Road, Kadawatha">
+  <label class="f">Website</label><input class="f-in" value="madushanaluminium.lk">
+  <label class="f">Email</label><input class="f-in" value="info@madushanaluminium.lk">
+ </div></div>
+ <div class="card"><div class="card-h"><h2>Greeting & away</h2></div><div class="card-b">
+  <label class="tgl"><input type="checkbox" checked><span>Greeting for first-time customers</span></label>
+  <textarea class="f-in" style="margin:6px 0 10px">ආයුබෝවන්! Madushan Aluminium. Kitchen, bathroom, wardrobe ගැන අහන්න.</textarea>
+  <label class="tgl"><input type="checkbox" checked><span>Away message outside call hours</span></label>
+  <textarea class="f-in" style="margin-top:6px">We’re closed now. We’ll reply from 9am tomorrow.</textarea>
+ </div></div>
+</div>`;};
+
+/* ── NUMBER & QUALITY ── */
+SC.number=function(){return head('Number & quality','Health of the WhatsApp Business number, as Meta reports it.','')+
+`<div class="stats">
+ <div class="stat ok"><span>Quality rating</span><b>High</b><small>No blocks in 7 days</small></div>
+ <div class="stat i"><span>Messaging limit</span><b>1K</b><small>Customers per 24h · next tier 10K</small></div>
+ <div class="stat"><span>Name status</span><b>Approved</b><small>Madushan Aluminium</small></div>
+ <div class="stat"><span>Business username</span><b>@madushanalu</b><small>Reserved</small></div>
+</div>
+<div class="card"><div class="card-h"><h2>Connection</h2><span class="chip ok">Cloud API</span></div><div class="card-b">
+ <div class="ln"><span>Phone number</span><b>+94 77 123 4567</b></div>
+ <div class="ln"><span>Phone number ID</span><b>1098 •••• 4412</b></div>
+ <div class="ln"><span>WhatsApp Business account</span><b>Madushan Aluminium (verified)</b></div>
+ <div class="ln"><span>Two-step verification</span><b>On</b></div>
+ <div class="ln"><span>Registered</span><b>22 Sep 2026</b></div>
+</div></div>`;};
+
+/* ── ROLES ── */
+SC.roles=function(){return head('Roles & users','Two roles for a small team. Add more when you need them.',
+  '<button class="btn pri" data-go="staff">Staff manage</button>')+
+`<div class="card"><div class="tw"><table><thead><tr><th>Can…</th><th>Manager</th><th>Staff</th></tr></thead><tbody>
+ <tr><td>Reply to assigned chats and calls</td><td>✓</td><td>✓</td></tr>
+ <tr><td>See every chat</td><td>✓</td><td>—</td></tr>
+ <tr><td>Assign and transfer chats</td><td>✓</td><td>Transfer own</td></tr>
+ <tr><td>Send approved templates</td><td>✓</td><td>✓</td></tr>
+ <tr><td>Create templates, broadcasts</td><td>✓</td><td>—</td></tr>
+ <tr><td>Catalog & pricing</td><td>✓</td><td>View</td></tr>
+ <tr><td>Reports, billing, settings</td><td>✓</td><td>Own performance</td></tr>
+</tbody></table></div></div>`;};
+
+/* ── INTEGRATIONS ── */
+SC.integrations=function(){return head('Webhooks & API','How Smart Reply talks to Meta. Your developer needs these; staff never do.',
+  '<button class="btn" data-toast="Test event sent. 200 OK in 180 ms.">Send test event</button>')+
+`<div class="grid g2">
+ <div class="card"><div class="card-h"><h2>Meta webhook</h2><span class="chip ok">Verified</span></div><div class="card-b">
+  <div class="ln"><span>Callback URL</span><b>https://app.smartreply.lk/api/webhooks/whatsapp</b></div>
+  <div class="ln"><span>Fields</span><b>messages · calls · message_template_status_update</b></div>
+  <div class="ln"><span>Last event</span><b>10:50:12 · call.terminate</b></div>
+  <div class="ln"><span>Failures (24h)</span><b>0</b></div>
+ </div></div>
+ <div class="card"><div class="card-h"><h2>Recent events</h2></div>
+  <div class="list-row"><span class="dot ok"></span><div class="bd"><b>messages · text</b><span>Kasun Perera · 10:46</span></div></div>
+  <div class="list-row"><span class="dot ok"></span><div class="bd"><b>calls · connect</b><span>Kasun Perera · 10:45</span></div></div>
+  <div class="list-row"><span class="dot w"></span><div class="bd"><b>message_template_status_update · REJECTED</b><span>avurudu_offer · 09:12</span></div></div>
+  <div class="list-row"><span class="dot ok"></span><div class="bd"><b>statuses · read</b><span>quotation_ready · 10:47</span></div></div>
+ </div>
+</div>`;};
+
+/* ── AUDIT ── */
+SC.audit=function(){return head('Audit log','Who did what, and when.','<button class="btn" data-toast="Audit log exported.">Export</button>')+
+`<div class="card"><div class="card-b"><div class="tl">
+ <div class="tl-i hi"><b>Nimal sent quotation_ready to Kasun Perera</b><span>Today 10:45 · mobile app</span></div>
+ <div class="tl-i"><b>Auto-assign gave Kasun Perera to Nimal</b><span>Today 10:39 · round-robin</span></div>
+ <div class="tl-i"><b>Meta rejected template avurudu_offer</b><span>Today 09:12 · image quality</span></div>
+ <div class="tl-i"><b>Madushan P. changed call hours</b><span>Yesterday 18:20 · web</span></div>
+ <div class="tl-i"><b>Sachini exported her performance report</b><span>Yesterday 17:02 · web</span></div>
+</div></div></div>`;};
+
+/* ── STAFF: MY DAY ── */
+SC.mydash=function(){var mine=D.convs.filter(function(v){return D.contacts[v.c].to==='s1';});
+ return head('Good morning, Nimal',TODAY+' · you are on a call',
+  '<div class="seg"><button aria-pressed="true">Available</button><button aria-pressed="false">Busy</button><button aria-pressed="false">Away</button></div>')+
+`<div class="stats">
+ <div class="stat i"><span>My chats</span><b>${mine.length}</b><small>1 unread</small></div>
+ <div class="stat b"><span>Call back</span><b>1</b><small>Priya Nadarajah</small></div>
+ <div class="stat ok"><span>Resolved today</span><b>14 / 20</b><small>Daily target</small></div>
+ <div class="stat"><span>My avg reply</span><b>2m 10s</b><small>Team 3m 40s</small></div>
+</div>
+<div class="grid gmain">
+ <div class="card"><div class="card-h"><h2>My queue</h2><span class="sp"></span><button class="btn sm" data-go="inbox">Open inbox</button></div>
+  ${mine.map(function(v){var c=D.contacts[v.c];return '<div class="list-row">'+av(c)+'<div class="bd"><b>'+c.n+'</b><span>'+D.esc(v.pv)+'</span></div><div class="rt">'+(v.un?'<span class="chip i">'+v.un+' new</span>':'')+'<button class="btn sm" data-go="inbox">Open</button></div></div>';}).join('')}
+ </div>
+ <div class="card"><div class="card-h"><h2>Today’s target</h2></div><div class="card-b"><div class="meter" style="height:10px"><i style="width:70%"></i></div><p class="hint">14 of 20 chats resolved · 6 to go</p></div></div>
+</div>`;};
+
+/* ── STAFF: MY PERFORMANCE ── */
+SC.myperf=function(){return head('My performance','Nimal Bandara · this week',
+  '<button class="btn" data-toast="Your report exported as PDF.">Export</button>')+
+`<div class="stats">
+ <div class="stat ok"><span>Score</span><b>92</b><small>Reply time, resolved, calls</small></div>
+ <div class="stat i"><span>Chats handled</span><b>64</b><small>Team avg 49</small></div>
+ <div class="stat"><span>Avg reply</span><b>2m 10s</b><small>Fastest on the team</small></div>
+ <div class="stat w"><span>Missed / rejected</span><b>2</b><small>Both while on another call</small></div>
+</div>
+<div class="card"><div class="card-h"><h2>Resolved per day</h2></div><div class="card-b"><div class="bars">
+ ${[9,13,8,17,12,0,0].map(function(v,i){return '<div class="'+(v===17?'hi':'')+'">'+v+'<i style="height:'+Math.max(4,Math.round(v/17*100))+'%"></i>'+['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i]+'</div>';}).join('')}
+</div></div></div>`;};
+
+/* ── STAFF: PROFILE ── */
+SC.profile=function(){return head('Profile settings','What customers see when you reply.',
+  '<button class="btn pri" data-toast="Profile saved.">Save</button>')+
+`<div class="grid g2">
+ <div class="card"><div class="card-h"><h2>Profile</h2></div><div class="card-b">
+  <label class="f">Name shown to customers</label><input class="f-in" value="Nimal">
+  <label class="f">Language</label><select class="f-in"><option>English + Sinhala</option><option>Sinhala</option><option>Tamil</option></select>
+  <label class="f">Signature</label><input class="f-in" value="– Nimal, Madushan Aluminium">
+ </div></div>
+ <div class="card"><div class="card-h"><h2>Notifications</h2></div><div class="card-b">
+  <label class="tgl"><input type="checkbox" checked><span>New chat assigned to me</span></label>
+  <label class="tgl"><input type="checkbox" checked><span>Incoming call ringtone</span></label>
+  <label class="tgl"><input type="checkbox"><span>Every message in my chats</span></label>
+ </div></div>
+</div>`;};
+
+})();
+</script>
+<script>
+/* ═══════════════════════════════════════════════
+   V2 — statuses, breaks, live team status, customer owners,
+   24h window colours, forwarding, IVR, recordings, call controls
+   ═══════════════════════════════════════════════ */
+(function(){
+"use strict";
+var SC=window.SCREENS,AF=window.AFTER,D=window.DATA,esc=D.esc,SR=window.SR={};
+function $(s){return document.querySelector(s);}
+function $$(s){return Array.prototype.slice.call(document.querySelectorAll(s));}
+function pad(n){return String(n).padStart(2,'0');}
+function nowT(){var d=new Date();return pad(d.getHours())+':'+pad(d.getMinutes());}
+function head(t,d,acts){return '<div class="ph"><div><h1>'+t+'</h1><p>'+d+'</p></div><div class="acts">'+(acts||'')+'</div></div>';}
+function av(c,cls){return '<i class="av '+(c.a||'')+(cls?' '+cls:'')+'">'+c.i+'</i>';}
+function chips(ls){return ls.map(function(l){return '<span class="chip '+l[1]+'">'+l[0]+'</span>';}).join(' ');}
+function isM(){return window.ROLE!=='staff';}
+function first(n){return n.split(' ')[0];}
+function sName(id){if(id==='mgr')return 'Madushan';var s=D.staffById(id);return s?first(s.n):null;}
+function curScreen(){var b=$('#nav button.on');return b?b.getAttribute('data-go'):null;}
+function rerender(){var k=curScreen();if(k)window.__go(k);}
+var T0=Date.now(),HR=3600000;
+
+/* ── data: Priya's chat, reply windows, owners ── */
+if(!D.convs.some(function(v){return v.c==='c7';}))D.convs.push({id:'v7',c:'c7',pv:'Sliding wardrobe colours thiyenawada?',t:'Yesterday',un:0,win:null,msgs:[
+ ['in','text','Sliding wardrobe colours thiyenawada?','Yesterday'],
+ ['out','text','Ow, 12 colours thiyenawa. Colour card eka attach kala.','Yesterday','Nimal',1,null,[{type:'image',name:'Colour_card.jpg',size:348160,url:D.colourCard}]],
+ ['in','text','Allow calls','Yesterday']]});
+var WINH={v1:21.4,v2:23.9,v3:1.35,v4:13.6,v6:0.7};
+D.convs.forEach(function(v){var h=WINH[v.id];v.exp=h!=null?T0+h*HR:0;});
+function convOf(cid){return D.convs.filter(function(v){return v.c===cid;})[0]||null;}
+function winMs(v){return v&&v.exp?v.exp-Date.now():0;}
+function isOpen(v){return winMs(v)>0;}
+function winCls(v){var ms=typeof v==='number'?v:winMs(v);return ms<=0?'x':ms<=2*HR?'r':ms>=20*HR?'g':'y';}
+function winTxt(ms){if(ms<=0)return 'Closed';var h=Math.floor(ms/HR),m=Math.floor(ms%HR/60000),s=Math.floor(ms%60000/1000);return h?h+'h '+pad(m)+'m':m+'m '+pad(s)+'s';}
+function winChip(v){var ms=winMs(v);return '<span class="wt '+winCls(ms)+'" data-exp="'+(v&&v.exp||0)+'" title="Time left in the 24-hour reply window">◷ <b>'+winTxt(ms)+'</b></span>';}
+SR.isOpen=isOpen;SR.winCls=function(v){return winCls(v);};SR.winChip=winChip;SR.winMs=winMs;
+Object.keys(D.contacts).forEach(function(k){var c=D.contacts[k];c.id=k;c.hist=c.to?[['Mon 09:12','Assigned to '+sName(c.to),'Auto-assign · round robin']]:[['Today 09:58','New customer · no owner yet','System']];});
+D.contacts.c5.hist.unshift(['Yesterday 16:40','Moved from Sachini to Nimal','Madushan · Sachini on leave']);
+function meName(){return isM()?'Madushan':'Nimal';}
+function setOwner(cid,sid,why){var c=D.contacts[cid],v=convOf(cid),old=c.to;sid=sid||null;if((old||null)===sid)return false;c.to=sid;
+ c.hist.unshift(['Today '+nowT(),sid?(old?'Moved from '+sName(old)+' to '+sName(sid):'Assigned to '+sName(sid)):'Unassigned'+(old?' (was '+sName(old)+')':''),meName()+(why?' · '+why:'')]);
+ if(v)v.msgs.push(['note','note',(sid?'Customer assigned to '+sName(sid):'Customer unassigned. Back to the team queue')+'. Chats and calls from '+c.ph+' now go to '+(sid?sName(sid):'the Sales queue')+'.',nowT(),meName()]);
+ return true;}
+SR.setOwner=setOwner;
+SR.ownerHist=function(c){return c.hist.map(function(h){return '<div class="ln"><span>'+esc(h[1])+'</span><b style="font-weight:500;font-size:11.5px;text-align:right">'+h[0]+'<br><span style="color:var(--ink-3)">'+esc(h[2])+'</span></b></div>';}).join('');};
+
+/* ── statuses: separate for calls and chats ── */
+var SL={available:['Available','ok'],oncall:['On a call','i'],brk:['On break','w'],away:['Away',''],dnd:['Do not disturb','b']};
+var BRK=[['Tea',15],['Lunch',45],['Prayer',15],['Meeting',30],['Training',60]];
+function ch(st,r,since,mins){return {st:st,r:r||'',since:since||T0,mins:mins||0};}
+var CFG=SR.cfg={brkmax:60,ring:'all',ringsec:20,rec:{auto:true,ann:true,pause:true,keep:'90'},link:false,
+ fwd:{noans:'queue',busy:'wait',brk:'queue',away:'queue',dnd:'msg',after:'msg'}};
+D.staff[0].call=ch('oncall','',T0-4*60000);D.staff[0].chat=ch('available','',T0-95*60000);D.staff[0].used=22;D.staff[0].log=[['Tea','10:30',12,'Calls + chats'],['Prayer','12:15',10,'Calls + chats']];
+D.staff[1].call=ch('available','',T0-40*60000);D.staff[1].chat=ch('dnd','',T0-25*60000);D.staff[1].used=14;D.staff[1].log=[['Tea','10:15',14,'Calls + chats']];D.staff[1].noteS='Calls only until 12:00';
+D.staff[2].call=ch('brk','Lunch',T0-18*60000,45);D.staff[2].chat=ch('brk','Lunch',T0-18*60000,45);D.staff[2].used=15;D.staff[2].log=[['Tea','10:40',15,'Calls + chats']];
+var MGR={id:'mgr',n:'Madushan P.',i:'MP',call:ch('available','',T0-52*60000),chat:ch('available','',T0-52*60000),used:0,log:[],queue:true};
+function lab(o){return o.st==='brk'?o.r+' break':SL[o.st][0];}
+function sync(s){if(!s.id||s.id==='mgr')return;s.st={oncall:'call',available:'',brk:'away',away:'away',dnd:'call'}[s.call.st];s.stt=lab(s.call);}
+D.staff.forEach(sync);
+function me(){if(isM())return MGR;var s=D.staff[0];if(s.call.st==='oncall'){s.call=ch('available','',Date.now()-2*60000);sync(s);}return s;}
+function fmtDur(ms){var s=Math.max(0,Math.floor(ms/1000));if(s>=3600)return Math.floor(s/3600)+'h '+pad(Math.floor(s%3600/60))+'m';return Math.floor(s/60)+':'+pad(s%60);}
+function tmr(since){return '<b class="tmr" data-since="'+since+'">'+fmtDur(Date.now()-since)+'</b>';}
+function sc(kind,o,timer){return '<span class="chip sc '+SL[o.st][1]+'">'+(kind==='call'?'☏':'✉')+' '+lab(o)+(timer?' '+tmr(o.since):'')+'</span>';}
+function both(p,timer){return '<span class="scs">'+sc('call',p.call,timer||p.call.st!=='available')+sc('chat',p.chat,timer||p.chat.st!=='available')+'</span>';}
+SR.both=both;
+var FD={queue:'Sales queue',wait:'Call waiting (beep)',msg:'Missed-call message + callback',vm:'Ask for a WhatsApp voice note',s1:'Nimal Bandara',s2:'Sachini Wickrama',s3:'Ruwan Kumara',mgr:'Madushan P.'};
+function fwdName(k){return FD[CFG.fwd[k]]||CFG.fwd[k];}
+function effect(k,o){if(k==='call')return o.st==='available'?'WhatsApp calls ring you.':'Calls go to '+fwdName(o.st)+'.';
+ return o.st==='available'?'New chats are assigned to you.':o.st==='dnd'?'No new chats and no chat alerts. Open chats stay yours.':'New chats go to the team. Your open chats wait for you.';}
+function brkTotal(p){var live=0;['call','chat'].some(function(k){if(p[k].st==='brk'){live=Math.round((Date.now()-p[k].since)/60000);return true;}});return p.used+live;}
+function setStatus(p,chn,st,r,mins){var t=Date.now(),chs=chn==='both'?['call','chat']:[chn];
+ var before=['call','chat'].filter(function(k){return p[k].st==='brk';}).map(function(k){return p[k];});
+ chs.forEach(function(k){p[k]=ch(st,r,t,mins);});
+ var seen=[];before.forEach(function(o){if(seen.indexOf(o.since)>-1)return;seen.push(o.since);
+  var still=['call','chat'].some(function(k){return p[k].st==='brk'&&p[k].since===o.since;});
+  if(!still){var u=Math.max(1,Math.round((t-o.since)/60000));p.used+=u;p.log.push([o.r,new Date(o.since).toTimeString().slice(0,5),u,'']);}});
+ sync(p);}
+/* top-bar pill */
+var mst=document.createElement('button');mst.className='mst';mst.id='mst';mst.setAttribute('data-w','status');mst.setAttribute('aria-label','Your status');
+var rs=$('.rolesw');rs.parentNode.insertBefore(mst,rs);
+function updMst(){var p=me(),h=sc('call',p.call,p.call.st==='brk')+sc('chat',p.chat,p.chat.st==='brk'&&p.call.st!=='brk');if(mst.getAttribute('data-h')!==p.call.st+p.chat.st+p.call.since+window.ROLE){mst.innerHTML=h;mst.setAttribute('data-h',p.call.st+p.chat.st+p.call.since+window.ROLE);}}
+setInterval(function(){var n=Date.now();updMst();
+ $$('.tmr').forEach(function(e){e.textContent=fmtDur(n-(+e.getAttribute('data-since')));});
+ $$('[data-exp]').forEach(function(e){var x=+e.getAttribute('data-exp'),ms=x?x-n:0;e.className='wt '+winCls(ms);var b=e.querySelector('b');if(b)b.textContent=winTxt(ms);});
+},1000);
+updMst();
+$$('.rolesw button').forEach(function(b){b.addEventListener('click',function(){setTimeout(updMst,0);});});
+
+/* ── W: global actions (data-w) ── */
+var W={};
+document.addEventListener('click',function(e){var b=e.target.closest('[data-w]');if(!b||b.tagName==='SELECT'||(b.tagName==='INPUT'&&b.type!=='checkbox'))return;var f=W[b.getAttribute('data-w')];if(f)f(b,e);});
+document.addEventListener('change',function(e){var b=e.target.closest('[data-wc]');if(!b)return;var f=W[b.getAttribute('data-wc')];if(f)f(b,e);});
+function opt(v,l,sel,dis){return '<option value="'+v+'"'+(sel?' selected':'')+(dis?' disabled':'')+'>'+l+'</option>';}
+
+function chanBlock(p,k){var o=p[k];
+ return '<div class="chb"><div class="chh"><b>'+(k==='call'?'☏ Calls':'✉ Chats')+'</b><span>'+lab(o)+(o.st!=='available'?' · '+tmr(o.since):'')+'</span></div>'+
+ '<div class="sopts">'+['available','brk','away','dnd'].map(function(v){return '<button data-w="pickst" data-ch="'+k+'" data-v="'+v+'" aria-pressed="'+(o.st===v)+'"><i class="sdot s'+v+'"></i>'+({available:'Available',brk:'Break',away:'Away',dnd:'DND'})[v]+'</button>';}).join('')+'</div><p class="hint">'+effect(k,o)+'</p></div>';}
+W.status=function(){var p=me();
+ window.__sheet('<h2>Your status</h2><p class="sub">Set calls and chats separately. '+(isM()?'Staff do the same from their app.':'Your manager sees both, live.')+'</p>'+chanBlock(p,'call')+chanBlock(p,'chat')+
+  '<label class="tgl"><input type="checkbox" data-w="link" '+(CFG.link?'checked':'')+'><span>Same status for calls and chats</span><small>Change one, both follow</small></label>'+
+  '<div class="ln"><span>Breaks today</span><b>'+brkTotal(p)+' of '+CFG.brkmax+' min</b></div>'+
+  '<button class="btn" style="width:100%;justify-content:center;margin-top:12px" data-go="fwd">⇄ Call forwarding rules</button>');};
+W.link=function(el){CFG.link=el.checked;window.__toast(CFG.link?'Calls and chats now change together.':'Calls and chats can have different statuses.');};
+var BK={ch:'both',r:'Tea',m:15};
+W.pickst=function(el){var k=CFG.link?'both':el.getAttribute('data-ch'),v=el.getAttribute('data-v');
+ if(v==='brk'){BK.ch=k;W.brk();return;}
+ var p=me();setStatus(p,k,v);updMst();window.__toast((k==='both'?'Calls and chats':k==='call'?'Calls':'Chats')+': '+SL[v][0]+'. '+(k==='chat'?effect('chat',p.chat):effect('call',p.call)));rerender();};
+W.brk=function(){var p=me();
+ window.__sheet('<h2>Take a break</h2><p class="sub">Choose what the break covers. '+(isM()?'':'Your manager sees it live.')+'</p>'+
+  '<label class="f">Break from</label><div class="seg" id="bkC">'+[['both','Calls + chats'],['call','Calls only'],['chat','Chats only']].map(function(o){return '<button data-w="bkc" data-v="'+o[0]+'" aria-pressed="'+(BK.ch===o[0])+'">'+o[1]+'</button>';}).join('')+'</div>'+
+  '<label class="f">Reason</label><div class="seg" id="bkR" style="flex-wrap:wrap">'+BRK.map(function(b){return '<button data-w="bkr" data-v="'+b[0]+'" data-m="'+b[1]+'" aria-pressed="'+(BK.r===b[0])+'">'+b[0]+'</button>';}).join('')+'</div>'+
+  '<label class="f">How long</label><div class="seg" id="bkM">'+[10,15,30,45,60].map(function(x){return '<button data-w="bkm" data-v="'+x+'" aria-pressed="'+(BK.m===x)+'">'+x+' min</button>';}).join('')+'</div>'+
+  '<p class="hint" style="margin-top:10px">'+Math.max(0,CFG.brkmax-brkTotal(p))+' of '+CFG.brkmax+' break minutes left today. Calls on break go to '+fwdName('brk')+'; new chats go to the team.</p>'+
+  '<button class="btn pri" style="width:100%;justify-content:center;margin-top:14px" data-w="bkgo">Start break</button>');};
+W.bkc=function(el){BK.ch=el.getAttribute('data-v');};
+W.bkr=function(el){BK.r=el.getAttribute('data-v');BK.m=+el.getAttribute('data-m');$$('#bkM button').forEach(function(x){x.setAttribute('aria-pressed',+x.getAttribute('data-v')===BK.m);});};
+W.bkm=function(el){BK.m=+el.getAttribute('data-v');};
+W.bkgo=function(){var p=me();setStatus(p,BK.ch,'brk',BK.r,BK.m);updMst();window.__toast(BK.r+' break started ('+BK.m+' min) for '+(BK.ch==='both'?'calls and chats':BK.ch==='call'?'calls':'chats')+'.');rerender();};
+W.backav=function(){var p=me();setStatus(p,'both','available');updMst();window.__toast('Available for calls and chats.');rerender();};
+
+/* ── LIVE TEAM STATUS (manager) ── */
+function cnt(k,st){return D.staff.filter(function(s){return s[k].st===st;}).length;}
+SC.status=function(){
+ var onb=D.staff.filter(function(s){return s.call.st==='brk'||s.chat.st==='brk';});
+ var late=D.staff.filter(function(s){return s.call.st==='brk'&&s.call.mins&&Date.now()-s.call.since>s.call.mins*60000;});
+ return head('Live status','Who can take calls and chats right now. It changes the moment someone changes status on their phone.',
+  '<button class="btn" data-go="callset">Break rules</button><button class="btn pri" data-w="status">My status</button>')+
+ '<div class="stats">'+
+  '<div class="stat ok"><span>Calls</span><b>'+cnt('call','available')+' of '+D.staff.length+'</b><small>can answer now · '+cnt('call','oncall')+' on a call</small></div>'+
+  '<div class="stat i"><span>Chats</span><b>'+cnt('chat','available')+' of '+D.staff.length+'</b><small>take new chats</small></div>'+
+  '<div class="stat w"><span>On break</span><b>'+onb.length+'</b><small>'+(onb.map(function(s){return first(s.n);}).join(', ')||'Nobody')+'</small></div>'+
+  '<div class="stat b"><span>Away / DND</span><b>'+D.staff.filter(function(s){return /away|dnd/.test(s.call.st+s.chat.st);}).length+'</b><small>Calls or chats switched off</small></div>'+
+ '</div>'+
+ (late.length?'<div class="note w"><span class="ic">⚠</span><div><b>'+late.map(function(s){return first(s.n);}).join(', ')+' is over the planned break time</b>Planned '+late[0].call.mins+' minutes.</div></div>':'')+
+ '<div class="card"><div class="card-h"><h2>Team</h2><span class="chip ok">Live</span></div><div class="tw"><table><thead><tr><th>Member</th><th>Calls</th><th>Chats</th><th class="r">Open chats</th><th>Breaks today</th><th class="r"></th></tr></thead><tbody>'+
+ D.staff.map(function(s){var bt=brkTotal(s),onbrk=s.call.st==='brk'||s.chat.st==='brk',off=s.call.st!=='available'&&s.call.st!=='oncall'||s.chat.st!=='available';
+  return '<tr><td><div class="emp"><i class="av st '+s.st+'">'+s.i+'</i><span><b>'+s.n+'</b><span>Staff · Sales'+(s.noteS?' · '+s.noteS:'')+'</span></span></div></td>'+
+  '<td>'+sc('call',s.call,true)+(s.call.st==='brk'&&s.call.mins?'<div class="hint">planned '+s.call.mins+' min</div>':'')+'</td><td>'+sc('chat',s.chat,true)+'</td><td class="r">'+s.open+'</td>'+
+  '<td style="min-width:150px"><div class="meter"><i style="width:'+Math.min(100,Math.round(bt/CFG.brkmax*100))+'%"></i></div><span class="hint">'+bt+' of '+CFG.brkmax+' min</span></td>'+
+  '<td class="r" style="white-space:nowrap">'+(onbrk?'<button class="btn sm" data-w="remind" data-id="'+s.id+'">Remind</button> ':'')+(off?'<button class="btn sm" data-w="force" data-id="'+s.id+'">Set available</button>':'')+'</td></tr>';}).join('')+
+ '<tr><td><div class="emp"><i class="av">MP</i><span><b>Madushan P. (you)</b><span>Owner · Manager</span></span></div></td><td>'+sc('call',MGR.call,true)+'</td><td>'+sc('chat',MGR.chat,true)+'</td><td class="r">0</td><td><span class="hint">'+brkTotal(MGR)+' min</span></td><td class="r"><button class="btn sm" data-w="status">Change</button></td></tr>'+
+ '</tbody></table></div></div>'+
+ '<div class="grid g2"><div class="card"><div class="card-h"><h2>Break log · today</h2></div><div class="tw"><table><thead><tr><th>Member</th><th>Reason</th><th>Start</th><th class="r">Minutes</th></tr></thead><tbody>'+
+ D.staff.concat([MGR]).map(function(s){return s.log.map(function(b){return '<tr><td>'+first(s.n)+'</td><td>'+b[0]+'</td><td>'+b[1]+'</td><td class="r">'+b[2]+'</td></tr>';}).join('')+(s.call.st==='brk'?'<tr><td>'+first(s.n)+'</td><td>'+s.call.r+' <span class="chip w">now</span></td><td>'+new Date(s.call.since).toTimeString().slice(0,5)+'</td><td class="r">'+tmr(s.call.since)+'</td></tr>':'');}).join('')+
+ '</tbody></table></div></div>'+
+ '<div class="card"><div class="card-h"><h2>What each status does</h2></div><div class="card-b">'+
+  '<div class="ln"><span>☏ Available</span><b>Calls ring them</b></div><div class="ln"><span>☏ Break / Away</span><b>Calls → '+fwdName('brk')+'</b></div><div class="ln"><span>☏ Do not disturb</span><b>'+fwdName('dnd')+'</b></div>'+
+  '<div class="ln"><span>✉ Available</span><b>New chats are assigned</b></div><div class="ln"><span>✉ Break / Away</span><b>New chats → team, open chats wait</b></div><div class="ln"><span>✉ Do not disturb</span><b>No new chats, no alerts</b></div>'+
+ '</div></div></div>';
+};
+W.remind=function(el){window.__toast(first(D.staffById(el.getAttribute('data-id')).n)+' got a reminder to come back.');};
+W.force=function(el){var s=D.staffById(el.getAttribute('data-id'));setStatus(s,'both','available');window.__toast(first(s.n)+' set to available for calls and chats. They get a notification.');rerender();};
+
+/* ── CUSTOMERS & OWNERS ── */
+var CU={f:'all',q:'',sel:{}};
+function ownSel(c,attr){return '<select class="f-in own" '+attr+' aria-label="Owner of '+esc(c?c.n:'selected')+'">'+opt('', 'Unassigned',c&&!c.to)+D.staff.map(function(s){return opt(s.id,s.n,c&&c.to===s.id);}).join('')+'</select>';}
+function cuRows(){var q=CU.q.toLowerCase();return Object.keys(D.contacts).map(function(k){return D.contacts[k];}).filter(function(c){
+  if(CU.f==='none'&&c.to)return false;if(CU.f!=='all'&&CU.f!=='none'&&c.to!==CU.f)return false;
+  return !q||(c.n+' '+c.ph+' '+c.city).toLowerCase().indexOf(q)>-1;});}
+function cuBody(){var rows=cuRows();
+ return rows.map(function(c){var v=convOf(c.id);
+  return '<tr><td style="width:30px"><input type="checkbox" class="ck" data-w="cusel" data-id="'+c.id+'" '+(CU.sel[c.id]?'checked':'')+' aria-label="Select '+esc(c.n)+'"></td><td><button class="emp lk" data-w="cuinfo" data-id="'+c.id+'">'+av(c)+'<span><b>'+c.n+'</b><span>'+c.ph+'</span></span></button></td><td>'+c.city+'</td><td>'+(chips(c.labels)||'—')+'</td>'+
+  '<td>'+(c.to?'':'<span class="chip b" style="margin-right:6px">No owner</span>')+ownSel(c,'data-wc="cuown" data-id="'+c.id+'"')+'</td><td>'+winChip(v)+'</td><td>'+(c.perm?'<span class="chip ok">Allowed</span>':'<span class="chip">Not yet</span>')+'</td></tr>';}).join('')||'<tr><td colspan="7"><div class="empty"><b>No customers here</b>Try another filter.</div></td></tr>';}
+function cuBulk(){var n=Object.keys(CU.sel).filter(function(k){return CU.sel[k];}).length;
+ return n?'<b>'+n+' selected</b><span class="sp"></span>'+ownSel(null,'id="cuBulkTo"').replace('>Unassigned<','>Choose owner…<')+'<button class="btn sm pri" data-w="cubulk">Assign</button><button class="btn sm" data-w="cubulkun">Unassign</button><button class="btn sm" data-w="cuclear">Clear</button>':'';}
+function cuSeg(){var all=Object.keys(D.contacts).map(function(k){return D.contacts[k];});function n(f){return all.filter(f).length;}
+ return [['all','All '+all.length],['none','Unassigned '+n(function(c){return !c.to;})]].concat(D.staff.map(function(s){return [s.id,first(s.n)+' '+n(function(c){return c.to===s.id;})];})).map(function(o){return '<button data-w="cuf" data-v="'+o[0]+'" aria-pressed="'+(CU.f===o[0])+'">'+o[1]+'</button>';}).join('');}
+SC.contacts=function(){return head('Customers & owners','One owner per customer number. The owner gets every chat and call from that number. Customers with no owner go to the Sales queue.',
+  '<button class="btn" data-toast="Import: CSV with name, number and owner.">Import CSV</button><button class="btn pri" data-toast="New customer form opened.">Add customer</button>')+
+ '<div class="card"><div class="card-h"><input class="f-in" id="cuQ" style="max-width:230px" placeholder="Name or number" aria-label="Search" value="'+esc(CU.q)+'"><div class="seg" id="cuSeg">'+cuSeg()+'</div><span class="sp"></span><button class="btn sm" data-toast="Customer list exported.">Export</button></div>'+
+ '<div class="bulk" id="cuBulk"'+(cuBulk()?'':' hidden')+'>'+cuBulk()+'</div>'+
+ '<div class="tw"><table><thead><tr><th><input type="checkbox" class="ck" data-w="cuall" aria-label="Select all"></th><th>Customer</th><th>City</th><th>Labels</th><th>Owner</th><th>Reply window</th><th>Calls</th></tr></thead><tbody id="cuT">'+cuBody()+'</tbody></table></div></div>'+
+ '<div class="note i"><span class="ic">◈</span><div><b>Changing the owner</b>Pick a name in the Owner column, or tick several customers and assign them together. Each change is saved in the customer’s owner history and added to the chat as a team note.</div></div>';};
+function cuDraw(){var t=$('#cuT');if(!t)return;t.innerHTML=cuBody();$('#cuSeg').innerHTML=cuSeg();var b=$('#cuBulk');b.innerHTML=cuBulk();b.hidden=!b.innerHTML;}
+AF.contacts=function(){$('#cuQ').addEventListener('input',function(e){CU.q=e.target.value;cuDraw();});};
+W.cuf=function(el){CU.f=el.getAttribute('data-v');cuDraw();};
+W.cusel=function(el){CU.sel[el.getAttribute('data-id')]=el.checked;var b=$('#cuBulk');b.innerHTML=cuBulk();b.hidden=!b.innerHTML;};
+W.cuall=function(el){CU.sel={};if(el.checked)cuRows().forEach(function(c){CU.sel[c.id]=true;});cuDraw();};
+W.cuclear=function(){CU.sel={};cuDraw();};
+W.cuown=function(el){var c=D.contacts[el.getAttribute('data-id')],old=c.to,s=el.value||null;if(setOwner(c.id,s)){cuDraw();window.__toast(s?(old?c.n+' moved from '+sName(old)+' to '+sName(s)+'.':c.n+' assigned to '+sName(s)+'.'):c.n+' unassigned. Chats and calls go to the Sales queue.');}};
+function bulkTo(s){var ids=Object.keys(CU.sel).filter(function(k){return CU.sel[k];}),n=0;ids.forEach(function(k){if(setOwner(k,s,'bulk'))n++;});CU.sel={};cuDraw();window.__toast(n+' customer'+(n===1?'':'s')+(s?' assigned to '+sName(s):' unassigned')+'.');}
+W.cubulk=function(){var v=$('#cuBulkTo').value;if(!v){window.__toast('Choose an owner first.');return;}bulkTo(v);};
+W.cubulkun=function(){bulkTo(null);};
+W.cuinfo=function(el){var c=D.contacts[el.getAttribute('data-id')],v=convOf(c.id),s=D.staffById(c.to);
+ window.__sheet('<h2>'+c.n+'</h2><p class="sub">'+c.ph+' · '+c.city+' · customer since '+c.since+'</p>'+
+  '<div class="ln"><span>Owner</span><b>'+(s?s.n:'<span class="chip b">No owner</span>')+'</b></div><div class="ln"><span>Reply window</span><b>'+winChip(v)+'</b></div><div class="ln"><span>Call permission</span><b>'+(c.perm?'Allowed':'Not asked yet')+'</b></div><div class="ln"><span>Labels</span><b>'+(chips(c.labels)||'—')+'</b></div>'+
+  '<h3 style="margin:16px 0 4px;font-size:13px">Owner history</h3>'+SR.ownerHist(c)+
+  '<button class="btn pri" style="width:100%;justify-content:center;margin-top:14px" data-go="inbox">Open chat</button>');};
+
+/* ── CALL FORWARDING ── */
+var FROWS=[['noans','Available, no answer'],['busy','Busy on another call'],['brk','On break'],['away','Away'],['dnd','Do not disturb'],['after','Outside call hours']];
+function fwdOpts(k){var t=D.staff.map(function(s){return s.id;}).filter(function(id){return isM()||id!=='s1';}).concat(isM()?[]:['mgr']);
+ return {noans:['queue'].concat(t,['vm','msg']),busy:['wait','queue'].concat(t,['msg']),brk:['queue'].concat(t,['vm','msg']),away:['queue'].concat(t,['vm','msg']),dnd:['msg','vm','queue'],after:['msg','vm']}[k];}
+SC.fwd=function(){var p=me();
+ return head('Call forwarding',(isM()?'Where WhatsApp calls go when a person can’t answer. These are the team defaults; staff can set their own on the app.':'Where your WhatsApp calls go when you can’t answer. Customers never see your personal number.'),
+  '<button class="btn" data-go="ivr"'+(isM()?'':' hidden')+'>IVR menu</button><button class="btn pri" data-toast="Forwarding rules saved.">Save</button>')+
+ '<div class="grid g2"><div class="card"><div class="card-h"><h2>Rules</h2></div><div class="tw"><table><thead><tr><th>When</th><th>Send the call to</th></tr></thead><tbody>'+
+ FROWS.filter(function(f){return isM()||f[0]!=='after';}).map(function(f){var on=f[0]===p.call.st||(f[0]==='noans'&&p.call.st==='available');
+  return '<tr><td><b>'+f[1]+'</b>'+(on?' <span class="chip ok">Now</span>':'')+(f[0]==='noans'?'<div class="hint">after '+CFG.ringsec+' seconds</div>':'')+'</td><td><select class="f-in" data-wc="fwdset" data-id="'+f[0]+'">'+fwdOpts(f[0]).map(function(o){var s=D.staffById(o);return opt(o,FD[o]+(s?' · '+lab(s.call):''),CFG.fwd[f[0]]===o);}).join('')+'</select></td></tr>';}).join('')+
+ '</tbody></table></div><div class="card-b"><label class="f">Ring for</label><div class="seg">'+[10,20,30,45].map(function(x){return '<button data-w="ringsec" data-v="'+x+'" aria-pressed="'+(CFG.ringsec===x)+'">'+x+' s</button>';}).join('')+'</div></div></div>'+
+ '<div><div class="card"><div class="card-h"><h2>Sales queue</h2><span class="chip">'+({all:'Ring everyone',rr:'Round robin',idle:'Longest idle'})[CFG.ring]+'</span></div>'+
+  D.staff.map(function(s){var skip=/brk|away|dnd/.test(s.call.st);return '<div class="list-row"><i class="av st '+s.st+'">'+s.i+'</i><div class="bd"><b>'+s.n+'</b><span>'+sc('call',s.call,true)+(skip?' skipped':s.call.st==='oncall'?' rings when free':' rings now')+'</span></div></div>';}).join('')+
+  '<div class="card-b">'+(isM()?'<label class="f" style="margin-top:0">The queue rings</label><div class="seg">'+[['all','Everyone'],['rr','Round robin'],['idle','Longest idle']].map(function(o){return '<button data-w="ringmode" data-v="'+o[0]+'" aria-pressed="'+(CFG.ring===o[0])+'">'+o[1]+'</button>';}).join('')+'</div>':'')+'<p class="hint" style="margin-top:8px">Nobody answers in 60 s: missed-call message and a call-back task for the team.</p></div></div>'+
+ '<div class="note i"><span class="ic">◈</span><div><b>Runs on the Smart Reply call server</b>Meta delivers the call to us; forwarding, queues, transfer and recording happen on our side.</div></div></div></div>';};
+W.fwdset=function(el){CFG.fwd[el.getAttribute('data-id')]=el.value;window.__toast('Saved: '+FROWS.filter(function(f){return f[0]===el.getAttribute('data-id');})[0][1].toLowerCase()+' → '+FD[el.value]+'.');};
+W.ringsec=function(el){CFG.ringsec=+el.getAttribute('data-v');rerender();};
+W.ringmode=function(el){CFG.ring=el.getAttribute('data-v');rerender();};
+
+/* ── IVR MENU ── */
+var KEYS='1234567890*#';
+var IVR=SR.ivr={on:true,mode:'rec',wait:8,none:'queue',after:true,
+ greet:'Ayubowan! Madushan Aluminium. Kitchen cabinets: press 1. Bathroom vanities: press 2. Wardrobes: press 3. Installation and service: press 4. Price list on WhatsApp: press 5. Anyone else: press 0.',
+ audio:{type:'voice',name:'ivr_greeting_si.ogg',size:184320,dur:'0:21'},
+ opts:[{k:'1',t:'Kitchen cabinets',to:'s1'},{k:'2',t:'Bathroom vanities',to:'s2'},{k:'3',t:'Wardrobes',to:'queue'},{k:'4',t:'Installation & service',to:'s3'},{k:'5',t:'Price list on WhatsApp',to:'qr:/price-list'},{k:'0',t:'Any available person',to:'queue'}]};
+function ivrDest(to){return to.indexOf('qr:')===0?'Send '+to.slice(3)+' on WhatsApp, then hang up':FD[to]||to;}
+function ivrTargets(){return ['queue','s1','s2','s3','mgr','vm','msg'].concat(D.quick.slice(0,4).map(function(q){return 'qr:'+q.cmd;}));}
+function ivrSort(){IVR.opts.sort(function(a,b){return KEYS.indexOf(a.k)-KEYS.indexOf(b.k);});}
+function ivrRows(){var used=IVR.opts.map(function(o){return o.k;});
+ return IVR.opts.map(function(o,i){return '<tr><td style="width:74px"><select class="f-in key" data-wc="ivkey" data-id="'+i+'" aria-label="Key">'+KEYS.split('').map(function(k){return opt(k,k,o.k===k,used.indexOf(k)>-1&&o.k!==k);}).join('')+'</select></td>'+
+  '<td><input class="f-in" data-wc="ivname" data-id="'+i+'" value="'+esc(o.t)+'" placeholder="What the caller hears" aria-label="Option name"></td>'+
+  '<td><select class="f-in" data-wc="ivto" data-id="'+i+'" aria-label="Send to">'+ivrTargets().map(function(t){return opt(t,ivrDest(t),o.to===t);}).join('')+'</select></td>'+
+  '<td class="r"><button class="btn sm dg" data-w="ivdel" data-id="'+i+'" aria-label="Remove option '+o.k+'">Remove</button></td></tr>';}).join('')||'<tr><td colspan="4"><div class="empty" style="padding:24px"><b>No options</b>Add one so callers can choose.</div></td></tr>';}
+function ivrFlow(){return '<div class="flow"><div class="fn">☏ Customer calls +94 77 123 4567</div><div class="fa"></div><div class="fn">🔊 Greeting '+(IVR.mode==='rec'&&IVR.audio?'('+IVR.audio.dur+')':'(text to speech)')+'</div><div class="fa"></div><div class="fb">'+
+  IVR.opts.map(function(o){return '<div><span class="keyb">'+o.k+'</span>'+esc(o.t)+' <em>→ '+esc(ivrDest(o.to).replace(', then hang up',''))+'</em></div>';}).join('')+'<div><span class="keyb">…</span>No key in '+IVR.wait+' s <em>→ '+esc(ivrDest(IVR.none))+'</em></div></div></div>';}
+function ivrTest(){return '<div class="keys">'+KEYS.split('').map(function(k){var o=IVR.opts.filter(function(x){return x.k===k;})[0];return '<button data-w="ivpress" data-v="'+k+'"'+(o?'':' class="off"')+'>'+k+(o?'<small>'+esc(first(o.t))+'</small>':'')+'</button>';}).join('')+'</div>';}
+SC.ivr=function(){
+ return head('IVR menu','What callers hear before anyone’s phone rings. They pick with the keypad and the call goes to the right person.',
+  '<label class="tgl" style="border:0;padding:0"><input type="checkbox" data-w="ivon" '+(IVR.on?'checked':'')+'><span>IVR on</span></label><button class="btn pri" data-toast="IVR menu saved. It applies to the next call.">Save</button>')+
+ (IVR.on?'':'<div class="note w"><span class="ic">⚠</span><div><b>IVR is off</b>Calls go straight to the Sales queue.</div></div>')+
+ '<div class="grid gmain"><div>'+
+  '<div class="card"><div class="card-h"><h2>Greeting</h2><span class="sp"></span><div class="seg">'+[['rec','Recorded voice'],['tts','Text to speech']].map(function(o){return '<button data-w="ivmode" data-v="'+o[0]+'" aria-pressed="'+(IVR.mode===o[0])+'">'+o[1]+'</button>';}).join('')+'</div></div><div class="card-b">'+
+   (IVR.mode==='rec'?'<div class="att" style="margin-bottom:10px">'+(IVR.audio?D.att(IVR.audio):'<span class="hint">No recording yet</span>')+'</div><div class="attb"><label class="btn sm">♪ Upload voice file<input type="file" accept="audio/*" data-wc="ivfile"></label><button type="button" class="btn sm" data-w="ivrec">● Record</button></div>'
+   :'<label class="f" style="margin-top:0">Voice</label><select class="f-in" style="max-width:260px"><option>Sinhala · female</option><option>Sinhala · male</option><option>English · female</option><option>Tamil · female</option></select>')+
+   '<label class="f">'+(IVR.mode==='rec'?'Script (for staff and the transcript)':'What the caller hears')+'</label><textarea class="f-in" data-wc="ivgreet" style="min-height:92px">'+esc(IVR.greet)+'</textarea>'+
+   '<p class="hint">When you add or remove an option, update the greeting so callers hear the right keys.</p></div></div>'+
+  '<div class="card"><div class="card-h"><h2>Options</h2><span class="chip">'+IVR.opts.length+' of 12 keys</span><span class="sp"></span><button class="btn sm pri" data-w="ivadd"'+(IVR.opts.length>=12?' disabled':'')+'>+ Add option</button></div>'+
+   '<div class="tw"><table><thead><tr><th>Key</th><th>Name</th><th>Send the caller to</th><th class="r"></th></tr></thead><tbody id="ivT">'+ivrRows()+'</tbody></table></div></div>'+
+  '<div class="card"><div class="card-h"><h2>If the caller doesn’t choose</h2></div><div class="card-b"><div class="grid g2" style="gap:12px;margin:0">'+
+   '<div><label class="f" style="margin-top:0">Wait for a key</label><div class="seg">'+[5,8,10,15].map(function(x){return '<button data-w="ivwait" data-v="'+x+'" aria-pressed="'+(IVR.wait===x)+'">'+x+' s</button>';}).join('')+'</div></div>'+
+   '<div><label class="f" style="margin-top:0">Then send to</label><select class="f-in" data-wc="ivnone">'+['queue','s1','s2','s3','vm','msg'].map(function(t){return opt(t,ivrDest(t),IVR.none===t);}).join('')+'</select></div></div>'+
+   '<div class="ln" style="margin-top:10px"><span>Wrong key</span><b>Play the menu again (2×)</b></div>'+
+   '<label class="tgl"><input type="checkbox" '+(IVR.after?'checked':'')+'><span>Outside call hours: play “We’re closed” and ask for a voice note</span></label></div></div>'+
+ '</div><div>'+
+  '<div class="card"><div class="card-h"><h2>How a call flows</h2></div><div class="card-b" id="ivF">'+ivrFlow()+'</div></div>'+
+  '<div class="card"><div class="card-h"><h2>Test it</h2></div><div class="card-b"><p class="hint" style="margin:0 0 10px">Press a key the way a caller would.</p><div id="ivK">'+ivrTest()+'</div><button class="btn sm" style="margin-top:10px" data-w="ivpress" data-v="">Don’t press anything</button></div></div>'+
+ '</div></div>';};
+function ivSide(){var f=$('#ivF');if(f)f.innerHTML=ivrFlow();var k=$('#ivK');if(k)k.innerHTML=ivrTest();}
+W.ivon=function(el){IVR.on=el.checked;window.__toast(IVR.on?'IVR on. Callers hear the menu first.':'IVR off. Calls go straight to the Sales queue.');rerender();};
+W.ivmode=function(el){IVR.mode=el.getAttribute('data-v');rerender();};
+W.ivwait=function(el){IVR.wait=+el.getAttribute('data-v');ivSide();};
+W.ivnone=function(el){IVR.none=el.value;ivSide();};
+W.ivgreet=function(el){IVR.greet=el.value;};
+W.ivname=function(el){IVR.opts[+el.getAttribute('data-id')].t=el.value.trim()||'Option';ivSide();};
+W.ivto=function(el){IVR.opts[+el.getAttribute('data-id')].to=el.value;ivSide();};
+W.ivkey=function(el){IVR.opts[+el.getAttribute('data-id')].k=el.value;ivrSort();rerender();};
+W.ivdel=function(el){var o=IVR.opts.splice(+el.getAttribute('data-id'),1)[0];rerender();window.__toast('Option '+o.k+' “'+o.t+'” removed. Update the greeting.');};
+W.ivadd=function(){var used=IVR.opts.map(function(o){return o.k;}),k=KEYS.split('').filter(function(x){return used.indexOf(x)<0;})[0];if(!k)return;
+ IVR.opts.push({k:k,t:'',to:'queue'});ivrSort();rerender();var i=IVR.opts.map(function(o){return o.k;}).indexOf(k),inp=$('[data-wc="ivname"][data-id="'+i+'"]');if(inp)inp.focus();window.__toast('Option '+k+' added. Give it a name and choose where it goes.');};
+W.ivfile=function(el){var a=D.readFiles(el.files,'voice')[0];if(a){IVR.audio=a;rerender();window.__toast('Greeting updated: '+a.name+'.');}};
+W.ivrec=function(el){D.toggleRecord(el,function(a){a.name='ivr_greeting.ogg';IVR.audio=a;rerender();window.__toast('New greeting recorded · '+a.dur);});};
+W.ivpress=function(el){var k=el.getAttribute('data-v'),o=IVR.opts.filter(function(x){return x.k===k;})[0];
+ window.__toast(!k?'No key in '+IVR.wait+' s → '+ivrDest(IVR.none)+'.':o?'Pressed '+k+' · '+(o.t||'Option')+' → '+ivrDest(o.to)+'.':'Key '+k+' isn’t in the menu. The caller hears the menu again.');};
+SR.ivrPick=function(){if(!IVR.on||!IVR.opts.length)return null;return IVR.opts.filter(function(o){return o.to==='queue';})[0]||IVR.opts[0];};
+
+/* ── CALL SETTINGS ── */
+function tg(l,sub,obj,k){return '<label class="tgl"><input type="checkbox" data-w="cfg" data-k="'+k+'" '+(obj[k]?'checked':'')+'><span>'+l+'</span>'+(sub?'<small>'+sub+'</small>':'')+'</label>';}
+W.cfg=function(el){CFG.rec[el.getAttribute('data-k')]=el.checked;};
+W.brkmax=function(el){CFG.brkmax=+el.getAttribute('data-v');};
+W.keep=function(el){CFG.rec.keep=el.getAttribute('data-v');};
+SC.callset=function(){return head('Call settings','WhatsApp Calling on the business number: recording, the queue, breaks and call hours.',
+  '<button class="btn pri" data-toast="Call settings saved.">Save</button>')+
+ '<div class="grid g2">'+
+ '<div class="card"><div class="card-h"><h2>Calling</h2><span class="chip ok">On</span></div><div class="card-b">'+
+  '<label class="tgl"><input type="checkbox" checked><span>Show the call button in customer chats</span></label><label class="tgl"><input type="checkbox" checked><span>Allow business-initiated calls</span><small>With permission</small></label><label class="tgl"><input type="checkbox" checked><span>Missed call: send the missed_call_si template</span></label></div></div>'+
+ '<div class="card"><div class="card-h"><h2>Recording</h2><span class="chip b">● REC</span></div><div class="card-b">'+
+  tg('Record every call','From connect',CFG.rec,'auto')+tg('Play the announcement first','“This call may be recorded”',CFG.rec,'ann')+tg('Staff can pause recording','For card or bank details',CFG.rec,'pause')+
+  '<label class="tgl"><input type="checkbox" checked><span>Transcribe and summarise calls</span></label>'+
+  '<label class="f">Keep recordings</label><div class="seg">'+[['30','30 days'],['90','90 days'],['365','1 year']].map(function(o){return '<button data-w="keep" data-v="'+o[0]+'" aria-pressed="'+(CFG.rec.keep===o[0])+'">'+o[1]+'</button>';}).join('')+'</div><p class="hint" style="margin-top:8px">Managers hear every call. Staff hear only their own.</p></div></div>'+
+ '<div class="card"><div class="card-h"><h2>Ringing & queue</h2></div><div class="card-b">'+
+  '<label class="f" style="margin-top:0">The Sales queue rings</label><div class="seg">'+[['all','Everyone'],['rr','Round robin'],['idle','Longest idle']].map(function(o){return '<button data-w="ringmode2" data-v="'+o[0]+'" aria-pressed="'+(CFG.ring===o[0])+'">'+o[1]+'</button>';}).join('')+'</div>'+
+  '<div class="ln" style="margin-top:10px"><span>Ring each person for</span><b>'+CFG.ringsec+' seconds</b></div><div class="ln"><span>People on break, away or DND</span><b>Skipped</b></div><div class="ln"><span>IVR menu</span><b>'+(IVR.on?IVR.opts.length+' options · on':'Off')+'</b></div>'+
+  '<div style="display:flex;gap:8px;margin-top:12px"><button class="btn sm" data-go="ivr">IVR menu</button><button class="btn sm" data-go="fwd">Call forwarding</button><button class="btn sm" data-go="status">Live status</button></div></div></div>'+
+ '<div class="card"><div class="card-h"><h2>Breaks</h2></div><div class="card-b">'+
+  '<label class="f" style="margin-top:0">Break time per person, per day</label><div class="seg">'+[30,60,90].map(function(x){return '<button data-w="brkmax" data-v="'+x+'" aria-pressed="'+(CFG.brkmax===x)+'">'+x+' min</button>';}).join('')+'</div>'+
+  '<label class="tgl" style="margin-top:8px"><input type="checkbox" checked><span>Tell me when a break runs over</span></label><label class="tgl"><input type="checkbox"><span>Staff must ask before a break</span><small>Off</small></label><label class="tgl"><input type="checkbox" checked><span>Staff can set calls and chats separately</span></label></div></div>'+
+ '<div class="card"><div class="card-h"><h2>Call hours</h2><span class="chip">Asia/Colombo</span></div><div class="card-b"><div class="ln"><span>Monday – Saturday</span><b>09:00 – 18:00</b></div><div class="ln"><span>Sunday & Poya</span><b>Closed</b></div><div class="ln"><span>Outside hours</span><b>'+fwdName('after')+'</b></div></div></div>'+
+ '</div>';};
+W.ringmode2=function(el){CFG.ring=el.getAttribute('data-v');};
+
+/* ── CALL LOG with recordings ── */
+var CT={missed:['b','↙ Missed'],rejected:['w','⊘ Rejected'],incoming:['ok','↙ Incoming'],outgoing:['i','↗ Outgoing'],forwarded:['i','⇄ Forwarded'],transferred:['i','⇄ Transferred']};
+var SUMM={c1:'Kasun confirmed the 10 ft pantry cupboard with glass shutters and wants soft-close hinges. Site measurement Saturday 10am in Kandy. Send revised quotation Q-1042.',c4:'Tharindu paid the advance for the 36" vanity. Installation date to be confirmed tomorrow. Asked about a matching mirror cabinet.',c5:'Anjali confirmed Saturday 9am installation. The building has a lift; parking at the back.',c7:'Priya asked about a 3-door sliding wardrobe with a mirror centre panel. Quoted Rs. 145,000. Site visit Saturday 10am.'};
+var TRS=[['Customer','Hello, I saw the wardrobe photos on your page.'],['Staff','Hi! Yes, which size are you looking at?'],['Customer','Three doors, with a mirror in the middle.'],['Staff','Our sliding 3-door is Rs. 145,000. We measure on site for free.']];
+SC.calls=function(){var mine=!isM();
+ var rows=D.calls.filter(function(k){return k.d!=='ringing'&&(!mine||D.contacts[k.c].to==='s1');});
+ return head('Call log','Every WhatsApp call on the business number, who took it, and the recording.',
+  (mine?'':'<button class="btn" data-go="callset">Call settings</button>')+'<button class="btn" data-go="fwd">Forwarding</button><button class="btn pri" data-toast="Call-back list sent to available staff.">Call back missed</button>')+
+ '<div class="stats"><div class="stat ok"><span>Answered</span><b>46</b><small>Avg 3m 12s</small></div><div class="stat b"><span>Missed</span><b>4</b><small>2 not returned yet</small></div><div class="stat w"><span>Rejected / forwarded</span><b>'+(2+rows.filter(function(k){return k.d==='forwarded';}).length)+'</b><small>Busy or on break</small></div><div class="stat i"><span>Recorded</span><b>'+(28+rows.filter(function(k){return k.rec;}).length)+'</b><small>Kept '+CFG.rec.keep+' days</small></div></div>'+
+ '<div class="card"><div class="card-h"><div class="seg" data-filter="callT"><button aria-pressed="false" data-v="missed">Missed</button><button aria-pressed="false" data-v="rejected">Rejected</button><button aria-pressed="false" data-v="rec">Recorded</button><button aria-pressed="true" data-v="all">All</button></div><span class="sp"></span><button class="btn sm" data-toast="Call log exported.">Export</button></div>'+
+ '<div class="tw"><table id="callT"><thead><tr><th>Customer</th><th>Type</th><th>When</th><th>Duration</th><th>Handled by</th><th>Notes</th><th class="r"></th></tr></thead><tbody>'+
+ rows.map(function(k){var c=D.contacts[k.c],m=CT[k.d]||CT.incoming,i=D.calls.indexOf(k);
+  return '<tr data-k="'+k.d+(k.rec?' rec':'')+'"><td><div class="emp">'+av(c)+'<span><b>'+c.n+'</b><span>'+c.ph+'</span></span></div></td><td><span class="chip '+m[0]+'">'+m[1]+'</span></td><td>'+k.t+'</td><td>'+(k.dur||'—')+'</td><td>'+(k.by||'—')+'</td><td>'+(k.ai?'<span class="chip i">AI summary</span> ':'')+esc(k.note||'')+'</td><td class="r" style="white-space:nowrap">'+(k.rec?'<button class="btn sm" data-w="recplay" data-id="'+i+'">● Recording</button> ':'')+'<button class="btn sm'+(k.rec?'':' pri')+'" data-w="callc" data-id="'+k.c+'">☏ Call</button></td></tr>';}).join('')+
+ '</tbody></table></div></div>'+
+ '<div class="note i"><span class="ic">◈</span><div><b>Calling needs the customer’s permission</b>A business can only call a customer who has allowed it, through the call_permission template or by calling the business first. Recording always plays an announcement.</div></div>';};
+AF.calls=function(){};
+W.callc=function(el){window.__call(el.getAttribute('data-id'));};
+W.recplay=function(el){var k=D.calls[+el.getAttribute('data-id')],c=D.contacts[k.c];
+ window.__sheet('<h2>Call recording</h2><p class="sub">'+c.n+' · '+k.t+' · '+k.dur+' · handled by '+k.by+'</p><div class="att">'+D.att({type:'voice',name:'call.ogg',dur:k.dur})+'</div>'+
+  '<h3 style="margin:16px 0 6px;font-size:13px">AI summary</h3><p style="font-size:13.5px">'+(SUMM[k.c]||'Customer asked about prices and delivery. Follow up on WhatsApp with the price list.')+'</p>'+
+  '<h3 style="margin:16px 0 6px;font-size:13px">Transcript</h3>'+TRS.map(function(t){return '<p style="font-size:13px;margin-bottom:4px"><b style="color:var(--ink-2)">'+(t[0]==='Staff'?k.by:first(c.n))+':</b> '+t[1]+'</p>';}).join('')+
+  '<p class="hint" style="margin-top:10px">Recorded after the announcement · kept '+CFG.rec.keep+' days · managers and '+k.by+' can listen.</p>'+
+  '<div style="display:flex;gap:8px;margin-top:12px"><button class="btn" data-w="recnote" data-id="'+el.getAttribute('data-id')+'">Add to chat as note</button><button class="btn" data-toast="Recording downloaded (call.ogg).">Download</button></div>');};
+W.recnote=function(el){var k=D.calls[+el.getAttribute('data-id')],v=convOf(k.c);if(v)v.msgs.push(['note','note','Call recording · '+k.dur+'. '+(SUMM[k.c]||''),nowT(),meName(),null,null,[{type:'voice',name:'call_recording.ogg',size:420000,dur:k.dur}]]);window.__close();window.__toast('Recording added to '+first(D.contacts[k.c].n)+'’s chat as a team note.');};
+
+/* ── CALL WINDOW: hold, add, transfer, record ── */
+function teamIds(){return D.staff.map(function(s){return s.id;}).filter(function(id){return isM()||id!=='s1';}).concat(isM()?[]:['mgr']);}
+var CS=null;
+function callBody(){var c=D.contacts[CS.c],ppl=CS.parts.map(sName);
+ return '<span style="font-size:12px;color:#C9D3F0">🔒 WhatsApp voice call · '+(CS.ivr?'IVR '+CS.ivr.k+' · '+esc(CS.ivr.t):'business line')+'</span>'+av(c,'lg')+'<h2>'+c.n+(ppl.length?' <small style="display:block;font-size:13px;font-weight:500;color:#C9D3F0">+ '+ppl.join(', ')+' · conference</small>':'')+'</h2>'+
+  '<span class="tm">'+(CS.hold?'On hold · ':'')+'<span id="ctm">'+fmtDur(Date.now()-CS.t0)+'</span></span><span class="rec'+(CS.rec?'':' off')+'">'+(CS.rec?'● Recording · customer notified':'❚❚ Recording paused')+'</span>'+
+  (CS.adding?'<div class="cpan"><b>Calling '+sName(CS.adding)+'…</b>They join when they answer.</div>':'')+
+  (CS.warm?'<div class="cpan"><b>Talking to '+sName(CS.warm)+'</b>'+first(c.n)+' is on hold with music.<div class="cbt"><button data-w="xdone">Complete transfer</button><button data-w="xconf">Join all three</button><button data-w="xcancel">Back to customer</button></div></div>':'')+
+  (ppl.length&&!CS.warm?'<div class="cpan"><b>Conference · '+(ppl.length+2)+' people</b><div class="cbt">'+CS.parts.map(function(p){return '<button data-w="rmp" data-v="'+p+'">Remove '+sName(p)+'</button>';}).join('')+'</div></div>':'')+
+  (CS.pick?'<div class="cpan"><b>'+(CS.pick==='add'?'Add to call':'Transfer to')+'</b>'+(CS.pick==='xfer'?'<div class="cbt"><button data-w="xmode" data-v="warm" class="'+(CS.xm==='warm'?'':'gh')+'">Ask first</button><button data-w="xmode" data-v="blind" class="'+(CS.xm==='blind'?'':'gh')+'">Transfer now</button></div>':'')+
+   '<div class="cbt">'+(CS.pick==='xfer'?'<button data-w="cpick" data-v="queue">Sales queue</button>':'')+teamIds().filter(function(i){return CS.parts.indexOf(i)<0;}).map(function(i){var s=D.staffById(i),off=s&&/brk|away|dnd/.test(s.call.st);return '<button data-w="cpick" data-v="'+i+'"'+(off?' disabled title="'+lab(s.call)+'"':'')+'>'+sName(i)+(s?' · '+lab(s.call):'')+'</button>';}).join('')+'<button data-w="cpickx" class="gh">Cancel</button></div></div>':'')+
+  '<div class="tr"><h4>✦ LIVE TRANSCRIPT</h4><p><b>'+first(c.n)+'</b>Pantry eke doors walata soft-close hinges danna puluwanda?</p><p><b>You</b>Ow puluwan. Saturday measurement ekata awama samples pennannam.</p></div>'+
+  '<div class="cgrid">'+[['mute','🎙','Mute',CS.mute],['spk','🔊','Speaker',CS.spk],['hold','❚❚','Hold',CS.hold],['add','＋','Add',CS.pick==='add'],['xfer','⇄','Transfer',CS.pick==='xfer'],['rec','●','Record',CS.rec],['keypad','⌗','Keypad',false],['note','✎','Note',false]].map(function(b){return '<button data-w="cctl" data-v="'+b[0]+'" class="'+(b[3]?'on':'')+'"><i>'+b[1]+'</i>'+b[2]+'</button>';}).join('')+'</div>'+
+  '<button class="endc" data-w="cend" aria-label="End call">✕</button>';}
+function callDraw(){var e=$('#callv');if(e)e.innerHTML=callBody();}
+window.__call=window.__call2=function(cid,ivr){var c=D.contacts[cid];
+ CS={c:cid,t0:Date.now(),parts:[],rec:CFG.rec.auto,ever:CFG.rec.auto,xm:'warm',ivr:ivr||null};
+ window.__sheet('<div class="callv" id="callv">'+callBody()+'</div>');
+ var iv=setInterval(function(){var e=$('#ctm');if(e&&CS)e.textContent=fmtDur(Date.now()-CS.t0);},1000);
+ window.__onClose=function(){clearInterval(iv);if(CS)endCall(null,null,true);};};
+function endCall(type,note,silent){var cs=CS;if(!cs)return;CS=null;var s=Math.floor((Date.now()-cs.t0)/1000),dur=Math.floor(s/60)+':'+pad(s%60),c=D.contacts[cs.c],v=convOf(cs.c);
+ if(D.calls[0]&&D.calls[0].d==='ringing'&&D.calls[0].c===cs.c)D.calls.shift();
+ var rec=cs.ever&&s>0;note=note||(cs.parts.length?'Conference with '+cs.parts.map(sName).join(', '):'');
+ D.calls.unshift({c:cs.c,d:type||(cs.ivr||cs.inc?'incoming':'outgoing'),t:'Today '+nowT(),dur:dur,by:meName(),rec:rec?1:0,note:note});
+ if(v)v.msgs.push(['sys','call','Voice call · '+dur+' · '+meName()+(note?' · '+note:'')+(rec?' · recording saved':''),nowT()]);
+ if(!silent)window.__close();
+ window.__toast((type==='transferred'?note+'.':'Call ended · '+dur+'.')+(rec?' Recording and summary saved to '+first(c.n)+'’s chat.':''));}
+W.cend=function(){endCall();};
+W.cctl=function(el){var k=el.getAttribute('data-v');
+ if(k==='note'){window.__toast('Note added to the call.');return;}
+ if(k==='keypad'){window.__toast('Keypad: tones are sent to the caller.');return;}
+ if(k==='add'||k==='xfer'){CS.pick=CS.pick===k?null:k;callDraw();return;}
+ if(k==='rec'){if(!isM()&&!CFG.rec.pause&&CS.rec){window.__toast('Your manager doesn’t allow pausing recordings.');return;}CS.rec=!CS.rec;if(CS.rec)CS.ever=true;callDraw();window.__toast(CS.rec?'Recording on.':'Recording paused. Card or bank details said now won’t be saved.');return;}
+ CS[k]=!CS[k];callDraw();if(k==='hold')window.__toast(CS.hold?'Customer on hold. They hear music.':'Call resumed.');};
+W.xmode=function(el){CS.xm=el.getAttribute('data-v');callDraw();};
+W.cpickx=function(){CS.pick=null;callDraw();};
+W.cpick=function(el){var id=el.getAttribute('data-v'),cs=CS;
+ if(cs.pick==='add'){cs.pick=null;cs.adding=id;callDraw();setTimeout(function(){if(CS!==cs||cs.adding!==id)return;cs.adding=null;cs.parts.push(id);callDraw();window.__toast(sName(id)+' joined. The customer can hear both of you.');},2000);return;}
+ cs.pick=null;
+ if(cs.xm==='blind'||id==='queue'){endCall('transferred','Transferred to '+(id==='queue'?'Sales queue':sName(id)));return;}
+ cs.warm=id;cs.hold=true;callDraw();};
+W.xdone=function(){endCall('transferred','Transferred to '+sName(CS.warm));};
+W.xconf=function(){CS.parts.push(CS.warm);CS.warm=null;CS.hold=false;callDraw();window.__toast('Conference: everyone can hear each other.');};
+W.xcancel=function(){CS.warm=null;CS.hold=false;callDraw();};
+W.rmp=function(el){var id=el.getAttribute('data-v');CS.parts=CS.parts.filter(function(p){return p!==id;});callDraw();window.__toast(sName(id)+' left the call.');};
+
+/* ── ringing banner actions (inbox) ── */
+function ringGone(d,note){var r=$('#ring');if(r)r.remove();var k=D.calls[0];if(k&&k.d==='ringing'){k.d=d;k.t='Today '+nowT();k.by=meName();k.note=note;}}
+W.ringans=function(){var r=$('#ring');if(r)r.remove();window.__call('c7',SR.ivrPick());if(CS)CS.inc=true;};
+W.ringno=function(){ringGone('rejected','Declined');window.__toast('Call declined. Priya gets the missed-call message.');};
+W.ringfwd=function(){window.__sheet('<h2>Forward this call</h2><p class="sub">It rings them now. You stay free.</p>'+
+ '<div class="list-row" style="padding-left:0;padding-right:0"><div class="bd"><b>Sales queue</b><span>Everyone available</span></div><div class="rt"><button class="btn sm pri" data-w="ringfwdto" data-v="queue">Forward</button></div></div>'+
+ D.staff.map(function(s){var off=/brk|away|dnd/.test(s.call.st);return '<div class="list-row" style="padding-left:0;padding-right:0"><i class="av st '+s.st+'">'+s.i+'</i><div class="bd"><b>'+s.n+'</b><span>'+sc('call',s.call,true)+'</span></div><div class="rt"><button class="btn sm pri" data-w="ringfwdto" data-v="'+s.id+'"'+(off?' disabled':'')+'>Forward</button></div></div>';}).join('')+
+ '<div class="list-row" style="padding-left:0;padding-right:0"><div class="bd"><b>Ask for a voice note</b><span>Auto-reply asks the caller to record one</span></div><div class="rt"><button class="btn sm" data-w="ringfwdto" data-v="vm">Send</button></div></div>');};
+W.ringfwdto=function(el){var v=el.getAttribute('data-v');window.__close();ringGone('forwarded',v==='vm'?'Asked for a voice note':'Forwarded to '+(v==='queue'?'Sales queue':sName(v)));window.__toast(v==='vm'?'Call ended. Priya was asked to send a voice note.':'Call forwarded to '+FD[v]+'.');};
+var CANNED=['Can’t talk right now. I’ll call you back in 10 minutes.','I’m with a customer. Please send your question on WhatsApp.','We’ll call you back within the hour.'];
+W.ringmsg=function(){window.__sheet('<h2>Decline with a message</h2><p class="sub">Sent on WhatsApp right away.</p>'+CANNED.map(function(t,i){return '<div class="list-row" style="padding-left:0;padding-right:0"><div class="bd"><b style="font-weight:500">'+t+'</b></div><div class="rt"><button class="btn sm pri" data-w="ringmsgto" data-v="'+i+'">Send</button></div></div>';}).join(''));};
+W.ringmsgto=function(el){var t=CANNED[+el.getAttribute('data-v')],v=convOf('c7');if(v){v.msgs.push(['out','text',t,nowT(),meName(),1]);v.pv=t;v.t=nowT();}window.__close();ringGone('rejected','Declined with a message');window.__toast('Declined. Message sent to Priya on WhatsApp.');};
+
+/* ── STAFF: my day ── */
+SC.mydash=function(){var p=me(),mine=D.convs.filter(function(v){return D.contacts[v.c].to==='s1';}),exp=mine.filter(function(v){return winCls(v)==='r';});
+ var off=p.call.st!=='available'||p.chat.st!=='available';
+ return head('Good morning, Nimal','Your chats, calls and status for today.','<button class="btn" data-w="brk">Take a break</button><button class="btn pri" data-w="status">Change status</button>')+
+ '<div class="card"><div class="card-h"><h2>My status</h2>'+both(p,true)+'<span class="sp"></span>'+(off?'<button class="btn sm pri" data-w="backav">Back to available</button>':'')+'</div><div class="card-b"><div class="grid g2" style="gap:14px;margin:0">'+chanBlock(p,'call')+chanBlock(p,'chat')+'</div><div class="ln"><span>Breaks today</span><b>'+brkTotal(p)+' of '+CFG.brkmax+' min</b></div></div></div>'+
+ '<div class="stats"><div class="stat i"><span>My customers</span><b>'+mine.length+'</b><small>'+mine.filter(function(v){return v.un;}).length+' unread</small></div><div class="stat b"><span>Closing in under 2h</span><b>'+exp.length+'</b><small>'+(exp.map(function(v){return first(D.contacts[v.c].n);}).join(', ')||'None')+'</small></div><div class="stat ok"><span>Resolved today</span><b>14 / 20</b><small>Daily target</small></div><div class="stat"><span>My avg reply</span><b>2m 10s</b><small>Team 3m 40s</small></div></div>'+
+ '<div class="card"><div class="card-h"><h2>My queue</h2><span class="sp"></span><button class="btn sm" data-go="inbox">Open inbox</button></div>'+
+ (mine.map(function(v){var c=D.contacts[v.c];return '<div class="list-row">'+av(c)+'<div class="bd"><b>'+c.n+'</b><span>'+esc(v.pv)+'</span></div><div class="rt">'+winChip(v)+(v.un?' <span class="chip i">'+v.un+' new</span>':'')+' <button class="btn sm" data-go="inbox">Open</button></div></div>';}).join('')||'<div class="empty"><b>No customers assigned</b>Your manager assigns customers to you.</div>')+'</div>';};
+
+/* ── dashboard helpers ── */
+SR.expRow=function(){var e=D.convs.filter(function(v){return winCls(v)==='r';});if(!e.length)return '';
+ return '<div class="list-row"><span class="dot b"></span><div class="bd"><b>'+e.length+' reply window'+(e.length>1?'s':'')+' close in under 2 hours</b><span>'+e.map(function(v){return D.contacts[v.c].n;}).join(' · ')+' · after that only paid templates can go</span></div><div class="rt">'+e.map(winChip).join(' ')+' <button class="btn sm" data-go="inbox">Open</button></div></div>';};
+SR.noOwner=function(){var n=Object.keys(D.contacts).filter(function(k){return !D.contacts[k].to;});if(!n.length)return '';
+ return '<div class="list-row"><span class="dot b"></span><div class="bd"><b>'+n.length+' customer'+(n.length>1?'s have':' has')+' no owner</b><span>'+n.map(function(k){return D.contacts[k].n;}).join(' · ')+' · chats and calls go to the Sales queue</span></div><div class="rt"><button class="btn sm" data-go="contacts">Assign</button></div></div>';};
+SR.legend='<div class="wleg"><span><i class="g"></i>New · 20h+</span><span><i class="y"></i>Open</span><span><i class="r"></i>Under 2h</span><span><i class="x"></i>Closed</span></div>';
+})();
+
+window.__boot();
+</script>
+</body>
+</html>
+
+</body></html>

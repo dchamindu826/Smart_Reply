@@ -1,0 +1,1674 @@
+/* WhatsApp Web Style UI Styles - Isolated Chat Theme */
+
+:root,
+[data-chat-theme="light"] {
+  --wa-bg: #efeae2;
+  --wa-header-bg: #f0f2f5;
+  --wa-border: #e0e5e9;
+  --wa-panel-bg: #ffffff;
+  --wa-panel-sub: #f0f2f5;
+  --wa-input-bg: #ffffff;
+  --wa-bubble-in: #ffffff;
+  --wa-bubble-out: #d9fdd3;
+  --wa-bubble-text: #111b21;
+  --wa-green: #00a884;
+  --wa-teal: #008069;
+  --wa-primary-text: #111b21;       /* Deep crystal-clear dark ink */
+  --wa-secondary-text: #54656f;     /* High contrast readable secondary text */
+  --wa-muted: #707f89;
+  --wa-hover: #f5f6f6;
+  --wa-active: #e9edef;
+  --wa-ticks: #53bdeb;
+  --wa-notice-bg: #e7f3ff;
+  --wa-notice-text: #0c4273;
+  --wa-doodle-dot: rgba(0, 0, 0, 0.06);
+  --wa-chip-bg: #ffffff;
+  --wa-chip-text: #111b21;
+  --wa-chip-border: #cbd5e1;
+}
+
+/* Eye-Friendly, Soft Charcoal Dark Mode (Not Harsh Pitch Black) */
+[data-chat-theme="dark"] {
+  --wa-bg: #0b141a;                 /* Official WhatsApp dark mode canvas background */
+  --wa-header-bg: #202c33;          /* Elegant slate-dark header */
+  --wa-border: #2a3942;             /* Smooth subtle borders */
+  --wa-panel-bg: #182229;           /* Calming soft slate panels */
+  --wa-panel-sub: #202c33;          /* Soft background for inputs/chips */
+  --wa-input-bg: #2a3942;           /* Composer input field */
+  --wa-bubble-in: #222e35;          /* Gentle incoming bubble */
+  --wa-bubble-out: #005c4b;         /* Classic soft WhatsApp emerald */
+  --wa-bubble-text: #e2e8f0;        /* Soothing off-white text without glare */
+  --wa-green: #00a884;
+  --wa-teal: #00a884;
+  --wa-primary-text: #e2e8f0;       /* High-legibility, zero-eye-strain text */
+  --wa-secondary-text: #94a3b8;     /* Soft slate secondary text */
+  --wa-muted: #64748b;
+  --wa-hover: #222e35;
+  --wa-active: #2a3942;
+  --wa-ticks: #53bdeb;
+  --wa-notice-bg: #1e2930;
+  --wa-notice-text: #ffd279;
+  --wa-doodle-dot: rgba(255, 255, 255, 0.035);
+  --wa-chip-bg: #202c33;
+  --wa-chip-text: #e2e8f0;
+  --wa-chip-border: #334155;
+}
+
+/* Page container for full-width seamless chat */
+.page-chat-container {
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: 100% !important;
+  height: calc(100vh - 57px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--wa-panel-bg);
+}
+
+/* 3-Column WhatsApp Layout */
+.wa-layout {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--wa-panel-bg);
+}
+
+/* Column 1: Conversations List */
+.wa-col-list {
+  width: 380px;
+  flex: 0 0 380px;
+  border-right: 1px solid var(--wa-border);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--wa-panel-bg);
+  position: relative;
+  z-index: 2;
+}
+
+/* Column 2: Chat Thread */
+.wa-col-thread {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--wa-bg);
+  position: relative;
+  z-index: 1;
+}
+
+/* Column 3: Contact Info */
+.wa-col-info {
+  width: 360px;
+  flex: 0 0 360px;
+  border-left: 1px solid var(--wa-border);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--wa-panel-bg);
+  overflow-y: auto;
+  position: relative;
+  z-index: 2;
+}
+
+/* Common Header Styles */
+.wa-header {
+  height: 59px;
+  padding: 10px 16px;
+  background: var(--wa-header-bg);
+  border-bottom: 1px solid var(--wa-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex: none;
+}
+
+.wa-header .wa-user-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.wa-header .wa-user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex: none;
+  cursor: pointer;
+}
+
+.wa-header .wa-user-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--wa-primary-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wa-header .wa-user-sub {
+  font-size: 12px;
+  color: var(--wa-secondary-text);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wa-icon-btn {
+  background: none;
+  border: 0;
+  color: var(--wa-secondary-text);
+  padding: 8px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s;
+}
+
+.wa-icon-btn:hover {
+  background: var(--wa-hover);
+  color: var(--wa-primary-text);
+}
+
+/* Notice Banner */
+.wa-notice-banner {
+  background: var(--wa-notice-bg);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--wa-border);
+  flex: none;
+}
+
+.wa-notice-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #00a884;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  flex: none;
+}
+
+.wa-notice-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.wa-notice-title {
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--wa-primary-text);
+}
+
+.wa-notice-sub {
+  font-size: 12px;
+  color: var(--wa-secondary-text);
+}
+
+.wa-notice-sub a {
+  color: #027eb5;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Search Bar */
+.wa-search-container {
+  padding: 8px 12px;
+  background: var(--wa-panel-bg);
+  border-bottom: 1px solid var(--wa-border);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: none;
+}
+
+.wa-search-input-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--wa-panel-sub);
+  border-radius: 8px;
+  padding: 0 12px;
+  height: 36px;
+}
+
+.wa-search-input-wrap svg {
+  width: 16px;
+  height: 16px;
+  color: var(--wa-secondary-text);
+  margin-right: 10px;
+  flex: none;
+}
+
+.wa-search-input {
+  border: 0;
+  background: transparent;
+  color: var(--wa-primary-text);
+  font-size: 13.5px;
+  width: 100%;
+  outline: none;
+}
+
+.wa-search-input::placeholder {
+  color: var(--wa-secondary-text);
+}
+
+.wa-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-bottom: 2px;
+}
+
+.wa-filter-pill {
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--wa-panel-sub);
+  color: var(--wa-secondary-text);
+  border: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.wa-filter-pill:hover {
+  background: var(--wa-hover);
+  color: var(--wa-primary-text);
+}
+
+.wa-filter-pill.active {
+  background: #00a884;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Chat Item */
+.wa-chat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--wa-border);
+  cursor: pointer;
+  background: transparent;
+  transition: background 0.15s;
+  width: 100%;
+  text-align: left;
+}
+
+.wa-chat-item:hover {
+  background: var(--wa-hover);
+}
+
+.wa-chat-item.active {
+  background: var(--wa-active);
+}
+
+.wa-chat-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 15px;
+  flex: none;
+}
+
+.wa-chat-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.wa-chat-row1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.wa-chat-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--wa-primary-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wa-chat-time {
+  font-size: 11.5px;
+  color: var(--wa-secondary-text);
+  flex: none;
+}
+
+.wa-chat-item.unread .wa-chat-time {
+  color: #00a884;
+  font-weight: 600;
+}
+
+.wa-chat-row2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+}
+
+.wa-chat-preview {
+  font-size: 13px;
+  color: var(--wa-secondary-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.wa-chat-badge {
+  background: #25d366;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 19px;
+  height: 19px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  padding: 0 5px;
+  flex: none;
+}
+
+/* Chat Wallpaper & Canvas - 5 Themes */
+.wa-canvas {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  transition: background-color 0.2s ease, background-image 0.2s ease;
+}
+
+/* 1. Classic WhatsApp Doodle (Default) */
+.wa-canvas,
+[data-wallpaper="doodle"] .wa-canvas {
+  background-color: #efeae2 !important;
+  background-image: url('/wa-doodle-light.png') !important;
+  background-repeat: repeat !important;
+  background-size: 380px auto !important;
+}
+
+[data-chat-theme="dark"] .wa-canvas,
+[data-chat-theme="dark"][data-wallpaper="doodle"] .wa-canvas,
+.wa-layout[data-chat-theme="dark"] .wa-canvas,
+.wa-isolated-root[data-chat-theme="dark"] .wa-canvas {
+  background-color: #0b141a !important;
+  background-image: url('/wa-doodle-dark.png') !important;
+  background-repeat: repeat !important;
+  background-size: 380px auto !important;
+}
+
+/* 2. Plain Solid Canvas (One option should be plain - clean & distraction free) */
+[data-wallpaper="plain"] .wa-canvas,
+.wa-layout[data-wallpaper="plain"] .wa-canvas,
+.wa-isolated-root[data-wallpaper="plain"] .wa-canvas {
+  background-color: #efeae2 !important;
+  background-image: none !important;
+}
+
+[data-chat-theme="dark"][data-wallpaper="plain"] .wa-canvas,
+.wa-layout[data-chat-theme="dark"][data-wallpaper="plain"] .wa-canvas,
+.wa-isolated-root[data-chat-theme="dark"][data-wallpaper="plain"] .wa-canvas {
+  background-color: #0b141a !important;
+  background-image: none !important;
+}
+
+/* 3. Minimal Tech Dots */
+[data-wallpaper="dots"] .wa-canvas,
+.wa-layout[data-wallpaper="dots"] .wa-canvas,
+.wa-isolated-root[data-wallpaper="dots"] .wa-canvas {
+  background-color: #f0f2f5 !important;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1.2px, transparent 0) !important;
+  background-size: 22px 22px !important;
+}
+
+[data-chat-theme="dark"][data-wallpaper="dots"] .wa-canvas,
+.wa-layout[data-chat-theme="dark"][data-wallpaper="dots"] .wa-canvas,
+.wa-isolated-root[data-chat-theme="dark"][data-wallpaper="dots"] .wa-canvas {
+  background-color: #111b21 !important;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1.2px, transparent 0) !important;
+  background-size: 22px 22px !important;
+}
+
+/* 4. Signature Emerald Mint */
+[data-wallpaper="emerald"] .wa-canvas,
+.wa-layout[data-wallpaper="emerald"] .wa-canvas,
+.wa-isolated-root[data-wallpaper="emerald"] .wa-canvas {
+  background-color: #e7f2ed !important;
+  background-image: url('/wa-doodle-emerald-light.png') !important;
+  background-repeat: repeat !important;
+  background-size: 380px auto !important;
+}
+
+[data-chat-theme="dark"][data-wallpaper="emerald"] .wa-canvas,
+.wa-layout[data-chat-theme="dark"][data-wallpaper="emerald"] .wa-canvas,
+.wa-isolated-root[data-chat-theme="dark"][data-wallpaper="emerald"] .wa-canvas {
+  background-color: #081a17 !important;
+  background-image: url('/wa-doodle-emerald-dark.png') !important;
+  background-repeat: repeat !important;
+  background-size: 380px auto !important;
+}
+
+/* 5. Cozy Warm Sand & Espresso */
+[data-wallpaper="warm"] .wa-canvas,
+.wa-layout[data-wallpaper="warm"] .wa-canvas,
+.wa-isolated-root[data-wallpaper="warm"] .wa-canvas {
+  background-color: #f7f1e6 !important;
+  background-image: url('/wa-doodle-warm-light.png') !important;
+  background-repeat: repeat !important;
+  background-size: 380px auto !important;
+}
+
+[data-chat-theme="dark"][data-wallpaper="warm"] .wa-canvas,
+.wa-layout[data-chat-theme="dark"][data-wallpaper="warm"] .wa-canvas,
+.wa-isolated-root[data-chat-theme="dark"][data-wallpaper="warm"] .wa-canvas {
+  background-color: #181415 !important;
+  background-image: url('/wa-doodle-warm-dark.png') !important;
+  background-repeat: repeat !important;
+  background-size: 380px auto !important;
+}
+
+/* Encryption / Notice Banner in Chat */
+.wa-chat-lock-banner {
+  align-self: center;
+  max-width: 580px;
+  background: #ffeecd;
+  color: #54656f;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  margin-bottom: 10px;
+}
+
+[data-chat-theme="dark"] .wa-chat-lock-banner {
+  background: #182229;
+  color: #ffd279;
+}
+
+/* Date Pill */
+.wa-date-pill {
+  align-self: center;
+  background: var(--wa-panel-bg);
+  color: var(--wa-secondary-text);
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+  margin: 8px 0;
+}
+
+/* Message Bubbles */
+.wa-bubble {
+  max-width: 65%;
+  min-width: 80px;
+  padding: 6px 9px 5px 9px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.4;
+  position: relative;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+  word-break: break-word;
+}
+
+.wa-bubble.in {
+  align-self: flex-start;
+  background: var(--wa-bubble-in);
+  color: var(--wa-primary-text);
+  border-top-left-radius: 0;
+}
+
+.wa-bubble.out {
+  align-self: flex-end;
+  background: var(--wa-bubble-out);
+  color: var(--wa-primary-text);
+  border-top-right-radius: 0;
+}
+
+.wa-bubble-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--wa-secondary-text);
+  float: right;
+  margin-left: 10px;
+  margin-bottom: -2px;
+}
+
+.wa-ticks {
+  color: var(--wa-ticks);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+/* Floating Scroll Down Arrow */
+.wa-scroll-btn {
+  position: absolute;
+  right: 24px;
+  bottom: 84px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--wa-panel-bg);
+  color: var(--wa-secondary-text);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+  border: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: transform 0.15s;
+}
+
+.wa-scroll-btn:hover {
+  transform: scale(1.06);
+  color: var(--wa-primary-text);
+}
+
+/* Quick reply pill chips */
+.wa-quick-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--wa-chip-bg);
+  color: var(--wa-chip-text) !important;
+  border: 1px solid var(--wa-chip-border);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.wa-quick-chip:hover {
+  background: var(--wa-hover);
+  color: var(--wa-primary-text) !important;
+  border-color: var(--wa-green);
+}
+
+/* Composer */
+.wa-composer-wrap {
+  background: var(--wa-header-bg);
+  border-top: 1px solid var(--wa-border);
+  padding: 8px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: none;
+}
+
+.wa-composer-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wa-composer-input {
+  flex: 1;
+  background: var(--wa-panel-bg);
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--wa-primary-text);
+  outline: none;
+}
+
+.wa-composer-input::placeholder {
+  color: var(--wa-secondary-text);
+}
+
+.wa-send-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #00a884;
+  color: #ffffff;
+  border: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 17px;
+  flex: none;
+  transition: background 0.15s, transform 0.15s;
+}
+
+.wa-send-btn:hover {
+  background: #008f6f;
+  transform: scale(1.05);
+}
+
+/* Contact Info Panel */
+.wa-info-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 20px 16px;
+  border-bottom: 10px solid var(--wa-panel-sub);
+  background: var(--wa-panel-bg);
+}
+
+.wa-info-avatar-lg {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 48px;
+  font-weight: 700;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+}
+
+.wa-info-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--wa-primary-text);
+  margin-top: 14px;
+  text-align: center;
+}
+
+.wa-info-phone {
+  font-size: 13.5px;
+  color: var(--wa-secondary-text);
+  margin-top: 3px;
+}
+
+.wa-info-actions {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-top: 18px;
+  width: 100%;
+}
+
+.wa-info-act-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #008069;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.wa-info-act-btn span.icon-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--wa-border);
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  color: #008069;
+  background: var(--wa-panel-bg);
+  transition: background 0.15s;
+}
+
+.wa-info-act-btn:hover span.icon-circle {
+  background: var(--wa-hover);
+}
+
+.wa-info-act-btn.dg {
+  color: #ea0038;
+}
+
+.wa-info-act-btn.dg span.icon-circle {
+  color: #ea0038;
+  border-color: rgba(234, 0, 56, 0.2);
+}
+
+/* Media / Links Section */
+.wa-info-section {
+  padding: 16px 20px;
+  border-bottom: 10px solid var(--wa-panel-sub);
+  background: var(--wa-panel-bg);
+}
+
+.wa-info-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  color: var(--wa-secondary-text);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.wa-info-section-header b {
+  color: #008069;
+}
+
+.wa-media-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.wa-media-item {
+  aspect-ratio: 1;
+  background: var(--wa-panel-sub);
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  color: var(--wa-secondary-text);
+  font-size: 20px;
+  overflow: hidden;
+  border: 1px solid var(--wa-border);
+}
+
+.wa-media-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* =========================================================================
+   TOTAL ISOLATION RULES (100% AIRTIGHT ENCAPSULATION)
+   Ensures that NO outer theme (:root[data-theme="dark"] or light) can EVER
+   leak into the Chat Area. Everything inside .wa-isolated-root / [data-chat-theme]
+   is completely self-governing and isolated.
+   ========================================================================= */
+
+/* Template action buttons in message bubbles */
+.wa-bubble-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+}
+
+/* -------------------------------------------------------------------------
+   LIGHT CHAT MODE (Full, Uncompromising WhatsApp Web Light)
+   Trumps ANY outer theme (even when outer web app is in Dark mode)
+   ------------------------------------------------------------------------- */
+:root .wa-isolated-root[data-chat-theme="light"],
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"],
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="light"],
+:root .wa-layout[data-chat-theme="light"],
+:root[data-theme="dark"] .wa-layout[data-chat-theme="light"],
+.wa-isolated-root[data-chat-theme="light"],
+[data-chat-theme="light"] {
+  --card: #ffffff !important;
+  --card-2: #f0f2f5 !important;
+  --paper: #efeae2 !important;
+  --ink: #111b21 !important;
+  --ink-2: #54656f !important;
+  --ink-3: #8696a0 !important;
+  --rule: #e0e5e9 !important;
+  --rule-2: #cbd5e1 !important;
+  --blue: #008069 !important;
+  --info: #008069 !important;
+  --info-bg: #e7f3ff !important;
+  --ok: #00a884 !important;
+  --ok-bg: #d9fdd3 !important;
+  --warn: #a96c08 !important;
+  --warn-bg: #fef9c3 !important;
+  --bad: #ea0038 !important;
+  --bad-bg: #ffebee !important;
+
+  /* WA Theme variables */
+  --wa-bg: #efeae2 !important;
+  --wa-header-bg: #f0f2f5 !important;
+  --wa-border: #e0e5e9 !important;
+  --wa-panel-bg: #ffffff !important;
+  --wa-panel-sub: #f0f2f5 !important;
+  --wa-input-bg: #ffffff !important;
+  --wa-bubble-in: #ffffff !important;
+  --wa-bubble-out: #d9fdd3 !important;
+  --wa-bubble-text: #111b21 !important;
+  --wa-primary-text: #111b21 !important;
+  --wa-secondary-text: #54656f !important;
+  --wa-muted: #707f89 !important;
+  --wa-hover: #f5f6f6 !important;
+  --wa-active: #e9edef !important;
+  --wa-ticks: #53bdeb !important;
+  --wa-notice-bg: #e7f3ff !important;
+  --wa-notice-text: #0c4273 !important;
+  --wa-doodle-dot: rgba(0, 0, 0, 0.06) !important;
+  --wa-chip-bg: #ffffff !important;
+  --wa-chip-text: #111b21 !important;
+  --wa-chip-border: #cbd5e1 !important;
+
+  background: #ffffff !important;
+  color: #111b21 !important;
+  color-scheme: light !important;
+}
+
+/* Light Mode: All Descendants Inherit Light CSS Variables */
+:root .wa-isolated-root[data-chat-theme="light"] *,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] *,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="light"] *,
+[data-chat-theme="light"] * {
+  --card: #ffffff;
+  --card-2: #f0f2f5;
+  --paper: #efeae2;
+  --ink: #111b21;
+  --ink-2: #54656f;
+  --ink-3: #8696a0;
+  --rule: #e0e5e9;
+  --rule-2: #cbd5e1;
+  --blue: #008069;
+  --info: #008069;
+  --info-bg: #e7f3ff;
+  --ok: #00a884;
+  --ok-bg: #d9fdd3;
+  --warn: #a96c08;
+  --warn-bg: #fef9c3;
+  --bad: #ea0038;
+  --bad-bg: #ffebee;
+}
+
+/* Light Mode: Message Bubble Action Buttons */
+:root .wa-isolated-root[data-chat-theme="light"] .wa-bubble-btn,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .wa-bubble-btn,
+.wa-isolated-root[data-chat-theme="light"] .wa-bubble-btn,
+[data-chat-theme="light"] .wa-bubble-btn {
+  background: #ffffff !important;
+  color: #008069 !important;
+  border: 1px solid #d1d7db !important;
+  font-weight: 600 !important;
+  font-size: 12.5px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="light"] .wa-bubble-btn:hover,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .wa-bubble-btn:hover,
+.wa-isolated-root[data-chat-theme="light"] .wa-bubble-btn:hover,
+[data-chat-theme="light"] .wa-bubble-btn:hover {
+  background: #f0fdf4 !important;
+  color: #006853 !important;
+  border-color: #008069 !important;
+}
+
+/* Light Mode: Generic Buttons Override */
+:root .wa-isolated-root[data-chat-theme="light"] button,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] button,
+[data-chat-theme="light"] button {
+  color: #111b21 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="light"] .btn,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .btn,
+[data-chat-theme="light"] .btn {
+  background: #ffffff !important;
+  color: #111b21 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="light"] .wa-header-call-btn,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .wa-header-call-btn,
+:root .wa-isolated-root[data-chat-theme="light"] .btn.pri,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .btn.pri,
+[data-chat-theme="light"] .wa-header-call-btn,
+[data-chat-theme="light"] .btn.pri {
+  background: #008069 !important;
+  color: #ffffff !important;
+  border: 1px solid #008069 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="light"] .wa-header-resolve-btn,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .wa-header-resolve-btn,
+[data-chat-theme="light"] .wa-header-resolve-btn {
+  background: #ffffff !important;
+  color: #111b21 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+/* Light Mode: Form Controls & Customer Owner Dropdown */
+:root .wa-isolated-root[data-chat-theme="light"] select,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] select,
+:root .wa-isolated-root[data-chat-theme="light"] input,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] input,
+:root .wa-isolated-root[data-chat-theme="light"] textarea,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] textarea,
+:root .wa-isolated-root[data-chat-theme="light"] .wa-select,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .wa-select,
+:root .wa-isolated-root[data-chat-theme="light"] .f-in,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .f-in,
+[data-chat-theme="light"] select,
+[data-chat-theme="light"] .wa-select,
+[data-chat-theme="light"] .f-in {
+  background: #ffffff !important;
+  color: #111b21 !important;
+  border: 1px solid #cbd5e1 !important;
+  color-scheme: light !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="light"] select option,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] select option,
+[data-chat-theme="light"] select option {
+  background: #ffffff !important;
+  color: #111b21 !important;
+}
+
+/* Light Mode: Search input */
+:root .wa-isolated-root[data-chat-theme="light"] .wa-search-input-wrap,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .wa-search-input-wrap,
+[data-chat-theme="light"] .wa-search-input-wrap {
+  background: #f0f2f5 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="light"] input.wa-search-input,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] input.wa-search-input,
+[data-chat-theme="light"] input.wa-search-input {
+  color: #111b21 !important;
+}
+
+/* Light Mode: Filter Pills & Tabs */
+:root .wa-isolated-root[data-chat-theme="light"] .wa-filter-pill,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .wa-filter-pill,
+[data-chat-theme="light"] .wa-filter-pill {
+  background: #f0f2f5 !important;
+  color: #54656f !important;
+  border: 1px solid transparent !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="light"] .wa-filter-pill:hover,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .wa-filter-pill:hover,
+[data-chat-theme="light"] .wa-filter-pill:hover {
+  background: #e9edef !important;
+  color: #111b21 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="light"] .wa-filter-pill.active,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .wa-filter-pill.active,
+[data-chat-theme="light"] .wa-filter-pill.active {
+  background: #d9fdd3 !important;
+  color: #008069 !important;
+  border: 1px solid #00a884 !important;
+  font-weight: 600 !important;
+}
+
+/* Light Mode: Quick Reply Chips */
+:root .wa-isolated-root[data-chat-theme="light"] .wa-quick-chip,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .wa-quick-chip,
+[data-chat-theme="light"] .wa-quick-chip {
+  background: #ffffff !important;
+  color: #111b21 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="light"] .wa-quick-chip:hover,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .wa-quick-chip:hover,
+[data-chat-theme="light"] .wa-quick-chip:hover {
+  background: #f0f2f5 !important;
+  color: #008069 !important;
+  border-color: #008069 !important;
+}
+
+/* Light Mode: Chips & Badges */
+:root .wa-isolated-root[data-chat-theme="light"] .chip,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .chip,
+[data-chat-theme="light"] .chip {
+  background: #f0f2f5 !important;
+  color: #111b21 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="light"] .chip.ok,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .chip.ok,
+[data-chat-theme="light"] .chip.ok {
+  background: #d9fdd3 !important;
+  color: #008069 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="light"] .chip.b,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .chip.b,
+[data-chat-theme="light"] .chip.b {
+  background: #ffebee !important;
+  color: #ea0038 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="light"] .chip.i,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .chip.i,
+[data-chat-theme="light"] .chip.i {
+  background: #e7f3ff !important;
+  color: #027eb5 !important;
+}
+
+/* Light Mode: Internal Notes */
+:root .wa-isolated-root[data-chat-theme="light"] .nt,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .nt,
+[data-chat-theme="light"] .nt {
+  background: #fef9c3 !important;
+  border: 1px dashed #ca8a04 !important;
+  color: #713f12 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="light"] .nt b,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .nt b,
+[data-chat-theme="light"] .nt b {
+  color: #854d0e !important;
+}
+
+/* Light Mode: System Pills */
+:root .wa-isolated-root[data-chat-theme="light"] .sys,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .sys,
+[data-chat-theme="light"] .sys {
+  background: #ffffff !important;
+  color: #54656f !important;
+  border: 1px solid #e0e5e9 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="light"] .sys.b,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .sys.b,
+[data-chat-theme="light"] .sys.b {
+  background: #ffebee !important;
+  color: #dc2626 !important;
+  border-color: #fecaca !important;
+}
+
+/* Light Mode: Lists & Meta Rows */
+:root .wa-isolated-root[data-chat-theme="light"] .ln,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .ln,
+[data-chat-theme="light"] .ln {
+  color: #111b21 !important;
+  border-bottom-color: #e0e5e9 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="light"] .ln span,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .ln span,
+[data-chat-theme="light"] .ln span {
+  color: #54656f !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="light"] .ln b,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .ln b,
+[data-chat-theme="light"] .ln b {
+  color: #111b21 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="light"] .hint,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .hint,
+[data-chat-theme="light"] .hint {
+  color: #54656f !important;
+}
+
+/* Light Mode: Action circles in Contact Info */
+:root .wa-isolated-root[data-chat-theme="light"] .wa-info-act-btn span.icon-circle,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .wa-info-act-btn span.icon-circle,
+[data-chat-theme="light"] .wa-info-act-btn span.icon-circle {
+  background: #ffffff !important;
+  color: #008069 !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="light"] .wa-info-act-btn.dg span.icon-circle,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .wa-info-act-btn.dg span.icon-circle,
+[data-chat-theme="light"] .wa-info-act-btn.dg span.icon-circle {
+  color: #ea0038 !important;
+  border-color: rgba(234, 0, 56, 0.3) !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="light"] .wa-info-act-btn span:last-child,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .wa-info-act-btn span:last-child,
+[data-chat-theme="light"] .wa-info-act-btn span:last-child {
+  color: #111b21 !important;
+}
+
+/* Light Mode: Icon buttons */
+:root .wa-isolated-root[data-chat-theme="light"] .wa-icon-btn,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .wa-icon-btn,
+[data-chat-theme="light"] .wa-icon-btn {
+  color: #54656f !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="light"] .wa-icon-btn:hover,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="light"] .wa-icon-btn:hover,
+[data-chat-theme="light"] .wa-icon-btn:hover {
+  color: #111b21 !important;
+  background: rgba(0, 0, 0, 0.05) !important;
+}
+
+
+/* -------------------------------------------------------------------------
+   DARK CHAT MODE (Eye-Friendly, Soft Slate WhatsApp Web Dark)
+   Trumps ANY outer theme (even when outer web app is in Light mode)
+   ------------------------------------------------------------------------- */
+:root .wa-isolated-root[data-chat-theme="dark"],
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="dark"],
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"],
+:root .wa-layout[data-chat-theme="dark"],
+:root[data-theme="light"] .wa-layout[data-chat-theme="dark"],
+.wa-isolated-root[data-chat-theme="dark"],
+[data-chat-theme="dark"] {
+  --card: #182229 !important;
+  --card-2: #202c33 !important;
+  --paper: #141e24 !important;
+  --ink: #e2e8f0 !important;
+  --ink-2: #94a3b8 !important;
+  --ink-3: #64748b !important;
+  --rule: #2a3942 !important;
+  --rule-2: #334155 !important;
+  --blue: #00a884 !important;
+  --info: #00a884 !important;
+  --info-bg: #1e2930 !important;
+  --ok: #00a884 !important;
+  --ok-bg: #005c4b !important;
+  --warn: #ffd279 !important;
+  --warn-bg: #1e2930 !important;
+  --bad: #f87171 !important;
+  --bad-bg: #371717 !important;
+
+  /* WA Theme variables */
+  --wa-bg: #0b141a !important;
+  --wa-header-bg: #202c33 !important;
+  --wa-border: #2a3942 !important;
+  --wa-panel-bg: #182229 !important;
+  --wa-panel-sub: #202c33 !important;
+  --wa-input-bg: #2a3942 !important;
+  --wa-bubble-in: #222e35 !important;
+  --wa-bubble-out: #005c4b !important;
+  --wa-bubble-text: #e2e8f0 !important;
+  --wa-green: #00a884 !important;
+  --wa-teal: #00a884 !important;
+  --wa-primary-text: #e2e8f0 !important;
+  --wa-secondary-text: #94a3b8 !important;
+  --wa-muted: #64748b !important;
+  --wa-hover: #222e35 !important;
+  --wa-active: #2a3942 !important;
+  --wa-ticks: #53bdeb !important;
+  --wa-notice-bg: #1e2930 !important;
+  --wa-notice-text: #ffd279 !important;
+  --wa-doodle-dot: rgba(255, 255, 255, 0.035) !important;
+  --wa-chip-bg: #202c33 !important;
+  --wa-chip-text: #e2e8f0 !important;
+  --wa-chip-border: #334155 !important;
+
+  background: #182229 !important;
+  color: #e2e8f0 !important;
+  color-scheme: dark !important;
+}
+
+/* Dark Mode: All Descendants Inherit Dark CSS Variables */
+:root .wa-isolated-root[data-chat-theme="dark"] *,
+:root[data-theme="dark"] .wa-isolated-root[data-chat-theme="dark"] *,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] *,
+[data-chat-theme="dark"] * {
+  --card: #182229;
+  --card-2: #202c33;
+  --paper: #141e24;
+  --ink: #e2e8f0;
+  --ink-2: #94a3b8;
+  --ink-3: #64748b;
+  --rule: #2a3942;
+  --rule-2: #334155;
+  --blue: #00a884;
+  --info: #00a884;
+  --info-bg: #1e2930;
+  --ok: #00a884;
+  --ok-bg: #005c4b;
+  --warn: #ffd279;
+  --warn-bg: #1e2930;
+  --bad: #f87171;
+  --bad-bg: #371717;
+}
+
+/* Dark Mode: Message Bubble Action Buttons */
+:root .wa-isolated-root[data-chat-theme="dark"] .wa-bubble-btn,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .wa-bubble-btn,
+.wa-isolated-root[data-chat-theme="dark"] .wa-bubble-btn,
+[data-chat-theme="dark"] .wa-bubble-btn {
+  background: #202c33 !important;
+  color: #00a884 !important;
+  border: 1px solid #334155 !important;
+  font-weight: 600 !important;
+  font-size: 12.5px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="dark"] .wa-bubble-btn:hover,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .wa-bubble-btn:hover,
+.wa-isolated-root[data-chat-theme="dark"] .wa-bubble-btn:hover,
+[data-chat-theme="dark"] .wa-bubble-btn:hover {
+  background: #2a3942 !important;
+  color: #25d366 !important;
+  border-color: #00a884 !important;
+}
+
+/* Dark Mode: Generic Buttons Override */
+:root .wa-isolated-root[data-chat-theme="dark"] button,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] button,
+[data-chat-theme="dark"] button {
+  color: #e2e8f0 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="dark"] .btn,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .btn,
+[data-chat-theme="dark"] .btn {
+  background: #202c33 !important;
+  color: #e2e8f0 !important;
+  border: 1px solid #334155 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="dark"] .wa-header-call-btn,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .wa-header-call-btn,
+:root .wa-isolated-root[data-chat-theme="dark"] .btn.pri,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .btn.pri,
+[data-chat-theme="dark"] .wa-header-call-btn,
+[data-chat-theme="dark"] .btn.pri {
+  background: #00a884 !important;
+  color: #111b21 !important;
+  border: 1px solid #00a884 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="dark"] .wa-header-resolve-btn,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .wa-header-resolve-btn,
+[data-chat-theme="dark"] .wa-header-resolve-btn {
+  background: #202c33 !important;
+  color: #e2e8f0 !important;
+  border: 1px solid #334155 !important;
+}
+
+/* Dark Mode: Form Controls & Customer Owner Dropdown */
+:root .wa-isolated-root[data-chat-theme="dark"] select,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] select,
+:root .wa-isolated-root[data-chat-theme="dark"] input,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] input,
+:root .wa-isolated-root[data-chat-theme="dark"] textarea,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] textarea,
+:root .wa-isolated-root[data-chat-theme="dark"] .wa-select,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .wa-select,
+:root .wa-isolated-root[data-chat-theme="dark"] .f-in,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .f-in,
+[data-chat-theme="dark"] select,
+[data-chat-theme="dark"] .wa-select,
+[data-chat-theme="dark"] .f-in {
+  background: #202c33 !important;
+  color: #e2e8f0 !important;
+  border: 1px solid #334155 !important;
+  color-scheme: dark !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="dark"] select option,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] select option,
+[data-chat-theme="dark"] select option {
+  background: #202c33 !important;
+  color: #e2e8f0 !important;
+}
+
+/* Dark Mode: Search input */
+:root .wa-isolated-root[data-chat-theme="dark"] .wa-search-input-wrap,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .wa-search-input-wrap,
+[data-chat-theme="dark"] .wa-search-input-wrap {
+  background: #202c33 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="dark"] input.wa-search-input,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] input.wa-search-input,
+[data-chat-theme="dark"] input.wa-search-input {
+  color: #e2e8f0 !important;
+}
+
+/* Dark Mode: Filter Pills & Tabs */
+:root .wa-isolated-root[data-chat-theme="dark"] .wa-filter-pill,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .wa-filter-pill,
+[data-chat-theme="dark"] .wa-filter-pill {
+  background: #202c33 !important;
+  color: #94a3b8 !important;
+  border: 1px solid transparent !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="dark"] .wa-filter-pill:hover,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .wa-filter-pill:hover,
+[data-chat-theme="dark"] .wa-filter-pill:hover {
+  background: #2a3942 !important;
+  color: #e2e8f0 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="dark"] .wa-filter-pill.active,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .wa-filter-pill.active,
+[data-chat-theme="dark"] .wa-filter-pill.active {
+  background: #005c4b !important;
+  color: #e2e8f0 !important;
+  border: 1px solid #00a884 !important;
+  font-weight: 600 !important;
+}
+
+/* Dark Mode: Quick Reply Chips */
+:root .wa-isolated-root[data-chat-theme="dark"] .wa-quick-chip,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .wa-quick-chip,
+[data-chat-theme="dark"] .wa-quick-chip {
+  background: #202c33 !important;
+  color: #e2e8f0 !important;
+  border: 1px solid #334155 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="dark"] .wa-quick-chip:hover,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .wa-quick-chip:hover,
+[data-chat-theme="dark"] .wa-quick-chip:hover {
+  background: #2a3942 !important;
+  color: #00a884 !important;
+  border-color: #00a884 !important;
+}
+
+/* Dark Mode: Chips & Badges */
+:root .wa-isolated-root[data-chat-theme="dark"] .chip,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .chip,
+[data-chat-theme="dark"] .chip {
+  background: #202c33 !important;
+  color: #e2e8f0 !important;
+  border: 1px solid #334155 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="dark"] .chip.ok,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .chip.ok,
+[data-chat-theme="dark"] .chip.ok {
+  background: #005c4b !important;
+  color: #4ade80 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="dark"] .chip.b,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .chip.b,
+[data-chat-theme="dark"] .chip.b {
+  background: #371717 !important;
+  color: #f87171 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="dark"] .chip.i,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .chip.i,
+[data-chat-theme="dark"] .chip.i {
+  background: #102e4c !important;
+  color: #60a5fa !important;
+}
+
+/* Dark Mode: Internal Notes */
+:root .wa-isolated-root[data-chat-theme="dark"] .nt,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .nt,
+[data-chat-theme="dark"] .nt {
+  background: #2e2612 !important;
+  border: 1px dashed #eab308 !important;
+  color: #fef08a !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="dark"] .nt b,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .nt b,
+[data-chat-theme="dark"] .nt b {
+  color: #fde047 !important;
+}
+
+/* Dark Mode: System Pills */
+:root .wa-isolated-root[data-chat-theme="dark"] .sys,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .sys,
+[data-chat-theme="dark"] .sys {
+  background: #182229 !important;
+  color: #94a3b8 !important;
+  border: 1px solid #2a3942 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="dark"] .sys.b,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .sys.b,
+[data-chat-theme="dark"] .sys.b {
+  background: #3e1b1b !important;
+  color: #fca5a5 !important;
+  border-color: #5c2222 !important;
+}
+
+/* Dark Mode: Lists & Meta Rows */
+:root .wa-isolated-root[data-chat-theme="dark"] .ln,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .ln,
+[data-chat-theme="dark"] .ln {
+  color: #e2e8f0 !important;
+  border-bottom-color: #2a3942 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="dark"] .ln span,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .ln span,
+[data-chat-theme="dark"] .ln span {
+  color: #94a3b8 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="dark"] .ln b,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .ln b,
+[data-chat-theme="dark"] .ln b {
+  color: #e2e8f0 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="dark"] .hint,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .hint,
+[data-chat-theme="dark"] .hint {
+  color: #94a3b8 !important;
+}
+
+/* Dark Mode: Action circles in Contact Info */
+:root .wa-isolated-root[data-chat-theme="dark"] .wa-info-act-btn span.icon-circle,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .wa-info-act-btn span.icon-circle,
+[data-chat-theme="dark"] .wa-info-act-btn span.icon-circle {
+  background: #202c33 !important;
+  color: #00a884 !important;
+  border: 1px solid #2a3942 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="dark"] .wa-info-act-btn.dg span.icon-circle,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .wa-info-act-btn.dg span.icon-circle,
+[data-chat-theme="dark"] .wa-info-act-btn.dg span.icon-circle {
+  color: #ea0038 !important;
+  border-color: rgba(234, 0, 56, 0.3) !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="dark"] .wa-info-act-btn span:last-child,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .wa-info-act-btn span:last-child,
+[data-chat-theme="dark"] .wa-info-act-btn span:last-child {
+  color: #e2e8f0 !important;
+}
+
+/* Dark Mode: Icon buttons */
+:root .wa-isolated-root[data-chat-theme="dark"] .wa-icon-btn,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .wa-icon-btn,
+[data-chat-theme="dark"] .wa-icon-btn {
+  color: #94a3b8 !important;
+}
+
+:root .wa-isolated-root[data-chat-theme="dark"] .wa-icon-btn:hover,
+:root[data-theme="light"] .wa-isolated-root[data-chat-theme="dark"] .wa-icon-btn:hover,
+[data-chat-theme="dark"] .wa-icon-btn:hover {
+  color: #e2e8f0 !important;
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ==========================================================================
+   Chat Wallpaper & Theme Picker Popover
+   ========================================================================== */
+.wa-wallpaper-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: -55px;
+  width: 310px;
+  background: var(--wa-panel-bg);
+  border: 1px solid var(--wa-border);
+  border-radius: 12px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 12px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: waPopoverFadeIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes waPopoverFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.wa-wallpaper-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--wa-border);
+}
+
+.wa-wallpaper-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--wa-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.wa-wallpaper-mode-btn {
+  background: var(--wa-input-bg);
+  border: 1px solid var(--wa-border);
+  color: var(--wa-text-primary);
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 3px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.wa-wallpaper-mode-btn:hover {
+  border-color: #00a884;
+  color: #00a884;
+}
+
+.wa-wallpaper-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wa-wallpaper-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1.5px solid transparent;
+  background: var(--wa-input-bg);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.wa-wallpaper-option:hover {
+  background: rgba(0, 168, 132, 0.08);
+  border-color: rgba(0, 168, 132, 0.35);
+}
+
+.wa-wallpaper-option.active {
+  background: rgba(0, 168, 132, 0.12);
+  border-color: #00a884;
+}
+
+.wa-wallpaper-swatch {
+  width: 36px;
+  height: 36px;
+  border-radius: 7px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.wa-wallpaper-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.wa-wallpaper-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.wa-wallpaper-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--wa-text-primary);
+}
+
+.wa-wallpaper-tag {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(0, 168, 132, 0.15);
+  color: #00a884;
+}
+
+.wa-wallpaper-desc {
+  font-size: 11px;
+  color: var(--wa-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.wa-wallpaper-check {
+  font-size: 14px;
+  font-weight: 700;
+  color: #00a884;
+  margin-left: 2px;
+}
+
+
+

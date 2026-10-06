@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 320" width="600" height="320">
+  <defs>
+    <!-- Circuit & Brain Gradient: Magenta to Purple -->
+    <linearGradient id="lumiCircuitGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#E6007E" />
+      <stop offset="50%" stop-color="#C810B0" />
+      <stop offset="100%" stop-color="#8A2BE2" />
+    </linearGradient>
+
+    <!-- Arc Gradient -->
+    <linearGradient id="lumiArcGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E6007E" />
+      <stop offset="100%" stop-color="#6B21A8" />
+    </linearGradient>
+
+    <!-- 'L' Gradient: Cyan to Bright Blue -->
+    <linearGradient id="lumiLGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00A8E8" />
+      <stop offset="100%" stop-color="#0B6FD4" />
+    </linearGradient>
+
+    <!-- 'U' Gradient: Blue -->
+    <linearGradient id="lumiUGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B6FD4" />
+      <stop offset="100%" stop-color="#145EA8" />
+    </linearGradient>
+
+    <!-- 'M' Gradient: Royal Blue to Deep Blue -->
+    <linearGradient id="lumiMGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1B6FC4" />
+      <stop offset="100%" stop-color="#243E9C" />
+    </linearGradient>
+
+    <!-- 'I' Gradient: Deep Sapphire to Indigo -->
+    <linearGradient id="lumiIGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#243E9C" />
+      <stop offset="100%" stop-color="#2E3192" />
+    </linearGradient>
+
+    <!-- Pill Banner Gradient -->
+    <linearGradient id="lumiPillGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#E6007E" />
+      <stop offset="50%" stop-color="#C810B0" />
+      <stop offset="100%" stop-color="#7C2D9E" />
+    </linearGradient>
+  </defs>
+
+  <!-- Left: Brain / Bulb Circuit Graphic -->
+  <g id="lumi-mark" transform="translate(10, 0)">
+    <!-- Arc sweeping over the top right -->
+    <path d="M 112 18 C 145 22 178 50 188 95 C 187 90 182 65 160 42 C 142 22 120 18 112 18 Z" fill="url(#lumiArcGrad)" />
+
+    <!-- Bulb / Cranium outer contour -->
+    <path d="M 68 210 C 45 210 15 188 15 152 C 15 118 42 100 48 82 C 54 58 75 32 108 32" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="5.5" stroke-linecap="round" />
+
+    <!-- Right stem vertical line -->
+    <line x1="92" y1="162" x2="92" y2="208" stroke="url(#lumiCircuitGrad)" stroke-width="5" stroke-linecap="round" />
+
+    <!-- Circuit Traces & Nodes -->
+    <!-- Central trunk -->
+    <path d="M 72 208 L 72 158 L 52 138 L 52 110" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="52" cy="105" r="5.5" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="4" />
+
+    <!-- Branch 1 (Far left bottom) -->
+    <path d="M 38 185 L 26 172 L 26 155" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="26" cy="150" r="5" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="3.8" />
+
+    <!-- Branch 2 (Left middle) -->
+    <path d="M 32 145 L 18 132 L 18 115" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="18" cy="110" r="5.5" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="4" />
+
+    <!-- Branch 3 (Far upper left) -->
+    <path d="M 40 102 L 28 88 L 28 72" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="28" cy="67" r="5.5" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="4" />
+
+    <!-- Branch 4 (Top left) -->
+    <path d="M 58 75 L 45 60 L 45 46" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="45" cy="41" r="5.5" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="4" />
+
+    <!-- Branch 5 (Top center) -->
+    <path d="M 72 65 L 68 45 L 68 32" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="68" cy="27" r="5.5" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="4" />
+
+    <!-- Branch 6 (Inner right upper) -->
+    <path d="M 72 135 L 85 120 L 85 85 L 75 75" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="75" cy="70" r="5.5" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="4" />
+
+    <!-- Branch 7 (Inner right middle) -->
+    <path d="M 85 110 L 98 95 L 98 62" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="98" cy="57" r="5.5" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="4" />
+
+    <!-- Branch 8 (Inner right lower) -->
+    <path d="M 85 130 L 105 110 L 105 90" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="105" cy="85" r="5.5" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="4" />
+
+    <!-- Inner node dots -->
+    <circle cx="60" cy="168" r="4.5" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="3.5" />
+    <circle cx="75" cy="188" r="4" fill="none" stroke="url(#lumiCircuitGrad)" stroke-width="3.5" />
+  </g>
+
+  <!-- Right: "LUMI" Typography -->
+  <g id="lumi-letters" transform="translate(195, 38)">
+    <!-- Letter L -->
+    <path d="M 0 0 L 32 0 L 32 98 L 74 98 L 108 132 L 40 132 C 18 132 0 114 0 92 Z" fill="url(#lumiLGrad)" />
+
+    <!-- Letter U -->
+    <path d="M 124 0 L 156 0 L 156 86 C 156 102 168 114 184 114 C 200 114 212 102 212 86 L 212 0 L 244 0 L 244 86 C 244 118 218 134 184 134 C 150 134 124 118 124 86 Z" fill="url(#lumiUGrad)" />
+
+    <!-- Letter M -->
+    <path d="M 260 0 L 292 0 L 328 62 L 364 0 L 396 0 L 396 132 L 366 132 L 366 48 L 338 98 L 318 98 L 290 48 L 290 132 L 260 132 Z" fill="url(#lumiMGrad)" />
+
+    <!-- Letter I -->
+    <path d="M 412 0 L 444 0 L 444 132 L 412 132 Z" fill="url(#lumiIGrad)" />
+  </g>
+
+  <!-- Bottom: Pill Banner "AUTOMATE | INOVATE | ELEVATE" -->
+  <g id="lumi-banner" transform="translate(48, 236)">
+    <!-- Pill background -->
+    <rect x="0" y="0" width="530" height="28" rx="14" fill="url(#lumiPillGrad)" />
+
+    <!-- Banner text -->
+    <text x="265" y="19" font-family="'Poppins', system-ui, sans-serif" font-weight="700" font-size="14.5" fill="#FFFFFF" text-anchor="middle" letter-spacing="1.8">
+      AUTOMATE   |   INOVATE   |   ELEVATE
+    </text>
+
+    <!-- Bulb Screw Base Elements below pill -->
+    <rect x="32" y="34" width="112" height="18" rx="9" fill="url(#lumiPillGrad)" />
+    <path d="M 58 58 C 58 58 64 74 88 74 C 112 74 118 58 118 58 Z" fill="url(#lumiPillGrad)" />
+  </g>
+</svg>
