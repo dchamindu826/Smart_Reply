@@ -42,6 +42,12 @@ import StatusBreakModal from '../modals/StatusBreakModal';
 import IncomingCallWidget from '../modals/IncomingCallWidget';
 
 export default function Shell() {
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const {
     screen,
     sheetContent,
@@ -53,6 +59,17 @@ export default function Shell() {
     frameTheme,
     sectionTheme
   } = useApp();
+
+  if (!mounted) {
+    return (
+      <div style={{ display: 'grid', placeItems: 'center', height: '100vh', background: '#0b141a', color: '#e9edef', fontFamily: 'sans-serif' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '32px', marginBottom: '12px' }}>💬</div>
+          <div style={{ fontSize: '16px', fontWeight: 600 }}>Loading Smart Reply...</div>
+        </div>
+      </div>
+    );
+  }
 
   const renderScreen = () => {
     switch (screen) {

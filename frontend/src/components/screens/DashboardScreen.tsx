@@ -60,22 +60,22 @@ export default function DashboardScreen() {
       </div>
 
       <div className="stats">
-        <div className="stat i">
+        <div className="stat i" onClick={() => setScreen('chats')} style={{ cursor: 'pointer' }} title="Click to open Chats">
           <span>Open chats</span>
           <b>24</b>
           <small>6 new since 08:00 · 3 unread</small>
         </div>
-        <div className="stat b">
+        <div className="stat b" onClick={() => setScreen('chats')} style={{ cursor: 'pointer' }} title="Click to view Unassigned chats">
           <span>Unassigned</span>
           <b>1</b>
           <small>Waiting 12 min · round-robin paused</small>
         </div>
-        <div className="stat ok">
+        <div className="stat ok" onClick={() => setScreen('calls')} style={{ cursor: 'pointer' }} title="Click to view Calls log">
           <span>Calls answered</span>
           <b>46 / 52</b>
           <small>4 missed · 2 rejected</small>
         </div>
-        <div className="stat w">
+        <div className="stat w" onClick={() => setScreen('reports')} style={{ cursor: 'pointer' }} title="Click to view Reports">
           <span>Avg first reply</span>
           <b>3m 40s</b>
           <small>Target under 5 min · Ruwan 5m 20s</small>

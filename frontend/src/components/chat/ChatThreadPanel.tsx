@@ -60,7 +60,7 @@ export default function ChatThreadPanel({
   onVoiceCancel,
   onFileSelect
 }: ChatThreadPanelProps) {
-  const { simulateCustomerReply } = useApp();
+  const { simulateCustomerReply, addToast } = useApp();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -245,7 +245,21 @@ export default function ChatThreadPanel({
               {m.buttons && (
                 <div style={{ display: 'flex', gap: '6px', marginTop: '6px', borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '6px' }}>
                   {m.buttons.map((bText, bIdx) => (
-                    <button key={bIdx} type="button" className="wa-bubble-btn" style={{ flex: 1 }}>
+                    <button
+                      key={bIdx}
+                      type="button"
+                      className="wa-bubble-btn"
+                      style={{ flex: 1, cursor: 'pointer' }}
+                      onClick={() => {
+                        if (bText.toLowerCase().includes('call')) {
+                          onCall();
+                        } else if (bText.toLowerCase().includes('quote')) {
+                          addToast('Viewing quotation Q-1042 · Rs. 185,000 (Valid until 30 Sep).');
+                        } else {
+                          addToast(`Action: ${bText}`);
+                        }
+                      }}
+                    >
                       {bText}
                     </button>
                   ))}
