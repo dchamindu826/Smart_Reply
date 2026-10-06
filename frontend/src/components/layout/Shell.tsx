@@ -137,12 +137,20 @@ export default function Shell() {
   };
 
   return (
-    <div className="shell" data-frame-theme={frameTheme} suppressHydrationWarning>
+    <div
+      className={`shell ${screen === 'chats' || screen === 'inbox' ? 'shell-chat-screen' : ''}`}
+      data-frame-theme={frameTheme}
+      suppressHydrationWarning
+    >
       {/* Sidebar Rail */}
       <Rail />
 
       {/* Main Container */}
-      <div className="main" data-page-theme={sectionTheme} suppressHydrationWarning>
+      <div
+        className={`main ${screen === 'chats' || screen === 'inbox' ? 'main-chat-screen' : ''}`}
+        data-page-theme={sectionTheme}
+        suppressHydrationWarning
+      >
         <Header />
         <main
           className={`page ${screen === 'chats' || screen === 'inbox' ? 'page-chat-container' : ''}`}

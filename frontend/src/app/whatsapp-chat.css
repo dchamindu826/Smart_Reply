@@ -54,15 +54,33 @@
   --wa-chip-border: #334155;
 }
 
+/* Shell & Main lock for chat screen */
+.shell-chat-screen {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+}
+
+.main-chat-screen {
+  height: 100vh !important;
+  max-height: 100vh !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
 /* Page container for full-width seamless chat */
 .page-chat-container {
   padding: 0 !important;
   margin: 0 !important;
   max-width: 100% !important;
-  height: calc(100vh - 57px);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  width: 100% !important;
+  height: calc(100vh - 57px) !important;
+  max-height: calc(100vh - 57px) !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  overflow: hidden !important;
   background: var(--wa-panel-bg);
 }
 
@@ -71,6 +89,8 @@
   display: flex;
   width: 100%;
   height: 100%;
+  max-height: 100%;
+  min-height: 0;
   overflow: hidden;
   background: var(--wa-panel-bg);
 }
@@ -83,6 +103,9 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  overflow: hidden;
   background: var(--wa-panel-bg);
   position: relative;
   z-index: 2;
@@ -90,11 +113,14 @@
 
 /* Column 2: Chat Thread */
 .wa-col-thread {
-  flex: 1;
+  flex: 1 1 0%;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   height: 100%;
+  max-height: 100%;
+  overflow: hidden;
   background: var(--wa-bg);
   position: relative;
   z-index: 1;
@@ -108,6 +134,8 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  max-height: 100%;
+  min-height: 0;
   background: var(--wa-panel-bg);
   overflow-y: auto;
   position: relative;
@@ -117,6 +145,7 @@
 /* Common Header Styles */
 .wa-header {
   height: 59px;
+  flex: 0 0 59px;
   padding: 10px 16px;
   background: var(--wa-header-bg);
   border-bottom: 1px solid var(--wa-border);
@@ -124,7 +153,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  flex: none;
+  position: relative;
+  z-index: 5;
 }
 
 .wa-header .wa-user-meta {
@@ -398,10 +428,14 @@
   flex: none;
 }
 
-/* Chat Wallpaper & Canvas - 5 Themes */
+/* Chat Wallpaper & Canvas - 9 Themes */
 .wa-canvas {
-  flex: 1;
+  flex: 1 1 0%;
+  min-height: 0;
+  max-height: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
   padding: 16px 40px;
   display: flex;
   flex-direction: column;
@@ -650,25 +684,26 @@
 /* Floating Scroll Down Arrow */
 .wa-scroll-btn {
   position: absolute;
-  right: 24px;
-  bottom: 84px;
+  right: 20px;
+  bottom: calc(100% + 14px);
   width: 38px;
   height: 38px;
   border-radius: 50%;
   background: var(--wa-panel-bg);
   color: var(--wa-secondary-text);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
-  border: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--wa-border);
   display: grid;
   place-items: center;
   cursor: pointer;
-  z-index: 10;
-  transition: transform 0.15s;
+  z-index: 20;
+  transition: transform 0.15s, background 0.15s, color 0.15s;
 }
 
 .wa-scroll-btn:hover {
-  transform: scale(1.06);
+  transform: scale(1.08);
   color: var(--wa-primary-text);
+  background: var(--wa-input-bg);
 }
 
 /* Quick reply pill chips */
@@ -695,7 +730,7 @@
   border-color: var(--wa-green);
 }
 
-/* Composer */
+/* Composer: FIXED & LOCKED AT BOTTOM */
 .wa-composer-wrap {
   background: var(--wa-header-bg);
   border-top: 1px solid var(--wa-border);
@@ -703,7 +738,10 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  flex: none;
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 10;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
 }
 
 .wa-composer-row {

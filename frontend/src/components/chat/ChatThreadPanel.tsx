@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Conversation, Contact, QuickReply, Attachment } from '@/types';
 import { getWinClass, getWinText } from '@/utils/windowTime';
 import MessageAttachment from './ChatThread/MessageAttachment';
@@ -62,12 +62,21 @@ export default function ChatThreadPanel({
 }: ChatThreadPanelProps) {
   const { simulateCustomerReply, addToast } = useApp();
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showScrollBottom, setShowScrollBottom] = useState(false);
 
   // Auto-scroll when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    setShowScrollBottom(false);
   }, [conversation?.msgs]);
+
+  const handleCanvasScroll = () => {
+    if (!canvasRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = canvasRef.current;
+    setShowScrollBottom(scrollHeight - scrollTop - clientHeight > 100);
+  };
 
   if (!conversation || !contact) {
     return (
@@ -169,7 +178,7 @@ export default function ChatThreadPanel({
       </div>
 
       {/* 2. Messages Canvas (WhatsApp Doodle Pattern) */}
-      <div className="wa-canvas">
+      <div className="wa-canvas" ref={canvasRef} onScroll={handleCanvasScroll}>
         {/* Yellow Notice Banner (Matching Screenshot) */}
         <div className="wa-chat-lock-banner">
           🔒 Messages are end-to-end encrypted. Reply window: <b>◷ {winText}</b> ({isWindowOpen ? 'free replies' : 'meta templates'}).
@@ -272,18 +281,22 @@ export default function ChatThreadPanel({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Floating Scroll to Bottom Arrow */}
-      <button
-        type="button"
-        className="wa-scroll-btn"
-        title="Scroll to bottom"
-        onClick={() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })}
-      >
-        ⌄
-      </button>
-
-      {/* 3. Composer (Matching WhatsApp Web Bottom Bar) */}
-      <div className="wa-composer-wrap" style={{ position: 'relative' }}>
+      {/* 3. Composer (Matching WhatsApp Web Bottom Bar - Fixed & Locked) */}
+      <div className="wa-composer-wrap">
+        {/* Floating Scroll to Bottom Arrow - sits cleanly above composer */}
+        {showScrollBottom && (
+          <button
+            type="button"
+            className="wa-scroll-btn"
+            title="Scroll to bottom"
+            onClick={() => {
+              messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+              setShowScrollBottom(false);
+            }}
+          >
+            ⌄
+          </button>
+        )}
         {/* Floating Voice Recording Studio anchored directly above recording button */}
         {isRecording && contact && (
           <VoiceRecordingWidget
