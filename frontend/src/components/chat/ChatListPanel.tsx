@@ -117,6 +117,50 @@ export default function ChatListPanel({
       previewImg: '/wa-doodle-warm-light.png',
       previewDarkImg: '/wa-doodle-warm-dark.png',
       type: 'doodle'
+    },
+    {
+      id: 'midnight' as const,
+      name: 'Midnight Navy',
+      tag: 'Sapphire',
+      desc: 'Deep royal sapphire night sky with subtle doodles',
+      lightBg: '#eaf0f8',
+      darkBg: '#0b1320',
+      previewImg: '/wa-doodle-midnight-light.png',
+      previewDarkImg: '/wa-doodle-midnight-dark.png',
+      type: 'doodle'
+    },
+    {
+      id: 'rose' as const,
+      name: 'Rose Blush',
+      tag: 'Pastel',
+      desc: 'Soft blush rose & petal tint with gentle doodles',
+      lightBg: '#fcf1f4',
+      darkBg: '#1f1116',
+      previewImg: '/wa-doodle-rose-light.png',
+      previewDarkImg: '/wa-doodle-rose-dark.png',
+      type: 'doodle'
+    },
+    {
+      id: 'lavender' as const,
+      name: 'Lavender Lilac',
+      tag: 'Royal',
+      desc: 'Calming lilac mist & purple tone with subtle doodles',
+      lightBg: '#f4f1fa',
+      darkBg: '#161122',
+      previewImg: '/wa-doodle-lavender-light.png',
+      previewDarkImg: '/wa-doodle-lavender-dark.png',
+      type: 'doodle'
+    },
+    {
+      id: 'amoled' as const,
+      name: 'AMOLED Pitch Black',
+      tag: 'OLED',
+      desc: 'True zero-light pitch black with stealth motifs',
+      lightBg: '#000000',
+      darkBg: '#000000',
+      previewImg: '/wa-doodle-amoled.png',
+      previewDarkImg: '/wa-doodle-amoled.png',
+      type: 'doodle'
     }
   ];
 
@@ -148,11 +192,11 @@ export default function ChatListPanel({
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', position: 'relative' }}>
-          {/* 5-Theme Wallpaper Switcher Button */}
+          {/* 9-Theme Wallpaper Switcher Button */}
           <button
             type="button"
             className={`wa-icon-btn ${wallpaperMenuOpen ? 'active' : ''}`}
-            title="Chat Wallpaper & Theme Options (5 Themes)"
+            title="Chat Wallpaper & Theme Options (9 Themes)"
             onClick={() => setWallpaperMenuOpen(!wallpaperMenuOpen)}
             style={wallpaperMenuOpen ? { color: '#00a884', background: theme === 'dark' ? 'rgba(0,168,132,0.15)' : 'rgba(0,168,132,0.12)' } : {}}
             aria-label="Chat Wallpaper Themes"

@@ -499,6 +499,76 @@
   background-size: 380px auto !important;
 }
 
+/* 6. Midnight Navy & Deep Sapphire */
+[data-wallpaper="midnight"] .wa-canvas,
+.wa-layout[data-wallpaper="midnight"] .wa-canvas,
+.wa-isolated-root[data-wallpaper="midnight"] .wa-canvas {
+  background-color: #eaf0f8 !important;
+  background-image: url('/wa-doodle-midnight-light.png') !important;
+  background-repeat: repeat !important;
+  background-size: 380px auto !important;
+}
+
+[data-chat-theme="dark"][data-wallpaper="midnight"] .wa-canvas,
+.wa-layout[data-chat-theme="dark"][data-wallpaper="midnight"] .wa-canvas,
+.wa-isolated-root[data-chat-theme="dark"][data-wallpaper="midnight"] .wa-canvas {
+  background-color: #0b1320 !important;
+  background-image: url('/wa-doodle-midnight-dark.png') !important;
+  background-repeat: repeat !important;
+  background-size: 380px auto !important;
+}
+
+/* 7. Soft Rose & Blush Sunset */
+[data-wallpaper="rose"] .wa-canvas,
+.wa-layout[data-wallpaper="rose"] .wa-canvas,
+.wa-isolated-root[data-wallpaper="rose"] .wa-canvas {
+  background-color: #fcf1f4 !important;
+  background-image: url('/wa-doodle-rose-light.png') !important;
+  background-repeat: repeat !important;
+  background-size: 380px auto !important;
+}
+
+[data-chat-theme="dark"][data-wallpaper="rose"] .wa-canvas,
+.wa-layout[data-chat-theme="dark"][data-wallpaper="rose"] .wa-canvas,
+.wa-isolated-root[data-chat-theme="dark"][data-wallpaper="rose"] .wa-canvas {
+  background-color: #1f1116 !important;
+  background-image: url('/wa-doodle-rose-dark.png') !important;
+  background-repeat: repeat !important;
+  background-size: 380px auto !important;
+}
+
+/* 8. Lavender Lilac */
+[data-wallpaper="lavender"] .wa-canvas,
+.wa-layout[data-wallpaper="lavender"] .wa-canvas,
+.wa-isolated-root[data-wallpaper="lavender"] .wa-canvas {
+  background-color: #f4f1fa !important;
+  background-image: url('/wa-doodle-lavender-light.png') !important;
+  background-repeat: repeat !important;
+  background-size: 380px auto !important;
+}
+
+[data-chat-theme="dark"][data-wallpaper="lavender"] .wa-canvas,
+.wa-layout[data-chat-theme="dark"][data-wallpaper="lavender"] .wa-canvas,
+.wa-isolated-root[data-chat-theme="dark"][data-wallpaper="lavender"] .wa-canvas {
+  background-color: #161122 !important;
+  background-image: url('/wa-doodle-lavender-dark.png') !important;
+  background-repeat: repeat !important;
+  background-size: 380px auto !important;
+}
+
+/* 9. Pure AMOLED Pitch Black */
+[data-wallpaper="amoled"] .wa-canvas,
+.wa-layout[data-wallpaper="amoled"] .wa-canvas,
+.wa-isolated-root[data-wallpaper="amoled"] .wa-canvas,
+[data-chat-theme="dark"][data-wallpaper="amoled"] .wa-canvas,
+.wa-layout[data-chat-theme="dark"][data-wallpaper="amoled"] .wa-canvas,
+.wa-isolated-root[data-chat-theme="dark"][data-wallpaper="amoled"] .wa-canvas {
+  background-color: #000000 !important;
+  background-image: url('/wa-doodle-amoled.png') !important;
+  background-repeat: repeat !important;
+  background-size: 380px auto !important;
+}
+
 /* Encryption / Notice Banner in Chat */
 .wa-chat-lock-banner {
   align-self: center;
@@ -1587,6 +1657,18 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.wa-wallpaper-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.wa-wallpaper-list::-webkit-scrollbar-thumb {
+  background: var(--wa-border);
+  border-radius: 4px;
 }
 
 .wa-wallpaper-option {

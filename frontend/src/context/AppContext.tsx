@@ -23,6 +23,8 @@ import {
 } from '@/utils/soundEffects';
 
 
+export type WallpaperType = 'doodle' | 'plain' | 'dots' | 'emerald' | 'warm' | 'midnight' | 'rose' | 'lavender' | 'amoled';
+
 interface Toast {
   id: string;
   message: string;
@@ -57,8 +59,8 @@ interface AppContextType {
   sectionTheme: 'light' | 'dark';
   toggleSectionTheme: () => void;
   setSectionTheme: (t: 'light' | 'dark') => void;
-  chatWallpaper: 'doodle' | 'plain' | 'dots' | 'emerald' | 'warm';
-  setChatWallpaper: (wp: 'doodle' | 'plain' | 'dots' | 'emerald' | 'warm') => void;
+  chatWallpaper: WallpaperType;
+  setChatWallpaper: (wp: WallpaperType) => void;
   railOpen: boolean;
   setRailOpen: (open: boolean) => void;
   toggleRail: () => void;
@@ -139,7 +141,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [screen, setScreenState] = useState<string>('dash');
   const [frameTheme, setFrameTheme] = useState<'light' | 'dark'>('dark');
   const [sectionTheme, setSectionTheme] = useState<'light' | 'dark'>('dark');
-  const [chatWallpaper, setChatWallpaperState] = useState<'doodle' | 'plain' | 'dots' | 'emerald' | 'warm'>('doodle');
+  const [chatWallpaper, setChatWallpaperState] = useState<WallpaperType>('doodle');
   const [railOpen, setRailOpen] = useState(false);
   const [business, setBusiness] = useState('Madushan Aluminium — 3 staff');
 
@@ -178,8 +180,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setSectionTheme(savedSection);
       }
 
-      const savedWallpaper = localStorage.getItem('sr.a.chatWallpaper') as 'doodle' | 'plain' | 'dots' | 'emerald' | 'warm' | null;
-      if (savedWallpaper && ['doodle', 'plain', 'dots', 'emerald', 'warm'].includes(savedWallpaper)) {
+      const savedWallpaper = localStorage.getItem('sr.a.chatWallpaper') as WallpaperType | null;
+      if (savedWallpaper && ['doodle', 'plain', 'dots', 'emerald', 'warm', 'midnight', 'rose', 'lavender', 'amoled'].includes(savedWallpaper)) {
         setChatWallpaperState(savedWallpaper);
       }
 
@@ -209,7 +211,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch {}
   };
 
-  const setChatWallpaper = (wp: 'doodle' | 'plain' | 'dots' | 'emerald' | 'warm') => {
+  const setChatWallpaper = (wp: WallpaperType) => {
     setChatWallpaperState(wp);
     try {
       localStorage.setItem('sr.a.chatWallpaper', wp);
