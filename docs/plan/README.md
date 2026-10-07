@@ -52,7 +52,8 @@ These take days or weeks and block real WhatsApp traffic. None of them is code.
 
 1. **Meta Business verification** for the company that will own the Smart Reply app (LUMI AI).
 2. **Create the Meta app**, add the WhatsApp product, and apply to become a **Tech Provider**
-   so customers can connect their own numbers through Embedded Signup.
+   so each customer's own number can be connected through Embedded Signup. The system
+   admin runs the connection; the customer only logs in to Facebook once to approve it.
 3. **App Review** for `whatsapp_business_management` and `whatsapp_business_messaging`
    (advanced access). Meta wants a screen recording of the real product, so this happens
    after Phase 3 works on a test number.
@@ -69,6 +70,8 @@ These take days or weeks and block real WhatsApp traffic. None of them is code.
 | Hosting | One VPS with Docker Compose to start | Cheapest path that still works; matches the earlier VPS plan | You expect many companies in the first months |
 | Seats | Up to 100 staff per company; only the manager adds or removes staff | Your earlier instruction | The plans you sell say otherwise |
 | Who pays Meta | Each company adds its own payment method in its WhatsApp account | This is how Meta's Tech Provider model works | You become a Solution Partner with a credit line |
+| Who connects the number | The system admin only. Managers see the number's health, read only | Your instruction | |
+| AI bot | A separately paid add-on. The system admin activates it, configures it and trains it. Managers get a read-only view | Your instruction | |
 | Call features | Two stages: simple browser calls first, media server second | Recording, IVR, transfer and conference cannot be done without a media server | See the open questions in 04 |
 | Mobile app | Flutter | Matches your earlier starter | You prefer React Native |
 

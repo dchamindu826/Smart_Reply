@@ -46,6 +46,25 @@ same schemas and published at `/api/docs` in non-production environments.
 | `POST /admin/companies/:id/managers` | Add another manager |
 | `POST /admin/companies/:id/impersonate` | Start a support session; needs a reason |
 | `GET /admin/plans`, `POST /admin/plans`, `PATCH /admin/plans/:id` | Plans |
+| `GET /admin/platform/meta`, `PUT /admin/platform/meta` | Meta app id, app secret, Graph version, Embedded Signup config id, system token. Secrets come back masked |
+| `POST /admin/platform/meta/test` | Call Meta with the saved settings and report the result |
+| `GET /admin/platform/webhook`, `PUT /admin/platform/webhook` | Callback URL (read only), verify token, subscribed fields |
+| `GET /admin/webhook-events?company=&status=`, `POST /admin/webhook-events/:id/replay` | Recent events and failures; run a failed event again |
+| `POST /admin/platform/webhook/test` | Send a test event through the pipeline |
+| `GET /admin/companies/:id/whatsapp` | WABA id, phone number id, number, token state (masked), quality, limit, calling, webhook subscription |
+| `POST /admin/companies/:id/whatsapp/connect` | Finish Embedded Signup with the code from Meta |
+| `PUT /admin/companies/:id/whatsapp` | Enter or change WABA id, phone number id and token by hand |
+| `POST /admin/companies/:id/whatsapp/connect-link` | A one-time link for the business owner that opens only Meta's login popup |
+| `POST /admin/companies/:id/whatsapp/verify`, `/subscribe`, `/disconnect` | Re-check the number, re-subscribe the webhook, disconnect |
+| `GET /admin/ai/platform`, `PUT /admin/ai/platform` | AI provider, key (masked), default model, default prompt and rules, global off switch |
+| `GET /admin/ai/addon-plans`, `POST`, `PATCH /:id` | AI add-on price plans |
+| `GET /admin/ai/companies` | Every company: add-on status, usage this month, cost, pending activation requests |
+| `PUT /admin/companies/:id/ai/addon` | Activate, pause, set plan, expiry and monthly limit |
+| `GET /admin/companies/:id/ai/settings`, `PUT` | The company's bot settings (all of `AIBotSettings`) |
+| `GET /admin/companies/:id/ai/knowledge`, `POST`, `DELETE /:docId` | Training documents |
+| `GET /admin/companies/:id/ai/examples`, `POST`, `DELETE /:exampleId` | Corrected question and answer pairs |
+| `POST /admin/companies/:id/ai/simulate` | Test the company's bot; sends nothing to WhatsApp |
+| `GET /admin/companies/:id/ai/logs`, `GET /admin/ai/logs` | Bot logs for one company or all |
 | `GET /admin/usage` | Messages, calls, storage and Meta cost per company |
 | `GET /admin/health` | Queue depth, webhook failures, numbers with low quality |
 | `GET /admin/audit` | Platform audit log |
@@ -153,11 +172,14 @@ same schemas and published at `/api/docs` in non-production environments.
 
 | Method and path | Who | Purpose |
 |---|---|---|
-| `GET /ai/settings`, `PUT /ai/settings` | M | AI bot screen |
-| `GET /ai/logs?channel=` | M | Logs tab |
-| `POST /ai/simulate` | M | The on-screen simulator. Runs the real prompt, sends nothing to WhatsApp |
-| `GET /ai/knowledge`, `POST`, `DELETE /:id` | M | Documents the bot may use |
+| `GET /ai/status` | M | Add-on state (`off`, `active`, `paused`, `expired`), plan, expiry, usage this month against the limit |
+| `GET /ai/settings` | M | Read-only summary of what the bot is set to do. No prompt text, no keys |
+| `GET /ai/logs?channel=` | M | Logs tab, read only |
+| `POST /ai/activation-request` | M | Ask LUMI AI to activate or renew the add-on. Notifies system admins |
 | `POST /conversations/:id/bot` | M, S | Body `{ active: boolean }`. Take over from the bot or hand back |
+
+There is no manager endpoint that changes the bot. Activation, settings, training and the
+simulator are under `/admin` only.
 
 ## Insight and setup
 
@@ -172,9 +194,7 @@ same schemas and published at `/api/docs` in non-production environments.
 | `GET /billing/usage?month=` | M | Meta usage and billing |
 | `GET /billing/invoices` | M | Smart Reply invoices |
 | `GET /business-profile`, `PUT /business-profile` | M | Also pushes to WhatsApp |
-| `GET /whatsapp/account` | M | Number and quality |
-| `POST /whatsapp/connect` | M | Finish Embedded Signup with the code from Meta |
-| `POST /whatsapp/disconnect` | M | |
+| `GET /whatsapp/account` | M | Number and quality, read only. Connecting is under `/admin` |
 | `GET /integrations/webhook` | M | Status, last event, failures in 24 hours |
 | `GET /integrations/events` | M | Recent webhook events (no message text) |
 | `POST /integrations/test` | M | Send a test event through the pipeline |
@@ -220,7 +240,7 @@ The client connects once after login. The server decides which rooms the socket 
 | `calls` | `/calls*`, `/contacts` | call actions, notes, exports |
 | `contacts` | `/contacts`, `/staff` | owner, bulk owner, import, new |
 | `labels` | `/labels` | label create, edit, delete |
-| `aibot` | `/ai/*` | settings, simulate, knowledge |
+| `aibot` | `/ai/status`, `/ai/settings`, `/ai/logs` | activation request only |
 | `status` | `/presence`, `/breaks` | (manager may set a staff member's status) `PUT /staff/:id/presence` |
 | `staff` | `/staff`, `/seats`, `/roles` | invites, edit, remove |
 | `routing` | `/assignment-rules`, `/keyword-rules` | same |
@@ -236,7 +256,7 @@ The client connects once after login. The server decides which rooms the socket 
 | `reports` | `/reports` | `/exports` |
 | `billing` | `/billing/*` | |
 | `business` | `/business-profile` | same |
-| `number` | `/whatsapp/account` | connect, disconnect |
+| `number` | `/whatsapp/account` | none (read only) |
 | `roles` | `/roles` | same |
 | `integrations` | `/integrations/*` | test |
 | `audit` | `/audit` | `/exports` |

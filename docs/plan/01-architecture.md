@@ -18,6 +18,11 @@ companies from a system admin console.
 Rules that follow from this:
 
 - A `system_admin` creates a company and its first manager. A system admin never adds staff.
+- Only a `system_admin` connects, changes or disconnects a company's WhatsApp number, and
+  only a `system_admin` holds the Meta app settings (app id, app secret, webhook).
+- The **AI bot is a paid add-on**. Only a `system_admin` activates it for a company,
+  configures it and trains it (prompt, persona, knowledge). Managers and staff cannot change
+  it. A manager sees whether it is active, what it is set to do, and its logs.
 - Only a `manager` adds or removes staff. The seat limit comes from the company's plan and is
   never more than 100.
 - A `staff` member sees only conversations and calls for contacts they own, plus the team
@@ -39,7 +44,12 @@ do. It is stored per company so a manager can change it.
 | Reports, billing, settings | Yes | Own performance only |
 | Add or remove staff | Yes | No |
 | Quick replies | Add, edit, remove | Add, edit, remove own; use shared |
-| AI bot and automated flows | Yes | No |
+| Automated flows (greeting, away, keyword replies) | Yes | No |
+| AI bot: activate, configure, train | No (system admin only) | No |
+| AI bot: see status, summary of settings, logs | Read only | No |
+| Take a chat over from the bot, hand it back | Yes | Own chats |
+| Connect or change the WhatsApp number | No (system admin only) | No |
+| See number health (quality, limit, name status) | Read only | No |
 
 ## System diagram
 

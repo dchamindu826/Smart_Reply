@@ -26,6 +26,10 @@ before writing code.
    `frontend/src/dev/` only.
 9. **No secrets in the repository.** Add new settings to `.env.example` with a comment.
 10. **No customer message text or full phone numbers in logs.**
+11. **WhatsApp connection and the AI bot belong to the system admin.** Only a
+    `system_admin` connects or changes a company's number, holds the Meta app settings,
+    and activates, configures or trains the AI bot. Managers get read-only views. Do not
+    add a manager or staff endpoint that writes any of these.
 
 ## Working method
 

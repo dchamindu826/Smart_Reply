@@ -102,7 +102,8 @@ team, content, setup.
    emails (through a mail provider interface; log to console in development).
 3. Session guard, role guard, permission guard, and the company-scoped repository layer.
 4. Team endpoints: staff list, invites, edit, remove, seats, roles matrix.
-5. `/admin` endpoints: companies, plans, suspend, impersonate.
+5. `/admin` endpoints: companies, plans, suspend, impersonate, and platform Meta settings
+   (app id, app secret, Graph version, verify token) stored encrypted and returned masked.
 6. Front end: login, forgot, reset, accept-invite pages; remove the role switch; permission
    helper; Staff manage and Roles screens on the real API; the system admin screens from 05.
 7. Seed script: one system admin, two demo companies with a manager and staff each.
@@ -143,7 +144,11 @@ test number (see the list in the plan README).
    conversion to OGG Opus.
 6. 24-hour window logic on the server; `WINDOW_CLOSED` error; send template endpoint.
 7. WebSocket gateway and the `message.*` and `conversation.*` events.
-8. Connect flow: Embedded Signup on Number & quality, `POST /whatsapp/connect`. A manual
+8. Connect flow in the **system admin** console: Embedded Signup on the company's WhatsApp
+   tab, `POST /admin/companies/:id/whatsapp/connect`, the one-time connect link, manual
+   entry of WABA id, phone number id and token, verify, re-subscribe, disconnect. The
+   manager's Number & quality screen is read only. Admin Webhook screen: recent events,
+   failures, run again, test event. A manual
    "paste token and ids" path for development only.
 9. Front end: Chats screen on the real API and socket; unread counts; read receipts.
 10. Integrations screen shows real webhook status and recent events.
@@ -157,6 +162,8 @@ test number (see the list in the plan README).
   free-form send.
 - Sending the same webhook payload twice creates one message.
 - Stopping the worker for a minute loses nothing.
+- A manager cannot connect, change or disconnect the number, from the screen or by calling
+  the API directly.
 
 **Prompt**
 ```
@@ -289,19 +296,26 @@ Do not merge the proof of concept; update 04 with the decision.
 ## Phase 7 · AI bot, reports, exports
 
 **Tasks**
-1. AI provider interface; chat bot worker; handoff rules; bot logs; per-conversation
-   take-over and hand-back.
-2. Knowledge documents and catalog as bot context.
-3. The on-screen simulator on the real prompt.
-4. Transcript and summary for recorded calls; "add summary to chat".
-5. Voice bot, only if Stage B is complete and speech quality tests pass.
-6. `stats_daily` job; Dashboard, Reports, Progress, My day, My performance on real numbers.
-7. Exports as background jobs: CSV, XLSX, PDF.
+1. AI add-on: `ai_addons` and `ai_addon_plans`; activate, pause, expiry, monthly limit,
+   usage counters; manager's activation request; global off switch.
+2. AI provider interface; chat bot worker that runs only while the add-on is active;
+   handoff rules; bot logs; per-conversation take-over and hand-back.
+3. System admin AI console: platform settings, add-on plans, companies list, and per
+   company the full bot settings, knowledge documents, training examples and simulator.
+4. Manager's AI Bot screen made read only: state, usage, summary, logs, request activation.
+5. Knowledge documents, training examples and catalog as bot context.
+6. Transcript and summary for recorded calls; "add summary to chat".
+7. Voice bot, only if Stage B is complete and speech quality tests pass.
+8. `stats_daily` job; Dashboard, Reports, Progress, My day, My performance on real numbers.
+9. Exports as background jobs: CSV, XLSX, PDF.
 
 **Done when**
 - With the bot on, a customer question covered by the knowledge base gets a correct reply,
   and a complaint is handed to a person with a note.
-- With the bot off for a company, no customer text leaves the platform to the AI provider.
+- With the add-on off, paused or expired for a company, or the monthly limit used up, the
+  bot sends nothing and no customer text leaves the platform to the AI provider.
+- A manager cannot change any bot setting, from the screen or by calling the API directly.
+- A system admin activates the add-on for one company and the other companies are unaffected.
 - Report totals equal direct database counts for the same range.
 
 **Prompt**

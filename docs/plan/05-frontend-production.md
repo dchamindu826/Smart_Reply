@@ -126,7 +126,13 @@ Old ids such as `?screen=chats` redirect to the new paths.
 ### 6. Remove the demo from the product
 - Move `simulateCustomerReply`, `simulateIncomingCall`, the bot simulators' canned answers
   and the mock data into `src/dev/`, loaded only when `NEXT_PUBLIC_DEMO=1`.
-- The AI bot screen's simulator calls `POST /ai/simulate`.
+- The manager's AI Bot screen becomes **read only**: add-on state, plan and expiry, usage
+  this month, a summary of the bot's behaviour, the logs tab, and a "Request activation"
+  button when the add-on is off or expired. Every input, switch, Save button and both
+  simulators move to the system admin's "Company → AI bot" screen, which reuses the same
+  components.
+- The manager's Number & quality screen stays as it looks today but has no connect or
+  disconnect action.
 - Replace the 37 message-only buttons with working forms. Build them from the existing
   sheet, form and button styles.
 
@@ -165,7 +171,14 @@ New, in the same visual language as the manager screens:
 | Plans | Name, seat limit, price, features |
 | Usage | Messages, calls, storage and Meta cost by company and month |
 | Health | Queue depth, webhook failures, numbers with low quality or restrictions |
-| Audit | Platform-level actions, including every impersonation |
+| Meta settings | App id, app secret, Graph API version, Embedded Signup config id, system token (all secrets masked), "Test connection" |
+| Webhook | Callback URL, verify token, subscribed fields, per-company subscription state, recent events, failures with "run again", "send test event" |
+| Company → WhatsApp | WABA id, phone number id, number, token state, quality, messaging limit, calling. Connect by Embedded Signup, enter ids by hand, send connect link, verify, re-subscribe, disconnect |
+| AI: platform | Provider, key, default model, default prompt and rules, global off switch |
+| AI: add-on plans | Price, monthly reply limit, voice included |
+| AI: companies | Per company: add-on state, plan, expiry, usage, cost, activation requests. Activate, pause, renew |
+| Company → AI bot | The full settings from today's `AIBotScreen.tsx`, knowledge documents, training examples, simulator, logs |
+| Audit | Platform-level actions, including every impersonation and every change to Meta, webhook, WhatsApp and AI settings |
 
 ### 12. Quality bar
 - **Accessibility**: the rail uses symbols such as `◧` and `☏` as icons; give every control

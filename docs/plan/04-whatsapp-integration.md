@@ -11,18 +11,32 @@ pages at the start of each phase.
 Smart Reply acts as a **Tech Provider**. The company keeps ownership of its WhatsApp
 Business account and pays Meta directly.
 
-1. The manager opens **Number & quality** and presses Connect.
-2. Meta's **Embedded Signup** opens in a popup. The manager logs in to Facebook, picks or
-   creates a WhatsApp Business account and a phone number.
+Only a system admin connects a number. The manager's **Number & quality** screen is read only.
+
+1. The system admin opens the company in the admin console and presses Connect WhatsApp.
+2. Meta's **Embedded Signup** opens in a popup. Someone with access to the customer's
+   Facebook business must log in there, pick or create the WhatsApp Business account and
+   the phone number. That login cannot be skipped: the customer owns the account. In
+   practice the system admin does this on a call with the customer, or sends the one-time
+   connect link, which opens only this popup and nothing else in Smart Reply.
 3. The popup returns a short-lived code, the account id (WABA id) and the phone number id.
    **(checked)**
-4. The web app posts these to `POST /whatsapp/connect`. The back end then:
+4. The admin console posts these to `POST /admin/companies/:id/whatsapp/connect`. The back end then:
    1. exchanges the code for a business token, server to server;
    2. registers the phone number for Cloud API;
    3. subscribes the Smart Reply app to the account's webhooks; **(checked, all three steps)**
    4. stores the token encrypted and reads the number's name, quality and messaging limit.
 5. The company must add a payment method in its WhatsApp account before it can send paid
    messages. **(checked)** Show this as a step on the screen.
+
+There is also a manual path for the system admin: type the WABA id, the phone number id and
+a token, then press Verify. Use it for numbers set up outside Embedded Signup. The back end
+runs the same register, subscribe and read steps.
+
+The platform-wide Meta settings (app id, app secret, Graph API version, verify token,
+Embedded Signup config id) are edited by the system admin in the admin console and stored
+encrypted in `platform_settings`. The app secret is needed to check webhook signatures, so
+the server reads it at start and when it changes.
 
 Requirements on our side: advanced access to `whatsapp_business_management` and
 `whatsapp_business_messaging` through App Review. Onboarding is capped at 10 customers a
@@ -248,8 +262,22 @@ Do not build Stage B features before that decision.
 
 ## AI bot
 
-- **Chat bot.** Runs in a worker after an incoming message when the bot is active for that
-  conversation. Inputs: the company's prompt and persona, recent messages, catalog and
+The AI bot is a paid add-on that LUMI AI controls completely.
+
+- **Who does what.** A system admin activates the add-on for a company, sets its plan,
+  expiry and monthly reply limit, writes the prompt and persona, uploads knowledge
+  documents and saves corrected answers from real chats as training examples. A manager
+  sees the add-on state, a plain summary of what the bot does, usage against the limit and
+  the logs, and can press "request activation". Managers and staff can still take a single
+  chat over from the bot and hand it back; that is day-to-day work, not configuration.
+- **When the bot runs.** Only when the company's add-on is `active`, the monthly limit is
+  not used up, the global off switch is not set, and the bot is active on that conversation.
+  In every other case the message goes to people as if there were no bot.
+- **Training.** "Training" here means improving the prompt, the knowledge documents and the
+  example answers the bot is given. It is not fine-tuning a model. The system admin's AI
+  console shows low-confidence and handed-off replies so they can be corrected and saved as
+  examples.
+- **Chat bot.** Runs in a worker after an incoming message when the conditions above hold. Inputs: the company's prompt and persona, recent messages, catalog and
   knowledge documents. Output: a reply with an intent and a confidence score. Below the
   company's confidence threshold, or when a handoff rule matches (negotiation, complaint,
   asks for a person), it sends the fallback message, assigns a human and stops. Every run

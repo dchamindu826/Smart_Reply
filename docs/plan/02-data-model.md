@@ -10,7 +10,9 @@ Every table in the "Company data" sections has `company_id uuid not null` with a
 
 | Table | Key columns | Notes |
 |---|---|---|
+| `platform_settings` | `meta_app_id`, `meta_app_secret_enc`, `meta_graph_version`, `meta_verify_token_enc`, `meta_embedded_signup_config_id`, `meta_system_token_enc`, `ai_provider`, `ai_api_key_enc`, `ai_default_model`, `ai_defaults jsonb`, `ai_global_off` | One row. Edited only by system admins. Secrets encrypted; the API never returns them in full |
 | `plans` | `name`, `seat_limit` (max 100), `price_minor`, `currency`, `features jsonb` | The plans LUMI AI sells |
+| `ai_addon_plans` | `name`, `price_minor`, `currency`, `monthly_reply_limit`, `voice_included` | What the AI add-on costs and includes |
 | `companies` | `name`, `slug`, `plan_id`, `seat_limit`, `status` (`active`, `suspended`, `closed`), `timezone`, `locale`, `created_by` | One row per customer. `seat_limit` copies the plan and can be overridden, never above 100 |
 | `users` | `company_id` (null for system admins), `role` (`system_admin`, `manager`, `staff`), `name`, `initials`, `title`, `email` unique, `phone`, `password_hash`, `status` (`invited`, `active`, `disabled`), `language`, `signature`, `notify jsonb`, `avatar_color`, `last_login_at` | A user belongs to one company |
 | `refresh_tokens` | `user_id`, `token_hash`, `device`, `expires_at`, `revoked_at`, `replaced_by` | Rotated on every use |
@@ -25,7 +27,7 @@ Every table in the "Company data" sections has `company_id uuid not null` with a
 |---|---|---|
 | `role_permissions` | `role`, `permissions jsonb` | The matrix from the Roles screen. One row per role per company |
 | `user_permissions` | `user_id`, `overrides jsonb` | Per-person switches from Staff manage (`can_call`, `see_all_chats`, `create_templates`, `edit_prices`, `export_own`) |
-| `whatsapp_accounts` | `waba_id`, `phone_number_id` unique, `display_phone`, `verified_name`, `name_status`, `username`, `access_token_enc`, `quality_rating`, `messaging_limit`, `calling_enabled`, `webhook_subscribed_at`, `connected_at`, `status` | One per company in the first release |
+| `whatsapp_accounts` | `waba_id`, `phone_number_id` unique, `display_phone`, `verified_name`, `name_status`, `username`, `access_token_enc`, `quality_rating`, `messaging_limit`, `calling_enabled`, `webhook_subscribed_at`, `connected_at`, `connected_by` (system admin), `connect_method` (`embedded_signup`, `manual`), `status` | One per company in the first release. Written only by system admins |
 | `business_profiles` | `display_name`, `about`, `address`, `website`, `email`, `greeting_text`, `greeting_on`, `away_text`, `away_on` | Business profile screen |
 | `call_settings` | `ring_strategy` (`all`, `round_robin`, `longest_idle`), `ring_seconds`, `record_auto`, `record_announce`, `record_pause_allowed`, `record_keep_days`, `link_previews`, `break_max_minutes`, `hours jsonb`, `holidays jsonb` | Call settings screen. Today: `CallConfig` |
 | `forwarding_rules` | `user_id` (null = company default), `on_no_answer`, `on_busy`, `on_break`, `on_away`, `on_dnd`, `after_hours` | Each value is a destination: `queue`, `wait`, `msg`, `vm`, `user:<id>`, `manager` |
@@ -33,8 +35,10 @@ Every table in the "Company data" sections has `company_id uuid not null` with a
 | `ivr_options` | `menu_id`, `digit`, `label`, `destination`, `position` | Destination may be a quick reply: `quick_reply:<id>` |
 | `assignment_rules` | `auto_assign` (`off`, `round_robin`, `least_open`), `sticky_owner`, `max_open_chats`, `unassigned_alert_minutes`, `call_ring_owner_first`, `missed_call_template_id` | Assignment rules screen |
 | `keyword_rules` | `keywords text[]`, `label_id`, `assign_user_id`, `quick_reply_id`, `enabled`, `match_count` | |
-| `ai_bot_settings` | Columns matching `AIBotSettings` in `frontend/src/types/index.ts` | One per company |
-| `knowledge_documents` | `title`, `source` (`upload`, `catalog`, `text`), `storage_key`, `status`, `chunks` | What the bot may answer from |
+| `ai_addons` | `status` (`off`, `active`, `paused`, `expired`), `addon_plan_id`, `activated_by`, `activated_at`, `active_until`, `monthly_reply_limit`, `replies_this_month`, `tokens_this_month`, `cost_minor_this_month`, `requested_at`, `requested_by` | One per company. The bot runs only when `status = active`. Written only by system admins, except `requested_*` which a manager's "request activation" sets |
+| `ai_bot_settings` | Columns matching `AIBotSettings` in `frontend/src/types/index.ts`, plus `model`, `updated_by` | One per company. Written only by system admins |
+| `knowledge_documents` | `title`, `source` (`upload`, `catalog`, `text`, `chat_examples`), `storage_key`, `status`, `chunks`, `added_by` | What the bot may answer from. Training material is added only by system admins |
+| `ai_training_examples` | `question`, `ideal_answer`, `source_message_id`, `approved_by` | Corrected answers a system admin saves from real chats to improve the bot |
 
 ## Company data: people and presence
 
