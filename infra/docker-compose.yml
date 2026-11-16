@@ -71,6 +71,8 @@ services:
     image: smart-reply-api:latest
     restart: unless-stopped
     environment: *api-env
+    ports:
+      - "127.0.0.1:4020:4000"
     volumes: [storage:/app/backend/storage]
     depends_on:
       migrate: { condition: service_completed_successfully }
@@ -98,9 +100,12 @@ services:
     restart: unless-stopped
     environment:
       API_INTERNAL_URL: http://api:4000
+    ports:
+      - "127.0.0.1:3020:3000"
     depends_on: [api]
 
   caddy:
+    profiles: ["caddy"]
     image: caddy:2-alpine
     restart: unless-stopped
     ports: ["80:80", "443:443", "443:443/udp"]
