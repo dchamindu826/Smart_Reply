@@ -33,17 +33,44 @@ export default function LoginPage() {
   };
 
   return (
-    <AuthShell title="Sign in" sub="Use the email your manager or LUMI AI set up for you.">
+    <AuthShell
+      title="Sign in to Console"
+      sub="Unified portal for Super Admins, Company Managers, and Staff."
+    >
       <form onSubmit={submit} noValidate>
         <label className="f" htmlFor="email">Email</label>
-        <input id="email" className="f-in" type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} required autoFocus />
+        <input
+          id="email"
+          className="f-in"
+          type="email"
+          autoComplete="username"
+          placeholder="name@company.com"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          required
+          autoFocus
+        />
+
         <label className="f" htmlFor="password">Password</label>
-        <input id="password" className="f-in" type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} required />
+        <input
+          id="password"
+          className="f-in"
+          type="password"
+          autoComplete="current-password"
+          placeholder="••••••••"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          required
+        />
+
         {error ? <div className="err" role="alert">{error}</div> : null}
+
         <button className="btn pri" type="submit" disabled={busy || !email || !password}>
-          {busy ? 'Signing in…' : 'Sign in'}
+          {busy ? 'Signing in…' : 'Sign in to Console'}
         </button>
+
         <div className="links">
+          <Link href="/">← Back to Home</Link>
           <Link href="/forgot-password">Forgot password?</Link>
         </div>
       </form>
