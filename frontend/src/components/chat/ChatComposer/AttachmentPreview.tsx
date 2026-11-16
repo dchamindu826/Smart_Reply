@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Attachment } from '@/types';
-import { formatFileSize } from '@/data/mockData';
+import { formatFileSize } from '@/lib/ui';
 
 interface AttachmentPreviewProps {
   attachments: Attachment[];

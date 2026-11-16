@@ -50,7 +50,8 @@ export default function ChatListPanel({
 }: ChatListPanelProps) {
   const [showNotice, setShowNotice] = useState(true);
 
-  const { chatWallpaper, setChatWallpaper, addToast } = useApp();
+  const { chatWallpaper, setChatWallpaper, addToast, companyPhone, numberQuality } = useApp();
+  const connected = numberQuality === 'Connected';
   const [wallpaperMenuOpen, setWallpaperMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -317,9 +318,9 @@ export default function ChatListPanel({
             ✓
           </div>
           <div className="wa-notice-content">
-            <div className="wa-notice-title">WhatsApp Business Connected</div>
+            <div className="wa-notice-title">{connected ? 'WhatsApp Business Connected' : 'WhatsApp not connected yet'}</div>
             <div className="wa-notice-sub">
-              +94 77 123 4567 · 24h Window active. <a onClick={() => setShowNotice(false)}>Dismiss</a>
+              {connected ? `${companyPhone} · Live.` : 'LUMI AI connects your number.'} <a onClick={() => setShowNotice(false)}>Dismiss</a>
             </div>
           </div>
           <button

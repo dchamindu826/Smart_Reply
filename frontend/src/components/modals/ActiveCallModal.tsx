@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
-import { formatDuration } from '@/data/mockData';
+import { formatDuration } from '@/lib/ui';
 
 export default function ActiveCallModal() {
   const {
@@ -12,7 +12,12 @@ export default function ActiveCallModal() {
     contacts,
     staff,
     callConfig,
-    addToast
+    addToast,
+    callAction,
+    addCallNote,
+    openSheet,
+    closeSheet,
+    manager
   } = useApp();
 
   const [elapsed, setElapsed] = useState('00:00');
@@ -32,18 +37,35 @@ export default function ActiveCallModal() {
 
   const teamIds = staff.map(s => s.id);
   const sName = (id: string) => {
-    if (id === 'mgr') return 'Madushan';
+    if (id === 'mgr') return manager.n.split(' ')[0];
     const s = staff.find(x => x.id === id);
     return s ? s.n.split(' ')[0] : id;
   };
 
   const handleCtl = (key: string) => {
     if (key === 'note') {
-      addToast('Note added to the call.');
+      let text = '';
+      openSheet(
+        <>
+          <h2>Call note</h2>
+          <p className="sub">Saved on the call and as an internal note in the chat.</p>
+          <textarea className="f-in" rows={4} autoFocus onChange={e => (text = e.target.value)} />
+          <button
+            className="btn pri"
+            style={{ marginTop: 12 }}
+            onClick={() => {
+              if (text.trim()) void addCallNote(text.trim());
+              closeSheet();
+            }}
+          >
+            Save note
+          </button>
+        </>
+      );
       return;
     }
     if (key === 'keypad') {
-      addToast('Keypad: tones are sent to the caller.');
+      addToast('The keypad needs the call media server (coming with recording and transfer).');
       return;
     }
     if (key === 'add' || key === 'xfer') {
@@ -52,14 +74,20 @@ export default function ActiveCallModal() {
     }
     if (key === 'rec') {
       const nextRec = !activeCall.rec;
-      updateActiveCall(prev => prev ? { ...prev, rec: nextRec, ever: prev.ever || nextRec } : null);
-      addToast(nextRec ? 'Recording on.' : 'Recording paused. Card or bank details said now won’t be saved.');
+      void callAction('recording', { on: nextRec }).then(ok => {
+        if (!ok) return;
+        updateActiveCall(prev => prev ? { ...prev, rec: nextRec, ever: prev.ever || nextRec } : null);
+        addToast(nextRec ? 'Recording on.' : 'Recording paused. Card or bank details said now won’t be saved.');
+      });
       return;
     }
     if (key === 'hold') {
       const nextHold = !activeCall.hold;
-      updateActiveCall(prev => prev ? { ...prev, hold: nextHold } : null);
-      addToast(nextHold ? 'Customer on hold. They hear music.' : 'Call resumed.');
+      void callAction(nextHold ? 'hold' : 'resume').then(ok => {
+        if (!ok) return;
+        updateActiveCall(prev => prev ? { ...prev, hold: nextHold } : null);
+        addToast(nextHold ? 'Customer on hold. They hear music.' : 'Call resumed.');
+      });
       return;
     }
     if (key === 'mute') {
@@ -74,24 +102,16 @@ export default function ActiveCallModal() {
 
   const handlePickTarget = (id: string) => {
     if (activeCall.pick === 'add') {
-      updateActiveCall(prev => prev ? { ...prev, pick: null, adding: id } : null);
-      setTimeout(() => {
-        updateActiveCall(prev => {
-          if (!prev || prev.adding !== id) return prev;
-          return { ...prev, adding: null, parts: [...prev.parts, id] };
-        });
-        addToast(`${sName(id)} joined. The customer can hear both of you.`);
-      }, 1500);
+      void callAction('participants', { userId: id }).then(ok => {
+        updateActiveCall(prev => prev ? { ...prev, pick: null } : null);
+        if (ok) addToast(`${sName(id)} is being added to the call.`);
+      });
       return;
     }
-
-    if (activeCall.xm === 'blind' || id === 'queue') {
-      endCall('transferred', `Transferred to ${id === 'queue' ? 'Sales queue' : sName(id)}`);
-      return;
-    }
-
-    // Warm transfer
-    updateActiveCall(prev => prev ? { ...prev, pick: null, warm: id, hold: true } : null);
+    void callAction('transfer', { destination: id === 'queue' ? 'queue' : `user:${id}`, mode: activeCall.xm }).then(ok => {
+      updateActiveCall(prev => prev ? { ...prev, pick: null } : null);
+      if (ok) endCall('transferred', `Transferred to ${id === 'queue' ? 'team queue' : sName(id)}`);
+    });
   };
 
   return (
@@ -116,7 +136,7 @@ export default function ActiveCallModal() {
 
         <span className="tm">
           {activeCall.hold ? 'On hold · ' : ''}
-          <span id="ctm">{elapsed}</span>
+          <span id="ctm">{activeCall.connected ? elapsed : 'Ringing…'}</span>
         </span>
 
         <span className={`rec ${activeCall.rec ? '' : 'off'}`}>
@@ -195,7 +215,7 @@ export default function ActiveCallModal() {
             )}
             <div className="cbt">
               {activeCall.pick === 'xfer' && (
-                <button onClick={() => handlePickTarget('queue')}>Sales queue</button>
+                <button onClick={() => handlePickTarget('queue')}>Team queue</button>
               )}
               {teamIds
                 .filter(i => !activeCall.parts.includes(i))

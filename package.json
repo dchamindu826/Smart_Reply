@@ -1,0 +1,28 @@
+{
+  "name": "smart-reply",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Smart Reply by LUMI AI: multi-company WhatsApp chat and call management",
+  "workspaces": [
+    "packages/shared",
+    "backend",
+    "frontend"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build:shared": "npm run build -w @smart-reply/shared",
+    "postinstall": "npm run build:shared",
+    "dev": "npm run build:shared && concurrently -n api,worker,web -c blue,magenta,green \"npm run dev -w backend\" \"npm run dev:worker -w backend\" \"npm run dev -w frontend\"",
+    "db:migrate": "npm run db:migrate -w backend",
+    "db:seed": "npm run db:seed -w backend",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

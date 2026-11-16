@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Attachment } from '@/types';
-import { formatFileSize } from '@/data/mockData';
+import { formatFileSize } from '@/lib/ui';
 
 interface MessageAttachmentProps {
   attachment: Attachment;
@@ -11,9 +11,9 @@ interface MessageAttachmentProps {
 export default function MessageAttachment({ attachment }: MessageAttachmentProps) {
   if (attachment.type === 'image') {
     return (
-      <span className="att-img">
-        <img src={attachment.url || ''} alt={attachment.name} />
-      </span>
+      <a className="att-img" href={attachment.url || undefined} target="_blank" rel="noreferrer">
+        {attachment.url ? <img src={attachment.url} alt={attachment.name} loading="lazy" /> : null}
+      </a>
     );
   }
 
@@ -23,19 +23,35 @@ export default function MessageAttachment({ attachment }: MessageAttachmentProps
         <button
           type="button"
           className="pl"
+          aria-label="Play voice message"
           onClick={e => {
             const p = e.currentTarget.parentNode as HTMLElement;
-            p?.classList.toggle('play');
+            const audio = p.querySelector('audio');
+            if (!audio) return;
+            if (audio.paused) {
+              void audio.play();
+              p.classList.add('play');
+            } else {
+              audio.pause();
+              p.classList.remove('play');
+            }
           }}
         >
           ▶
         </button>
+        {attachment.url ? (
+          <audio
+            src={attachment.url}
+            preload="none"
+            onEnded={e => (e.currentTarget.parentNode as HTMLElement).classList.remove('play')}
+          />
+        ) : null}
         <span className="wave">
           {Array.from({ length: 22 }).map((_, wIdx) => (
             <i key={wIdx} style={{ height: `${6 + ((wIdx * 37) % 17)}px` }} />
           ))}
         </span>
-        <small>{attachment.dur || '0:14'}</small>
+        <small>{attachment.dur || ''}</small>
       </span>
     );
   }
@@ -43,13 +59,21 @@ export default function MessageAttachment({ attachment }: MessageAttachmentProps
   const ext = (attachment.name.split('.').pop() || 'FILE').toUpperCase().slice(0, 4);
   const extClass = /XLS|CSV/.test(ext) ? 'x' : /DOC|TXT/.test(ext) ? 'w' : '';
 
+  if (attachment.mime?.startsWith('video/') && attachment.url) {
+    return (
+      <span className="att-img">
+        <video src={attachment.url} controls preload="metadata" style={{ maxWidth: '100%', borderRadius: 6 }} />
+      </span>
+    );
+  }
+
   return (
-    <span className="att-file">
+    <a className="att-file" href={attachment.url || undefined} target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>
       <span className={`ext ${extClass}`}>{ext}</span>
       <span>
         <b>{attachment.name}</b>
         <span>{formatFileSize(attachment.size)}</span>
       </span>
-    </span>
+    </a>
   );
 }

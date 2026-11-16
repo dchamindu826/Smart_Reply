@@ -2,12 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
-import { formatDuration } from '@/data/mockData';
+import { formatDuration } from '@/lib/ui';
 
 export default function Header() {
   const {
     role,
-    setRole,
     screen,
     theme,
     toggleTheme,
@@ -23,8 +22,50 @@ export default function Header() {
     setStatusModalOpen,
     addToast,
     soundMuted,
-    toggleSoundMuted
+    toggleSoundMuted,
+    companyPhone,
+    numberQuality,
+    counts,
+    calls,
+    openSheet,
+    setScreen,
+    signOut
   } = useApp();
+  void role;
+  void screen;
+  void setBusiness;
+
+  // Items that need attention: unread chats, chats about to close, missed calls today.
+  const today = new Date().toDateString();
+  const missedToday = calls.filter(c => c.d === 'missed' && c.startedAt && new Date(c.startedAt).toDateString() === today).length;
+  const attention = [
+    { n: counts?.unread ?? 0, text: 'unread chats', go: 'chats' },
+    { n: counts?.closingSoon ?? 0, text: 'chats closing within 2 hours', go: 'chats' },
+    { n: missedToday, text: 'missed calls today', go: 'calls' }
+  ].filter(a => a.n > 0);
+  const attentionCount = attention.reduce((sum, a) => sum + a.n, 0);
+
+  const openAttention = () => {
+    if (attention.length === 0) {
+      addToast('Nothing needs your attention right now.');
+      return;
+    }
+    openSheet(
+      <>
+        <h2>Needs your attention</h2>
+        {attention.map(a => (
+          <div key={a.text} className="list-row" style={{ paddingLeft: 0, paddingRight: 0 }}>
+            <div className="bd">
+              <b>{a.n} {a.text}</b>
+            </div>
+            <div className="rt">
+              <button className="btn sm" onClick={() => setScreen(a.go)}>Open</button>
+            </div>
+          </div>
+        ))}
+      </>
+    );
+  };
 
   const [callElapsed, setCallElapsed] = useState('');
   const [chatElapsed, setChatElapsed] = useState('');
@@ -86,15 +127,13 @@ export default function Header() {
 
       <div className="pick">
         <label className="sr" htmlFor="co">Business</label>
-        <select id="co" value={business} onChange={e => setBusiness(e.target.value)}>
-          <option>Madushan Aluminium — 3 staff</option>
-          <option>Kandy Tiles &amp; Bath — 6 staff</option>
-          <option>Ceylon Kitchen Works — 12 staff</option>
+        <select id="co" value={business} onChange={() => undefined}>
+          <option>{business}</option>
         </select>
       </div>
 
       <span className="wa" title="WhatsApp Business number">
-        +94 77 123 4567 · Quality High
+        {numberQuality === 'Connected' ? `${companyPhone} · Connected` : 'WhatsApp not connected'}
       </span>
 
       <span className="sp" />
@@ -113,21 +152,10 @@ export default function Header() {
         </span>
       </button>
 
-      {/* Role switcher */}
-      <div className="rolesw" role="group" aria-label="View as">
-        <button
-          aria-pressed={role === 'manager'}
-          className={role === 'manager' ? 'active' : ''}
-          onClick={() => setRole('manager')}
-        >
-          Manager
-        </button>
-        <button
-          aria-pressed={role === 'staff'}
-          className={role === 'staff' ? 'active' : ''}
-          onClick={() => setRole('staff')}
-        >
-          Staff
+      {/* Sign out */}
+      <div className="rolesw" role="group" aria-label="Account">
+        <button onClick={() => void signOut()} title="Sign out of Smart Reply">
+          Sign out
         </button>
       </div>
 
@@ -191,12 +219,12 @@ export default function Header() {
         className="tbtn"
         id="bell"
         aria-label="Notifications"
-        onClick={() => addToast('5 items need your attention.')}
+        onClick={openAttention}
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0" />
         </svg>
-        <span className="bdg">5</span>
+        {attentionCount ? <span className="bdg">{attentionCount > 99 ? '99+' : attentionCount}</span> : null}
       </button>
 
       {/* User profile */}

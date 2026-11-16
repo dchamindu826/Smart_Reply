@@ -1,29 +1,76 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import type { BreakEntry } from '@smart-reply/shared';
 import { useApp } from '@/context/AppContext';
-import { formatDuration } from '@/data/mockData';
+import { useBreaks } from '@/features/team';
+import { hhmm } from '@/lib/adapters';
+import { formatDuration } from '@/lib/ui';
+import { Staff } from '@/types';
 import SectionThemeToggle from '@/components/common/SectionThemeToggle';
 
 export default function LiveStatusScreen() {
   const {
-    staff,
+    role,
+    staff: allStaff,
+    team,
     manager,
+    currentUser,
     callConfig,
     setStatusModalOpen,
-    setUserStatus,
+    setStaffStatus,
     setScreen,
     addToast
   } = useApp();
+  const isManager = role === 'manager';
 
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(() => Date.now());
+  const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const brkMax = callConfig.brkmax;
+  // Invited people have not signed in yet; they are not part of the live team.
+  const staff = useMemo(() => allStaff.filter(s => s.status !== 'invited' && s.id !== currentUser.id), [allStaff, currentUser.id]);
+  const otherManagers = useMemo(
+    () => team.filter(m => m.role === 'manager' && m.id !== currentUser.id && m.status !== 'invited'),
+    [team, currentUser.id]
+  );
+  const me = team.find(m => m.id === currentUser.id);
+  const members: Staff[] = useMemo(() => [...staff, ...otherManagers], [staff, otherManagers]);
+
+  const breaksQ = useBreaks('today', isManager);
+  const { refetch: refetchBreaks } = breaksQ;
+  const breaksBy = useMemo(() => new Map((breaksQ.data ?? []).map(b => [b.userId, b])), [breaksQ.data]);
+  const brkMax = breaksQ.data?.[0]?.limitMinutes ?? callConfig.brkmax;
+
+  // A status change (live over the socket) can open or close a break: reload the log.
+  const presenceKey = team.map(m => `${m.id}:${m.call.st}:${m.chat.st}`).join('|');
+  useEffect(() => {
+    if (isManager) void refetchBreaks();
+  }, [presenceKey, isManager, refetchBreaks]);
+
+  /** Break minutes today: finished breaks plus the one running now, counted live. */
+  const breakMinutes = (s: Staff) => {
+    const b = breaksBy.get(s.id);
+    if (!b) return s.used;
+    return b.entries.reduce((sum, e) => sum + (e.endedAt ? e.minutes : Math.round((now - new Date(e.startedAt).getTime()) / 60000)), 0);
+  };
+
+  const logRows = useMemo(() => {
+    const rows: { userId: string; name: string; e: BreakEntry }[] = [];
+    for (const b of breaksQ.data ?? []) for (const e of b.entries) rows.push({ userId: b.userId, name: b.name, e });
+    return rows.sort((a, b) => a.e.startedAt.localeCompare(b.e.startedAt));
+  }, [breaksQ.data]);
+
+  const setAvailable = async (s: Staff) => {
+    setBusy(s.id);
+    await setStaffStatus(s.id, 'both', 'available');
+    setBusy(null);
+    addToast(`${s.n.split(' ')[0]} set to available for calls and chats.`);
+  };
 
   const onBreakStaff = staff.filter(s => s.call.st === 'brk' || s.chat.st === 'brk');
   const lateStaff = staff.filter(
@@ -120,10 +167,19 @@ export default function LiveStatusScreen() {
               </tr>
             </thead>
             <tbody>
-              {staff.map(s => {
-                const onBrk = s.call.st === 'brk' || s.chat.st === 'brk';
+              {members.length === 0 && (
+                <tr>
+                  <td colSpan={6}>
+                    <div className="empty">
+                      <b>No staff yet</b>
+                      Add people on the Staff manage screen.
+                    </div>
+                  </td>
+                </tr>
+              )}
+              {members.map(s => {
                 const off = (s.call.st !== 'available' && s.call.st !== 'oncall') || s.chat.st !== 'available';
-                const bt = s.used + (onBrk ? Math.round((now - s.call.since) / 60000) : 0);
+                const bt = breakMinutes(s);
 
                 return (
                   <tr key={s.id}>
@@ -132,7 +188,7 @@ export default function LiveStatusScreen() {
                         <i className={`av st ${s.st}`}>{s.i}</i>
                         <span>
                           <b>{s.n}</b>
-                          <span>Staff · Sales{s.noteS ? ` · ${s.noteS}` : ''}</span>
+                          <span>{s.role === 'manager' ? 'Manager' : 'Staff'}{s.title && !/^(staff|manager)$/i.test(s.title) ? ` · ${s.title}` : ''}{s.noteS ? ` · ${s.noteS}` : ''}</span>
                         </span>
                       </div>
                     </td>
@@ -159,23 +215,11 @@ export default function LiveStatusScreen() {
                       <span className="hint">{bt} of {brkMax} min</span>
                     </td>
                     <td className="r" style={{ whiteSpace: 'nowrap' }}>
-                      {onBrk && (
+                      {isManager && off && (
                         <button
                           className="btn sm"
-                          style={{ marginRight: '6px' }}
-                          onClick={() => addToast(`${s.n.split(' ')[0]} got a reminder to come back.`)}
-                        >
-                          Remind
-                        </button>
-                      )}
-                      {off && (
-                        <button
-                          className="btn sm"
-                          onClick={() => {
-                            s.call.st = 'available';
-                            s.chat.st = 'available';
-                            addToast(`${s.n.split(' ')[0]} set to available for calls and chats.`);
-                          }}
+                          disabled={busy === s.id}
+                          onClick={() => void setAvailable(s)}
                         >
                           Set available
                         </button>
@@ -188,28 +232,28 @@ export default function LiveStatusScreen() {
               <tr>
                 <td>
                   <div className="emp">
-                    <i className="av">MP</i>
+                    <i className="av">{manager.i}</i>
                     <span>
-                      <b>Madushan P. (you)</b>
-                      <span>Owner · Manager</span>
+                      <b>{manager.n} (you)</b>
+                      <span>{me?.title && !/^manager$/i.test(me.title) ? `${me.title} · ` : ''}{isManager ? 'Manager' : 'Staff'}</span>
                     </span>
                   </div>
                 </td>
                 <td>
                   <span className={`chip sc ${getStatusColor(manager.call.st)}`}>
-                    ☏ {getStatusLabel(manager.call.st)}{' '}
+                    ☏ {getStatusLabel(manager.call.st, manager.call.r)}{' '}
                     <b className="tmr">{formatDuration(now - manager.call.since)}</b>
                   </span>
                 </td>
                 <td>
                   <span className={`chip sc ${getStatusColor(manager.chat.st)}`}>
-                    ✉ {getStatusLabel(manager.chat.st)}{' '}
+                    ✉ {getStatusLabel(manager.chat.st, manager.chat.r)}{' '}
                     <b className="tmr">{formatDuration(now - manager.chat.since)}</b>
                   </span>
                 </td>
-                <td className="r">0</td>
+                <td className="r">{me?.open ?? 0}</td>
                 <td>
-                  <span className="hint">{manager.used} min</span>
+                  <span className="hint">{me ? breakMinutes(me) : manager.used} min</span>
                 </td>
                 <td className="r">
                   <button className="btn sm" onClick={() => setStatusModalOpen(true)}>
@@ -238,28 +282,29 @@ export default function LiveStatusScreen() {
                 </tr>
               </thead>
               <tbody>
-                {staff.map(s => (
-                  <React.Fragment key={s.id}>
-                    {s.log.map((b, idx) => (
-                      <tr key={idx}>
-                        <td>{s.n.split(' ')[0]}</td>
-                        <td>{b[0]}</td>
-                        <td>{b[1]}</td>
-                        <td className="r">{b[2]}</td>
-                      </tr>
-                    ))}
-                    {s.call.st === 'brk' && (
-                      <tr>
-                        <td>{s.n.split(' ')[0]}</td>
-                        <td>{s.call.r} <span className="chip w">now</span></td>
-                        <td>{new Date(s.call.since).toTimeString().slice(0, 5)}</td>
-                        <td className="r">
-                          <b className="tmr">{formatDuration(now - s.call.since)}</b>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                ))}
+                {breaksQ.isLoading ? (
+                  <tr>
+                    <td colSpan={4}><span className="hint">Loading…</span></td>
+                  </tr>
+                ) : logRows.length ? (
+                  logRows.map(({ userId, name, e }) => (
+                    <tr key={e.id}>
+                      <td>{userId === currentUser.id ? 'You' : name.split(' ')[0]}</td>
+                      <td>
+                        {e.reason || 'Break'}
+                        {!e.endedAt && <> <span className="chip w">now</span></>}
+                      </td>
+                      <td>{hhmm(e.startedAt)}</td>
+                      <td className="r">
+                        {e.endedAt ? e.minutes : <b className="tmr">{formatDuration(now - new Date(e.startedAt).getTime())}</b>}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4}><span className="hint">No breaks yet today.</span></td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

@@ -57,7 +57,8 @@ export default function Shell() {
     toasts,
     activeCall,
     frameTheme,
-    sectionTheme
+    sectionTheme,
+    role
   } = useApp();
 
   if (!mounted) {
@@ -71,8 +72,12 @@ export default function Shell() {
     );
   }
 
+  // Staff only get the screens in their menu. The API enforces this too.
+  const STAFF_SCREENS = ['mydash', 'chats', 'inbox', 'calls', 'gallery', 'fwd', 'myperf', 'quick', 'templates', 'profile'];
+  const shown = role === 'staff' && !STAFF_SCREENS.includes(screen) ? 'mydash' : screen;
+
   const renderScreen = () => {
-    switch (screen) {
+    switch (shown) {
       case 'dash':
         return <DashboardScreen />;
       case 'chats':

@@ -1,0 +1,31 @@
+# One domain for everything. Caddy gets and renews the HTTPS certificate automatically.
+{
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	# API, Meta webhook and file links
+	handle /api/* {
+		request_body {
+			max_size 110MB
+		}
+		reverse_proxy api:4000
+	}
+	# Live events (WebSocket)
+	handle /socket.io/* {
+		reverse_proxy api:4000
+	}
+	handle /health {
+		reverse_proxy api:4000
+	}
+	# Web app
+	handle {
+		reverse_proxy web:3000
+	}
+}

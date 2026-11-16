@@ -7,6 +7,7 @@ import { getWinClass } from '@/utils/windowTime';
 import ChatListPanel, { ChatFilterType } from '@/components/chat/ChatListPanel';
 import ChatThreadPanel from '@/components/chat/ChatThreadPanel';
 import ContactInfoPanel from '@/components/chat/ContactInfoPanel';
+import LabelPicker from '@/components/chat/LabelPicker';
 
 export default function InboxScreen() {
   const {
@@ -25,8 +26,14 @@ export default function InboxScreen() {
     openSheet,
     closeSheet,
     addToast,
-    ivr,
     currentUser,
+    openConversation,
+    activeConversationId,
+    resolveConversation,
+    setBlocked,
+    setContactLabels,
+    sendQuickReplyMessage,
+    companyPhone,
     setStatusModalOpen,
     sectionTheme,
     toggleSectionTheme,
@@ -35,19 +42,19 @@ export default function InboxScreen() {
   } = useApp();
 
   const isStaff = role === 'staff';
-  const myStaffId = 's1';
 
   // Chat theme uses global sectionTheme so it toggles seamlessly with the header toggle
   const chatTheme = sectionTheme;
   const toggleChatTheme = toggleSectionTheme;
 
-  // Filter conversations for staff if in staff mode
-  const visibleConvs = conversations.filter(v => !isStaff || contacts[v.c]?.to === myStaffId);
+  // The API already limits staff to their own customers and the team queue.
+  const visibleConvs = conversations.filter(v => !v.archived);
 
   const [filter, setFilter] = useState<ChatFilterType>('all');
   const [staffFilter, setStaffFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
-  const [selectedConvId, setSelectedConvId] = useState<string>(visibleConvs[0]?.id || 'v1');
+  const selectedConvId = activeConversationId;
+  const setSelectedConvId = (id: string) => openConversation(id);
   const [contactInfoOpen, setContactInfoOpen] = useState(true);
 
   // Composer states
@@ -56,7 +63,7 @@ export default function InboxScreen() {
   const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([]);
   const [isRecording, setIsRecording] = useState(false);
 
-  const activeConv = conversations.find(v => v.id === selectedConvId) || visibleConvs[0];
+  const activeConv = conversations.find(v => v.id === selectedConvId);
   const activeContact = activeConv ? contacts[activeConv.c] : null;
 
   const isWindowOpen = activeConv?.exp ? activeConv.exp - Date.now() > 0 : false;
@@ -89,12 +96,11 @@ export default function InboxScreen() {
     if (filteredConvs.length > 0 && !filteredConvs.some(v => v.id === selectedConvId)) {
       setSelectedConvId(filteredConvs[0].id);
     }
-  }, [staffFilter, filter, search]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [staffFilter, filter, search, filteredConvs.length]);
 
   const handleSelectConv = (id: string) => {
     setSelectedConvId(id);
-    const v = conversations.find(x => x.id === id);
-    if (v) v.un = 0;
   };
 
   const handleSendMessage = (e?: React.FormEvent) => {
@@ -116,6 +122,7 @@ export default function InboxScreen() {
     if (qr.att.length) {
       setPendingAttachments([...qr.att]);
     }
+    void sendQuickReplyMessage;
     addToast(`${qr.cmd} ready${qr.att.length ? ` with ${qr.att.length} attachment(s)` : ''}. Edit if needed, then Send.`);
   };
 
@@ -129,7 +136,9 @@ export default function InboxScreen() {
         name: f.name,
         size: f.size,
         url: URL.createObjectURL(f),
-        real: true
+        real: true,
+        file: f,
+        mime: f.type
       };
     });
     setPendingAttachments(prev => [...prev, ...newAtts]);
@@ -149,24 +158,63 @@ export default function InboxScreen() {
     }
   };
 
-  const handleVoiceSend = (durStr: string) => {
+  const handleVoiceSend = (durStr: string, audio: Blob) => {
     setIsRecording(false);
     if (!activeConv) return;
+    const mime = audio.type.split(';')[0] || 'audio/webm';
+    const ext = mime.includes('ogg') ? 'ogg' : mime.includes('mp4') ? 'm4a' : 'webm';
+    const file = new File([audio], `voice-${Date.now()}.${ext}`, { type: mime });
     const voiceAtt: Attachment = {
       type: 'voice',
-      name: `voice_${Date.now()}.ogg`,
-      size: 42000 + Math.floor(Math.random() * 25000),
+      name: file.name,
+      size: file.size,
       dur: durStr,
-      real: false
+      url: URL.createObjectURL(file),
+      real: true,
+      file,
+      mime
     };
-
-    sendMessage(activeConv.id, `▶ Voice message · ${durStr}`, isNoteMode, [voiceAtt]);
-    addToast(`Voice message sent (${durStr}).`);
+    sendMessage(activeConv.id, '', isNoteMode, [voiceAtt]);
   };
 
   const handleVoiceCancel = () => {
     setIsRecording(false);
     addToast('Voice message discarded.');
+  };
+
+  // Fill {{1}}, {{2}} … before sending a template
+  const openTemplateVariables = (t: (typeof templates)[number]) => {
+    const values: string[] = Array.from({ length: t.vars ?? 0 }, (_, i) => (i === 0 && activeContact ? activeContact.n.split(' ')[0] : ''));
+    openSheet(
+      <>
+        <h2>{t.n}</h2>
+        <p className="sub">Fill the blanks. The customer sees the finished message.</p>
+        <div className="tpv" style={{ margin: '8px 0 6px' }}>
+          <div className="bb out">{t.body}</div>
+        </div>
+        {values.map((v, i) => (
+          <React.Fragment key={i}>
+            <label className="f" htmlFor={`tv${i}`}>{`{{${i + 1}}}`}</label>
+            <input id={`tv${i}`} className="f-in" defaultValue={v} onChange={e => (values[i] = e.target.value)} />
+          </React.Fragment>
+        ))}
+        <button
+          className="btn pri"
+          style={{ marginTop: 14 }}
+          onClick={() => {
+            if (!activeConv) return;
+            if (values.some(x => !x.trim())) {
+              addToast('Fill every blank first.');
+              return;
+            }
+            sendTemplateMessage(activeConv.id, t, values);
+            closeSheet();
+          }}
+        >
+          Send template
+        </button>
+      </>
+    );
   };
 
   // Open Template Sheet
@@ -178,6 +226,7 @@ export default function InboxScreen() {
         <p className="sub">
           Templates can go any time, even after the 24-hour window closes. Meta charges per template delivered.
         </p>
+        {approvedTemplates.length === 0 ? <p className="sub">No approved templates yet. Create one in Message templates.</p> : null}
         {approvedTemplates.map(t => (
           <div key={t.n} className="list-row" style={{ paddingLeft: 0, paddingRight: 0 }}>
             <div className="bd">
@@ -191,10 +240,13 @@ export default function InboxScreen() {
               <button
                 className="btn sm pri"
                 onClick={() => {
-                  if (activeConv) {
-                    sendTemplateMessage(activeConv.id, t);
-                    closeSheet();
+                  if (!activeConv) return;
+                  if (t.vars) {
+                    openTemplateVariables(t);
+                    return;
                   }
+                  sendTemplateMessage(activeConv.id, t);
+                  closeSheet();
                 }}
               >
                 Send
@@ -205,6 +257,13 @@ export default function InboxScreen() {
       </>
     );
   };
+
+  const openLabelPicker = (contactId: string) => {
+    const c = contacts[contactId];
+    if (!c) return;
+    openSheet(<LabelPicker contactId={contactId} current={c.labelIds ?? []} onSave={ids => { void setContactLabels(contactId, ids); closeSheet(); }} />);
+  };
+  void companyPhone;
 
   return (
     <div
@@ -234,7 +293,7 @@ export default function InboxScreen() {
           theme={chatTheme}
           toggleTheme={toggleChatTheme}
           onOpenStatusModal={() => setStatusModalOpen(true)}
-          onNewChat={() => addToast('New chat: select a customer contact.')}
+          onNewChat={() => setScreen('contacts')}
         />
 
         {/* Part 2: Middle Chat Thread & Composer Panel (File 2) */}
@@ -242,7 +301,7 @@ export default function InboxScreen() {
           conversation={activeConv}
           contact={activeContact}
           onCall={() => activeContact && startCall(activeContact.id)}
-          onResolve={() => addToast('Chat marked resolved.')}
+          onResolve={() => activeConv && void resolveConversation(activeConv.id, activeConv.status !== 'resolved')}
           onToggleContactInfo={() => setContactInfoOpen(prev => !prev)}
           contactInfoOpen={contactInfoOpen}
           quickReplies={quickReplies}
@@ -282,8 +341,8 @@ export default function InboxScreen() {
               const el = document.getElementById('cuTo');
               el?.focus();
             }}
-            onOpenLabels={() => addToast('Label picker opened.')}
-            onBlock={() => addToast('Blocked numbers cannot message or call.')}
+            onOpenLabels={() => activeContact && openLabelPicker(activeContact.id)}
+            onBlock={() => activeContact && void setBlocked(activeContact.id, !activeContact.blocked)}
             onOwnerChange={newOwner => {
               if (!activeContact) return;
               setOwner(activeContact.id, newOwner);
@@ -293,7 +352,7 @@ export default function InboxScreen() {
                 : `${activeContact.n} unassigned. Chats and calls go to the Sales queue.`
               );
             }}
-            onAddLabel={() => addToast('Label added.')}
+            onAddLabel={() => activeContact && openLabelPicker(activeContact.id)}
           />
         )}
       </div>

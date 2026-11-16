@@ -1,144 +1,323 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import type { MediaItem as ApiMediaItem } from '@smart-reply/shared';
+import { EXTRA_IMAGE_MIMES, MEDIA_LIMITS } from '@smart-reply/shared';
 import { useApp } from '@/context/AppContext';
-import { MediaItem, MediaCategory } from '@/types';
-import { formatFileSize } from '@/data/mockData';
+import { useSession } from '@/features/session';
+import {
+  useCreateMediaCategory,
+  useDeleteMedia,
+  useDeleteMediaCategory,
+  useDownloadMedia,
+  useFavoriteMedia,
+  useMediaCategories,
+  useMediaItems,
+  useUploadMedia
+} from '@/features/content';
+import { MediaItem } from '@/types';
+import { toMedia } from '@/lib/adapters';
+import { errorMessage } from '@/lib/api';
+import { formatFileSize } from '@/lib/ui';
 import SectionThemeToggle from '@/components/common/SectionThemeToggle';
 
+const NEW_CATEGORY = '__new__';
+const IMAGE_ACCEPT = [...MEDIA_LIMITS.image.mimes, ...EXTRA_IMAGE_MIMES.filter(m => m !== 'image/svg+xml')].join(',');
+const VIDEO_ACCEPT = [...MEDIA_LIMITS.video.mimes, 'video/quicktime'].join(',');
+/** The API allows gallery videos up to 100 MB; WhatsApp sends up to 16 MB. */
+const GALLERY_VIDEO_MAX = 100 * 1024 * 1024;
+
+/** True when WhatsApp accepts the file as it is (type and size). */
+function whatsappReady(m: ApiMediaItem): boolean {
+  const limit = m.kind === 'image' ? MEDIA_LIMITS.image : MEDIA_LIMITS.video;
+  return (limit.mimes as readonly string[]).includes(m.file.mime) && m.file.sizeBytes <= limit.max;
+}
+
+function formatLabel(mime: string): string {
+  const sub = mime.split('/')[1] ?? mime;
+  return { jpeg: 'JPEG', png: 'PNG', webp: 'WebP', gif: 'GIF', mp4: 'MP4', '3gpp': '3GP', quicktime: 'MOV' }[sub] ?? sub.toUpperCase();
+}
+
+interface FileInfo {
+  width: number | null;
+  height: number | null;
+  durationSeconds: number | null;
+  previewUrl: string;
+}
+
+/** Read the pixel size (and video length) in the browser before uploading. */
+function readFileInfo(file: File): Promise<FileInfo> {
+  const previewUrl = URL.createObjectURL(file);
+  return new Promise(resolve => {
+    if (file.type.startsWith('image/')) {
+      const img = new Image();
+      img.onload = () => resolve({ width: img.naturalWidth || null, height: img.naturalHeight || null, durationSeconds: null, previewUrl });
+      img.onerror = () => resolve({ width: null, height: null, durationSeconds: null, previewUrl });
+      img.src = previewUrl;
+    } else {
+      const v = document.createElement('video');
+      v.preload = 'metadata';
+      v.onloadedmetadata = () =>
+        resolve({
+          width: v.videoWidth || null,
+          height: v.videoHeight || null,
+          durationSeconds: Number.isFinite(v.duration) && v.duration > 0 ? Math.max(1, Math.round(v.duration)) : null,
+          previewUrl
+        });
+      v.onerror = () => resolve({ width: null, height: null, durationSeconds: null, previewUrl });
+      v.src = previewUrl;
+    }
+  });
+}
+
 export default function MediaGalleryScreen() {
-  const {
-    role,
-    mediaList,
-    addMediaItem,
-    deleteMediaItem,
-    toggleFavoriteMedia,
-    sendMediaToChat,
-    conversations,
-    setScreen,
-    addToast
-  } = useApp();
+  const { role, sendMediaToChat, conversations, contacts, activeConversationId, setScreen, addToast, reportError } = useApp();
+  const { me } = useSession();
+  const isManager = role === 'manager';
 
   const [activeTab, setActiveTab] = useState<'all' | 'image' | 'video' | 'fav'>('all');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'shares' | 'size'>('newest');
 
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchQuery.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
+  // Every item (for the counts) and the filtered list from the API.
+  const allQ = useMediaItems();
+  const listQ = useMediaItems({
+    kind: activeTab === 'image' || activeTab === 'video' ? activeTab : undefined,
+    favorites: activeTab === 'fav',
+    category: selectedCategory !== 'all' ? selectedCategory : undefined,
+    search,
+    sort: sortBy === 'shares' ? 'popular' : 'newest'
+  });
+  const categoriesQ = useMediaCategories();
+  const categories = categoriesQ.data ?? [];
+
+  const favorite = useFavoriteMedia();
+  const removeMedia = useDeleteMedia();
+  const download = useDownloadMedia();
+  const upload = useUploadMedia();
+  const createCategory = useCreateMediaCategory();
+  const deleteCategory = useDeleteMediaCategory();
+
+  const allApi = useMemo(() => allQ.data ?? [], [allQ.data]);
+  const mediaList = useMemo(() => allApi.map(toMedia), [allApi]);
+  const apiById = useMemo(() => new Map([...allApi, ...(listQ.data ?? [])].map(m => [m.id, m])), [allApi, listQ.data]);
+
   // Modal states
-  const [previewItem, setPreviewItem] = useState<MediaItem | null>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
   // Upload Form states
   const [newTitle, setNewTitle] = useState('');
   const [newType, setNewType] = useState<'image' | 'video'>('image');
-  const [newUrl, setNewUrl] = useState('');
-  const [newCategory, setNewCategory] = useState<MediaCategory>('Products');
+  const [newFile, setNewFile] = useState<File | null>(null);
+  const [newInfo, setNewInfo] = useState<FileInfo | null>(null);
+  const [newCategory, setNewCategory] = useState<string>('');
+  const [newCategoryName, setNewCategoryName] = useState('');
   const [newCaption, setNewCaption] = useState('');
   const [newTags, setNewTags] = useState('');
-  const [newDuration, setNewDuration] = useState('0:45');
-  const [newSizeMb, setNewSizeMb] = useState('2.5');
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Target conversation for sending media
-  const [selectedConvId, setSelectedConvId] = useState<string>(
-    conversations[0]?.id || ''
-  );
+  const [selectedConvId, setSelectedConvId] = useState<string>(activeConversationId ?? '');
+  const targetConvId = selectedConvId || activeConversationId || conversations[0]?.id || '';
 
   // Filtered and sorted media
-  const filtered = mediaList
-    .filter(item => {
-      // Type / Tab filter
-      if (activeTab === 'image' && item.type !== 'image') return false;
-      if (activeTab === 'video' && item.type !== 'video') return false;
-      if (activeTab === 'fav' && !item.isFavorite) return false;
+  const filtered = useMemo(() => {
+    const list = (listQ.data ?? []).map(toMedia);
+    if (sortBy === 'size') list.sort((a, b) => b.size - a.size);
+    return list;
+  }, [listQ.data, sortBy]);
 
-      // Category filter
-      if (selectedCategory !== 'all' && item.category !== selectedCategory) return false;
-
-      // Search query filter
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchTitle = item.title.toLowerCase().includes(q);
-        const matchCaption = item.caption.toLowerCase().includes(q);
-        const matchTag = item.tags.some(t => t.toLowerCase().includes(q));
-        if (!matchTitle && !matchCaption && !matchTag) return false;
-      }
-
-      return true;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'shares') return (b.shares || 0) - (a.shares || 0);
-      if (sortBy === 'size') return b.size - a.size;
-      return 0; // Default order
-    });
+  const previewItem: MediaItem | null = useMemo(() => {
+    if (!previewId) return null;
+    const a = apiById.get(previewId);
+    return a ? toMedia(a) : null;
+  }, [previewId, apiById]);
+  const setPreviewItem = (item: MediaItem | null) => setPreviewId(item?.id ?? null);
+  const previewApi = previewId ? apiById.get(previewId) : undefined;
 
   const totalImages = mediaList.filter(m => m.type === 'image').length;
   const totalVideos = mediaList.filter(m => m.type === 'video').length;
   const totalFavorites = mediaList.filter(m => m.isFavorite).length;
   const totalStorageBytes = mediaList.reduce((acc, m) => acc + m.size, 0);
+  const readyCount = allApi.filter(whatsappReady).length;
+  const readyPercent = allApi.length ? Math.round((readyCount / allApi.length) * 100) : 100;
 
-  const handleSaveMedia = (e: React.FormEvent) => {
+  const toggleFavoriteMedia = (id: string) => {
+    const item = apiById.get(id);
+    if (!item) return;
+    favorite.mutate({ id, favorite: !item.favorite }, { onError: reportError });
+  };
+
+  const resetUploadForm = () => {
+    if (newInfo) URL.revokeObjectURL(newInfo.previewUrl);
+    setNewTitle('');
+    setNewFile(null);
+    setNewInfo(null);
+    setNewCaption('');
+    setNewTags('');
+    setNewCategoryName('');
+    setUploadError(null);
+  };
+
+  const closeUpload = () => {
+    if (upload.isPending) return;
+    resetUploadForm();
+    setIsUploadOpen(false);
+  };
+
+  const handlePickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = '';
+    if (!f) return;
+    setUploadError(null);
+    const kind = f.type.startsWith('video/') ? 'video' : f.type.startsWith('image/') ? 'image' : null;
+    if (!kind) {
+      setUploadError('The gallery holds photos and videos only.');
+      return;
+    }
+    const max = kind === 'image' ? MEDIA_LIMITS.image.max : GALLERY_VIDEO_MAX;
+    if (f.size > max) {
+      setUploadError(`${f.name} is ${formatFileSize(f.size)}. ${kind === 'image' ? 'Images' : 'Videos'} can be at most ${Math.round(max / 1048576)} MB.`);
+      return;
+    }
+    setNewType(kind);
+    setNewFile(f);
+    if (!newTitle.trim()) setNewTitle(f.name.replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').slice(0, 120));
+    if (newInfo) URL.revokeObjectURL(newInfo.previewUrl);
+    setNewInfo(null);
+    void readFileInfo(f).then(setNewInfo);
+  };
+
+  const handleSaveMedia = async (e: React.FormEvent) => {
     e.preventDefault();
+    setUploadError(null);
     if (!newTitle.trim()) {
-      addToast('Please enter a title for the media item.');
+      setUploadError('Please enter a title for the media item.');
+      return;
+    }
+    if (!newFile) {
+      setUploadError('Choose a photo or video to upload.');
       return;
     }
 
-    const fallbackUrl = newType === 'image'
-      ? 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=900&q=80'
-      : 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
+    const tagsArray = [
+      ...new Set(
+        newTags
+          .split(',')
+          .map(t => t.trim())
+          .filter(Boolean)
+          .map(t => (t.startsWith('#') ? t : `#${t}`).slice(0, 30))
+      )
+    ];
 
-    const tagsArray = newTags
-      .split(',')
-      .map(t => t.trim())
-      .filter(Boolean)
-      .map(t => (t.startsWith('#') ? t : `#${t}`));
-
-    const sizeInBytes = Math.round((parseFloat(newSizeMb) || 2.5) * 1024 * 1024);
-
-    const newItem: MediaItem = {
-      id: `med_${Date.now()}`,
-      title: newTitle.trim(),
-      type: newType,
-      url: newUrl.trim() || fallbackUrl,
-      thumbnail: newType === 'image' ? (newUrl.trim() || fallbackUrl) : 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=600&q=80',
-      caption: newCaption.trim() || `${newTitle} by Madushan Aluminium. 15-year warranty.`,
-      size: sizeInBytes,
-      duration: newType === 'video' ? (newDuration || '0:45') : undefined,
-      category: newCategory,
-      tags: tagsArray.length > 0 ? tagsArray : [`#${newCategory.toLowerCase()}`, '#aluminium'],
-      addedAt: 'Just now',
-      addedBy: role === 'manager' ? 'Madushan P.' : 'Nimal Bandara',
-      isFavorite: false,
-      shares: 0,
-      downloads: 0
-    };
-
-    addMediaItem(newItem);
-    setIsUploadOpen(false);
-
-    // Reset form
-    setNewTitle('');
-    setNewUrl('');
-    setNewCaption('');
-    setNewTags('');
+    try {
+      let categoryId: string | null = newCategory && newCategory !== NEW_CATEGORY ? newCategory : null;
+      if (newCategory === NEW_CATEGORY) {
+        if (!newCategoryName.trim()) {
+          setUploadError('Enter a name for the new category.');
+          return;
+        }
+        const c = await createCategory.mutateAsync(newCategoryName.trim());
+        categoryId = c.id;
+        setNewCategory(c.id);
+      }
+      const info = newInfo ?? (await readFileInfo(newFile));
+      const item = await upload.mutateAsync({
+        file: newFile,
+        title: newTitle.trim(),
+        caption: newCaption.trim(),
+        categoryId,
+        tags: tagsArray,
+        width: info.width,
+        height: info.height,
+        durationSeconds: info.durationSeconds
+      });
+      addToast(`Added "${item.title}" to Media Gallery.`);
+      resetUploadForm();
+      setIsUploadOpen(false);
+    } catch (err) {
+      setUploadError(errorMessage(err));
+    }
   };
 
   const handleCopyLink = (item: MediaItem) => {
-    try {
-      navigator.clipboard.writeText(item.url);
-      addToast(`Direct WhatsApp media link copied: ${item.title}`);
-    } catch {
-      addToast(`Link: ${item.url}`);
-    }
+    navigator.clipboard
+      .writeText(item.url)
+      .then(() => addToast(`Media link copied: ${item.title}`))
+      .catch(() => addToast(`Link: ${item.url}`));
+  };
+
+  const handleDownload = (item: MediaItem) => {
+    download.mutate(item.id, {
+      onSuccess: ({ url }) => {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = apiById.get(item.id)?.file.name ?? item.title;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      },
+      onError: reportError
+    });
+  };
+
+  const handleDelete = (item: MediaItem) => {
+    if (!window.confirm(`Delete "${item.title}" from the Media Gallery?`)) return;
+    removeMedia.mutate(item.id, {
+      onSuccess: () => {
+        addToast('Item removed from Media Gallery.');
+        setPreviewItem(null);
+      },
+      onError: reportError
+    });
+  };
+
+  const handleDeleteCategory = () => {
+    const c = categories.find(x => x.id === selectedCategory);
+    if (!c || !window.confirm(`Delete category "${c.name}"? Its photos and videos stay in the gallery.`)) return;
+    deleteCategory.mutate(c.id, {
+      onSuccess: () => {
+        addToast(`Category "${c.name}" deleted.`);
+        setSelectedCategory('all');
+      },
+      onError: reportError
+    });
+  };
+
+  const convName = (convId: string) => {
+    const conv = conversations.find(c => c.id === convId);
+    return conv ? (contacts[conv.c]?.n ?? 'customer') : 'customer';
   };
 
   const handleSendToChatAction = (item: MediaItem) => {
-    if (!selectedConvId) {
-      addToast('Please select an active conversation.');
+    if (!targetConvId) {
+      addToast('Open a chat first, then send media from the gallery.');
+      setScreen('chats');
       return;
     }
-    sendMediaToChat(selectedConvId, item);
+    sendMediaToChat(targetConvId, item);
+    addToast(`Sending "${item.title}" to ${convName(targetConvId)}…`);
     if (previewItem) setPreviewItem(null);
+  };
+
+  const fieldStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '8px 12px',
+    borderRadius: '6px',
+    border: '1px solid var(--rule-2)',
+    background: 'var(--card-2)',
+    fontSize: '13.5px',
+    color: 'var(--ink)'
   };
 
   return (
@@ -148,11 +327,17 @@ export default function MediaGalleryScreen() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
             <h1>Media Gallery</h1>
-            <span className="chip ok" style={{ fontSize: '11px', padding: '2px 8px' }}>
-              ✓ WhatsApp Cloud CDN Synced
-            </span>
+            {me?.features.whatsappConnected ? (
+              <span className="chip ok" style={{ fontSize: '11px', padding: '2px 8px' }}>
+                ✓ WhatsApp connected
+              </span>
+            ) : (
+              <span className="chip w" style={{ fontSize: '11px', padding: '2px 8px' }}>
+                WhatsApp not connected
+              </span>
+            )}
             <span className="hint" style={{ margin: 0, fontSize: '12px' }}>
-              ({role === 'manager' ? 'Manager & Admin Access' : 'Staff Access · Nimal'})
+              ({isManager ? 'Manager & Admin Access' : `Staff Access · ${me?.user.name.split(' ')[0] ?? ''}`})
             </span>
           </div>
           <p>
@@ -163,18 +348,21 @@ export default function MediaGalleryScreen() {
           <SectionThemeToggle />
           <button
             className="btn"
+            disabled={allQ.isFetching || listQ.isFetching}
             onClick={() => {
-              addToast('All media verified with WhatsApp Cloud API specs (Images < 5MB, Videos < 16MB).');
+              void Promise.all([allQ.refetch(), listQ.refetch(), categoriesQ.refetch()]).then(() => addToast('Media Gallery refreshed.'));
             }}
           >
-            ↻ Sync WhatsApp CDN
+            ↻ Refresh
           </button>
-          <button
-            className="btn pri"
-            onClick={() => setIsUploadOpen(true)}
-          >
-            + Upload / Save Media
-          </button>
+          {isManager && (
+            <button
+              className="btn pri"
+              onClick={() => setIsUploadOpen(true)}
+            >
+              + Upload / Save Media
+            </button>
+          )}
         </div>
       </div>
 
@@ -187,8 +375,10 @@ export default function MediaGalleryScreen() {
         </div>
         <div className="stat ok">
           <span>WhatsApp HD Ready</span>
-          <b style={{ color: 'var(--ok)' }}>100%</b>
-          <small>Standardized compression &amp; thumbnails</small>
+          <b style={{ color: readyPercent === 100 ? 'var(--ok)' : 'var(--warn)' }}>{readyPercent}%</b>
+          <small>
+            {readyCount} of {allApi.length} within WhatsApp limits (JPG/PNG ≤ {Math.round(MEDIA_LIMITS.image.max / 1048576)} MB · MP4 ≤ {Math.round(MEDIA_LIMITS.video.max / 1048576)} MB)
+          </small>
         </div>
         <div className="stat">
           <span>Starred / Favorites</span>
@@ -197,8 +387,8 @@ export default function MediaGalleryScreen() {
         </div>
         <div className="stat">
           <span>Cloud Storage Used</span>
-          <b style={{ fontSize: '20px' }}>{formatFileSize(totalStorageBytes)} / 15 GB</b>
-          <small>16.2% allocated on Meta Media Servers</small>
+          <b style={{ fontSize: '20px' }}>{mediaList.length ? formatFileSize(totalStorageBytes) : '0 MB'}</b>
+          <small>{mediaList.length} file(s) in the gallery</small>
         </div>
       </div>
 
@@ -269,17 +459,20 @@ export default function MediaGalleryScreen() {
             }}
           >
             <option value="all">All Categories</option>
-            <option value="Products">Products (Pantry, Vanity, Wardrobe)</option>
-            <option value="Workshop">Workshop &amp; Fabrication</option>
-            <option value="Installation">Installation &amp; Sites</option>
-            <option value="Testimonials">Customer Reviews &amp; Handover</option>
-            <option value="Promotions">Promotions &amp; Discounts</option>
+            {categories.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
           </select>
+          {isManager && selectedCategory !== 'all' && (
+            <button type="button" className="btn sm" style={{ color: 'var(--bad)' }} disabled={deleteCategory.isPending} onClick={handleDeleteCategory}>
+              Delete category
+            </button>
+          )}
 
           {/* Sort Dropdown */}
           <select
             value={sortBy}
-            onChange={e => setSortBy(e.target.value as any)}
+            onChange={e => setSortBy(e.target.value as 'newest' | 'shares' | 'size')}
             style={{
               padding: '6px 10px',
               fontSize: '13px',
@@ -298,14 +491,24 @@ export default function MediaGalleryScreen() {
 
         {/* Media Grid */}
         <div className="card-b" style={{ padding: '16px' }}>
-          {filtered.length === 0 ? (
+          {listQ.isLoading ? (
+            <p className="hint" style={{ margin: 0 }}>Loading…</p>
+          ) : listQ.isError ? (
+            <p className="hint" style={{ margin: 0, color: 'var(--bad)' }}>{errorMessage(listQ.error)}</p>
+          ) : filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '48px 16px', color: 'var(--ink-2)' }}>
               <div style={{ fontSize: '36px', marginBottom: '8px' }}>🔍</div>
-              <b style={{ display: 'block', fontSize: '16px', color: 'var(--ink)' }}>No media items found</b>
+              <b style={{ display: 'block', fontSize: '16px', color: 'var(--ink)' }}>
+                {mediaList.length === 0 ? 'The gallery is empty' : 'No media items found'}
+              </b>
               <p style={{ fontSize: '13.5px', marginTop: '4px' }}>
-                Try adjusting your search terms or category filter, or upload a new photo or video clip.
+                {mediaList.length === 0
+                  ? isManager
+                    ? 'Upload product photos and demonstration videos so the team can send them in chats.'
+                    : 'Your manager has not added photos or videos yet.'
+                  : 'Try adjusting your search terms or category filter, or upload a new photo or video clip.'}
               </p>
-              <button
+              {mediaList.length > 0 && <button
                 className="btn pri sm"
                 style={{ marginTop: '12px' }}
                 onClick={() => {
@@ -315,7 +518,12 @@ export default function MediaGalleryScreen() {
                 }}
               >
                 Reset Filters
-              </button>
+              </button>}
+              {mediaList.length === 0 && isManager && (
+                <button className="btn pri sm" style={{ marginTop: '12px' }} onClick={() => setIsUploadOpen(true)}>
+                  + Upload / Save Media
+                </button>
+              )}
             </div>
           ) : (
             <div
@@ -372,16 +580,33 @@ export default function MediaGalleryScreen() {
                       />
                     ) : (
                       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                        <img
-                          src={item.thumbnail || 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=600&q=80'}
-                          alt={item.title}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'cover',
-                            filter: 'brightness(0.75)'
-                          }}
-                        />
+                        {item.thumbnail ? (
+                          <img
+                            src={item.thumbnail}
+                            alt={item.title}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              filter: 'brightness(0.75)'
+                            }}
+                          />
+                        ) : (
+                          <video
+                            src={`${item.url}#t=0.5`}
+                            preload="metadata"
+                            muted
+                            playsInline
+                            aria-label={item.title}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              filter: 'brightness(0.75)',
+                              pointerEvents: 'none'
+                            }}
+                          />
+                        )}
                         {/* Play Video Overlay Badge */}
                         <div
                           style={{
@@ -462,7 +687,7 @@ export default function MediaGalleryScreen() {
                           backdropFilter: 'blur(4px)'
                         }}
                       >
-                        {item.category}
+                        {item.category || 'Uncategorised'}
                       </span>
                     </div>
 
@@ -669,7 +894,7 @@ export default function MediaGalleryScreen() {
                     {previewItem.type === 'image' ? 'IMAGE / PHOTO' : 'VIDEO DEMO'}
                   </span>
                   <span className="chip ok" style={{ fontSize: '11px' }}>
-                    Category: {previewItem.category}
+                    Category: {previewItem.category || 'Uncategorised'}
                   </span>
                 </div>
                 <h2 style={{ fontSize: '18px', marginTop: '4px', color: 'var(--ink)' }}>
@@ -786,7 +1011,11 @@ export default function MediaGalleryScreen() {
                 </div>
                 <div>
                   <span style={{ color: 'var(--ink-3)', display: 'block' }}>Format / Type</span>
-                  <b>{previewItem.type === 'image' ? 'JPEG / WebP' : `MP4 (${previewItem.duration || '0:45'})`}</b>
+                  <b>
+                    {previewApi ? formatLabel(previewApi.file.mime) : previewItem.type === 'image' ? 'Image' : 'Video'}
+                    {previewItem.width && previewItem.height ? ` · ${previewItem.width}×${previewItem.height}` : ''}
+                    {previewItem.duration ? ` (${previewItem.duration})` : ''}
+                  </b>
                 </div>
                 <div>
                   <span style={{ color: 'var(--ink-3)', display: 'block' }}>Added By</span>
@@ -811,7 +1040,7 @@ export default function MediaGalleryScreen() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ fontSize: '13px', color: 'var(--ink-2)' }}>Target Chat:</span>
                   <select
-                    value={selectedConvId}
+                    value={targetConvId}
                     onChange={e => setSelectedConvId(e.target.value)}
                     style={{
                       padding: '6px 10px',
@@ -821,9 +1050,10 @@ export default function MediaGalleryScreen() {
                       fontSize: '13px'
                     }}
                   >
+                    {conversations.length === 0 && <option value="">No chats yet</option>}
                     {conversations.map(conv => (
                       <option key={conv.id} value={conv.id}>
-                        {conv.pv.slice(0, 30)}...
+                        {contacts[conv.c]?.n ?? 'Customer'}{conv.pv ? ` · ${conv.pv.slice(0, 24)}…` : ''}
                       </option>
                     ))}
                   </select>
@@ -840,20 +1070,26 @@ export default function MediaGalleryScreen() {
                   <button
                     type="button"
                     className="btn"
+                    disabled={download.isPending}
+                    onClick={() => handleDownload(previewItem)}
+                  >
+                    ⬇ Download
+                  </button>
+                  <button
+                    type="button"
+                    className="btn"
                     style={{ color: previewItem.isFavorite ? 'var(--warn)' : 'var(--ink)' }}
                     onClick={() => toggleFavoriteMedia(previewItem.id)}
                   >
                     {previewItem.isFavorite ? '★ Starred' : '☆ Star'}
                   </button>
-                  {role === 'manager' && (
+                  {isManager && (
                     <button
                       type="button"
                       className="btn"
                       style={{ color: 'var(--bad)' }}
-                      onClick={() => {
-                        deleteMediaItem(previewItem.id);
-                        setPreviewItem(null);
-                      }}
+                      disabled={removeMedia.isPending}
+                      onClick={() => handleDelete(previewItem)}
                     >
                       Delete
                     </button>
@@ -889,7 +1125,7 @@ export default function MediaGalleryScreen() {
             justifyContent: 'center',
             padding: '20px'
           }}
-          onClick={() => setIsUploadOpen(false)}
+          onClick={closeUpload}
         >
           <div
             style={{
@@ -931,13 +1167,13 @@ export default function MediaGalleryScreen() {
                   cursor: 'pointer',
                   color: 'var(--ink-2)'
                 }}
-                onClick={() => setIsUploadOpen(false)}
+                onClick={closeUpload}
               >
                 ×
               </button>
             </div>
 
-            <form onSubmit={handleSaveMedia} style={{ padding: '20px' }}>
+            <form onSubmit={e => void handleSaveMedia(e)} style={{ padding: '20px' }}>
               {/* Media Type Selector */}
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
@@ -963,6 +1199,43 @@ export default function MediaGalleryScreen() {
                 </div>
               </div>
 
+              {/* File */}
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
+                  {newType === 'video' ? 'Video File' : 'Image File'} <span style={{ color: 'var(--bad)' }}>*</span>
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <label className="btn sm" style={{ cursor: 'pointer' }}>
+                    {newFile ? 'Choose another file' : newType === 'video' ? '▶ Choose video' : '🖼 Choose photo'}
+                    <input
+                      type="file"
+                      accept={newType === 'video' ? VIDEO_ACCEPT : IMAGE_ACCEPT}
+                      style={{ display: 'none' }}
+                      onChange={handlePickFile}
+                    />
+                  </label>
+                  {newFile && (
+                    <span style={{ fontSize: '12.5px', color: 'var(--ink-2)' }}>
+                      {newFile.name} · {formatFileSize(newFile.size)}
+                    </span>
+                  )}
+                </div>
+                {newInfo && newFile && (
+                  <div style={{ marginTop: '10px', height: '140px', background: '#060D1A', borderRadius: '8px', overflow: 'hidden', display: 'flex', justifyContent: 'center' }}>
+                    {newType === 'image' ? (
+                      <img src={newInfo.previewUrl} alt="" style={{ maxHeight: '140px', objectFit: 'contain' }} />
+                    ) : (
+                      <video src={newInfo.previewUrl} muted controls style={{ maxHeight: '140px' }} />
+                    )}
+                  </div>
+                )}
+                <span className="hint" style={{ marginTop: '4px' }}>
+                  {newType === 'video'
+                    ? `MP4 or 3GP. WhatsApp sends videos up to ${Math.round(MEDIA_LIMITS.video.max / 1048576)} MB.`
+                    : `JPG or PNG up to ${Math.round(MEDIA_LIMITS.image.max / 1048576)} MB (WebP and GIF are kept in the gallery only).`}
+                </span>
+              </div>
+
               {/* Title */}
               <div style={{ marginBottom: '14px' }}>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
@@ -972,110 +1245,56 @@ export default function MediaGalleryScreen() {
                   type="text"
                   placeholder="e.g. Modern Teak Aluminium Pantry Cupboard with Soft Close"
                   required
+                  maxLength={120}
                   value={newTitle}
                   onChange={e => setNewTitle(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: '6px',
-                    border: '1px solid var(--rule-2)',
-                    background: 'var(--card-2)',
-                    fontSize: '13.5px',
-                    color: 'var(--ink)'
-                  }}
+                  style={fieldStyle}
                 />
               </div>
 
-              {/* Category & Size in grid */}
+              {/* Category & detected details in grid */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
                     Category
                   </label>
-                  <select
-                    value={newCategory}
-                    onChange={e => setNewCategory(e.target.value as MediaCategory)}
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--rule-2)',
-                      background: 'var(--card-2)',
-                      fontSize: '13.5px',
-                      color: 'var(--ink)'
-                    }}
-                  >
-                    <option value="Products">Products</option>
-                    <option value="Workshop">Workshop &amp; Factory</option>
-                    <option value="Installation">Installation &amp; Sites</option>
-                    <option value="Testimonials">Testimonials</option>
-                    <option value="Promotions">Promotions</option>
+                  <select value={newCategory} onChange={e => setNewCategory(e.target.value)} style={fieldStyle}>
+                    <option value="">No category</option>
+                    {categories.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                    <option value={NEW_CATEGORY}>+ New category…</option>
                   </select>
+                  {newCategory === NEW_CATEGORY && (
+                    <input
+                      type="text"
+                      placeholder="e.g. Installation & Sites"
+                      maxLength={40}
+                      value={newCategoryName}
+                      onChange={e => setNewCategoryName(e.target.value)}
+                      style={{ ...fieldStyle, marginTop: '6px' }}
+                    />
+                  )}
                 </div>
 
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-                    {newType === 'video' ? 'Video Duration' : 'Approx File Size'}
+                    {newType === 'video' ? 'Video Duration' : 'Image Size'}
                   </label>
-                  {newType === 'video' ? (
-                    <input
-                      type="text"
-                      placeholder="e.g. 0:45 or 1:15"
-                      value={newDuration}
-                      onChange={e => setNewDuration(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '8px 12px',
-                        borderRadius: '6px',
-                        border: '1px solid var(--rule-2)',
-                        background: 'var(--card-2)',
-                        fontSize: '13.5px',
-                        color: 'var(--ink)'
-                      }}
-                    />
-                  ) : (
-                    <input
-                      type="text"
-                      placeholder="e.g. 2.4 MB"
-                      value={newSizeMb}
-                      onChange={e => setNewSizeMb(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '8px 12px',
-                        borderRadius: '6px',
-                        border: '1px solid var(--rule-2)',
-                        background: 'var(--card-2)',
-                        fontSize: '13.5px',
-                        color: 'var(--ink)'
-                      }}
-                    />
-                  )}
+                  <div style={{ ...fieldStyle, color: 'var(--ink-2)' }}>
+                    {!newFile
+                      ? 'Read from the file'
+                      : !newInfo
+                        ? 'Reading…'
+                        : [
+                            newInfo.width && newInfo.height ? `${newInfo.width}×${newInfo.height}` : null,
+                            newInfo.durationSeconds ? `${Math.floor(newInfo.durationSeconds / 60)}:${String(newInfo.durationSeconds % 60).padStart(2, '0')}` : null,
+                            formatFileSize(newFile.size)
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                  </div>
                 </div>
-              </div>
-
-              {/* URL or Upload File */}
-              <div style={{ marginBottom: '14px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>
-                  Image or Video URL / File
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://... or leave empty to use high-res demo asset"
-                  value={newUrl}
-                  onChange={e => setNewUrl(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: '6px',
-                    border: '1px solid var(--rule-2)',
-                    background: 'var(--card-2)',
-                    fontSize: '13.5px',
-                    color: 'var(--ink)'
-                  }}
-                />
-                <span className="hint" style={{ marginTop: '4px' }}>
-                  Accepts HTTPS image links (JPG, PNG, WebP) or video stream links (MP4, WebM).
-                </span>
               </div>
 
               {/* Caption */}
@@ -1085,19 +1304,11 @@ export default function MediaGalleryScreen() {
                 </label>
                 <textarea
                   rows={3}
+                  maxLength={1024}
                   placeholder="Caption sent automatically when attaching this photo/video to a customer in WhatsApp..."
                   value={newCaption}
                   onChange={e => setNewCaption(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: '6px',
-                    border: '1px solid var(--rule-2)',
-                    background: 'var(--card-2)',
-                    fontSize: '13.5px',
-                    color: 'var(--ink)',
-                    resize: 'vertical'
-                  }}
+                  style={{ ...fieldStyle, resize: 'vertical' }}
                 />
               </div>
 
@@ -1111,32 +1322,36 @@ export default function MediaGalleryScreen() {
                   placeholder="#pantry, #sliding, #teak, #waterproof"
                   value={newTags}
                   onChange={e => setNewTags(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    borderRadius: '6px',
-                    border: '1px solid var(--rule-2)',
-                    background: 'var(--card-2)',
-                    fontSize: '13.5px',
-                    color: 'var(--ink)'
-                  }}
+                  style={fieldStyle}
                 />
               </div>
+
+              {uploadError && (
+                <div className="note w" style={{ marginTop: 0, marginBottom: '14px' }}>
+                  <span className="ic">⚠</span>
+                  <div>
+                    <b>Not saved</b>
+                    {uploadError}
+                  </div>
+                </div>
+              )}
 
               {/* Modal Buttons */}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                 <button
                   type="button"
                   className="btn"
-                  onClick={() => setIsUploadOpen(false)}
+                  disabled={upload.isPending}
+                  onClick={closeUpload}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   className="btn pri"
+                  disabled={upload.isPending || createCategory.isPending}
                 >
-                  Save to Media Gallery
+                  {upload.isPending ? 'Uploading…' : 'Save to Media Gallery'}
                 </button>
               </div>
             </form>
@@ -1149,7 +1364,7 @@ export default function MediaGalleryScreen() {
         <span className="ic">🖼</span>
         <div>
           <b>WhatsApp Cloud Media Optimization</b>
-          All images and videos in this gallery are cached and verified against Meta WhatsApp Cloud standards. Both Managers and Staff can instantly send these photos and video clips to active customer chats.
+          All images and videos in this gallery are checked against WhatsApp Cloud media limits when they are uploaded. Both Managers and Staff can instantly send these photos and video clips to active customer chats.
         </div>
       </div>
     </div>

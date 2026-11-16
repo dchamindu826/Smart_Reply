@@ -1,5 +1,11 @@
 # 07 · Mobile app
 
+> **Change (built):** the app is **Expo (SDK 54) / React Native + TypeScript**, not Flutter.
+> The whole stack is TypeScript, so the app imports the API types and schemas straight from
+> `packages/shared` instead of generating models. State uses TanStack Query (not Riverpod),
+> audio uses `react-native-webrtc` (not `flutter_webrtc`), and calls/push need an EAS
+> development or store build. See `mobile/README.md`. The rest of this plan still applies.
+
 A Flutter app in `mobile/` for Android and iOS. Staff and managers use it; the system admin
 console stays on the web.
 

@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { StatusType } from '@/types';
-import { FORWARDING_DESTINATIONS } from '@/data/mockData';
 
 export default function StatusBreakModal() {
   const {
@@ -19,6 +18,7 @@ export default function StatusBreakModal() {
     setCallConfig,
     addToast
   } = useApp();
+  const FORWARDING_DESTINATIONS = useApp().forwardingDestinations;
 
   const [breakScope, setBreakScope] = useState<'both' | 'call' | 'chat'>('both');
   const [breakReason, setBreakReason] = useState('Tea');
@@ -187,7 +187,7 @@ export default function StatusBreakModal() {
                 key={o.id}
                 aria-pressed={breakScope === o.id}
                 className={breakScope === o.id ? 'active' : ''}
-                onClick={() => setBreakScope(o.id as any)}
+                onClick={() => setBreakScope(o.id as 'both' | 'call' | 'chat')}
               >
                 {o.label}
               </button>

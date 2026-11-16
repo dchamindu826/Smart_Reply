@@ -1,89 +1,60 @@
-# Smart_Reply
+# Smart Reply by LUMI AI
 
-> Enterprise-grade WhatsApp CRM & AI Smart Auto-Reply Platform for modern customer support teams.
+Multi-company WhatsApp chat and call management. LUMI AI (super admin) sells it to companies;
+each company's manager and up to 100 staff answer their WhatsApp chats and calls from the web
+app and the mobile app.
 
-![SmartReply Platform](https://img.shields.io/badge/Next.js-15-black?style=flat&logo=next.js)
-![React](https://img.shields.io/badge/React-19-blue?style=flat&logo=react)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat&logo=typescript)
-![License](https://img.shields.io/badge/License-MIT-green)
+| Part | Folder | Stack |
+|---|---|---|
+| Web app (manager, staff, super admin console) | `frontend/` | Next.js 16, React 19, TypeScript, TanStack Query, Socket.IO |
+| API and background workers | `backend/` | NestJS 11, PostgreSQL (Drizzle ORM), Redis, BullMQ, Socket.IO |
+| Mobile app (Android, iOS) | `mobile/` | Expo / React Native, TypeScript |
+| Shared API types and validation | `packages/shared/` | TypeScript, zod |
+| Server deployment | `infra/` | Docker Compose, Caddy (automatic HTTPS) |
 
----
+## Run it on your computer
 
-## 🌟 Key Features
+Needs Node.js 22+, PostgreSQL 16 and Redis 7 (or Docker for those two).
 
-- **📱 WhatsApp Web-Faithful UI/UX**:
-  - Pixel-perfect reproduction of the modern WhatsApp Web layout.
-  - Authentic sound effects for incoming messages, outgoing notes, and phone calls.
-  - Interactive status viewer, media browser, search, and contact detail drawer.
+```bash
+npm install
+cp backend/.env.example backend/.env      # set DATABASE_URL, REDIS_URL, JWT_SECRET, ENCRYPTION_KEY
+npm run db:migrate:dev -w backend         # create tables
+npm run db:seed:dev -w backend            # plans + first super admin (SEED_ADMIN_* in backend/.env)
+npm run db:seed:demo -w backend           # optional demo company (development only)
+npm run dev                               # API :4000, worker, web :3000
+```
 
-- **🎨 9 Dynamic Chat Wallpaper Themes (Light & Dark Mode)**:
-  - **WhatsApp Doodle** (Classic): Authentic WhatsApp doodles with SmartReply brand motif.
-  - **Plain Solid**: Distraction-free clean minimalist background.
-  - **Minimal Tech Dots**: Modern geometric micro-dot matrix.
-  - **Emerald Mint**: Signature WhatsApp green tint doodles.
-  - **Warm Sand**: Cozy espresso & parchment tone.
-  - **Midnight Navy**: Deep sapphire royal night sky.
-  - **Rose Blush**: Elegant pastel blush rose.
-  - **Lavender Lilac**: Calming royal lavender purple.
-  - **AMOLED Pitch Black**: Zero-light true black OLED stealth theme.
-  - Live preview swatches with synchronized light and dark mode adaptations.
+Open http://localhost:3000. Demo logins: `manager@demo.test`, `staff1@demo.test`,
+password `Demo12345!`; super admin from your `SEED_ADMIN_EMAIL`.
 
-- **🤖 AI Auto-Reply & Bot Engine**:
-  - Configurable AI response tone, confidence thresholds, and handoff triggers.
-  - Real-time AI bot response logs and human agent intervention toggles.
-  - Custom knowledge base and product catalogue integration.
+For live events in development set `NEXT_PUBLIC_SOCKET_URL=http://localhost:4000` in
+`frontend/.env.local`.
 
-- **👥 Multi-Agent & Team Collaboration**:
-  - Role-based views: Manager vs. Staff Agent.
-  - Conversation assignment, 24-hour expiration countdowns, and label categorization.
-  - Live agent status management (Available, Break, Offline) with real-time timers.
+Postgres and Redis with Docker:
 
-- **📞 Voice & Simulated Calling**:
-  - Live simulated VoIP call engine with IVR menu routing.
-  - Call forwarding, warm/blind transfer, call recording, and mute/hold controls.
+```bash
+docker run -d --name sr-pg -e POSTGRES_USER=smart -e POSTGRES_PASSWORD=smart -e POSTGRES_DB=smart_reply -p 5432:5432 postgres:16-alpine
+docker run -d --name sr-redis -p 6379:6379 redis:7-alpine
+```
 
----
+## Checks
 
-## 🚀 Quick Start
+```bash
+npm run lint
+npm run typecheck
+npm run test      # backend tests need the database smart_reply_test (see backend/test/env.ts)
+npm run build
+```
 
-### Prerequisites
-- Node.js 18+ or 20+
-- npm or yarn
+## Put it on a server
 
-### Installation & Run
+See **[docs/deploy.md](docs/deploy.md)** — one server, `docker compose up -d --build`.
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/dchamindu826/Smart_Reply.git
-   cd Smart_Reply
-   ```
+## Documents
 
-2. **Navigate to the frontend directory:**
-   ```bash
-   cd frontend
-   npm install
-   ```
-
-3. **Start the development server:**
-   ```bash
-   npm run dev
-   ```
-
-4. **Open in browser:**
-   Open [http://localhost:3000](http://localhost:3000) to view the application.
-
----
-
-## 🛠️ Tech Stack
-
-- **Framework**: Next.js 15+ (Turbopack / App Router)
-- **Library**: React 19
-- **Language**: TypeScript
-- **Styling**: Vanilla CSS (CSS Variables, Flexbox, CSS Grid)
-- **Audio**: Web Audio API / HTML5 Audio
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
+- [docs/deploy.md](docs/deploy.md) — production setup, Meta app, backups
+- [docs/dev/backend-guide.md](docs/dev/backend-guide.md) and [docs/dev/frontend-guide.md](docs/dev/frontend-guide.md) — how the code is organised
+- [docs/plan/](docs/plan/README.md) — architecture, data model, API contract, WhatsApp integration, phases
+- [mobile/README.md](mobile/README.md) — running and publishing the mobile app
+- [AGENTS.md](AGENTS.md) — rules for coding agents (Antigravity, Claude, Copilot)

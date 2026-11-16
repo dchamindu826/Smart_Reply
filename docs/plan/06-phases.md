@@ -1,5 +1,38 @@
 # 06 · Build phases
 
+## Status (November 2026)
+
+All phases were built in one pass on branch `feat/production-build`. What is done and what is open:
+
+| Area | State |
+|---|---|
+| Login, sessions, invites, password reset, roles, permissions, seats (max 100) | Done |
+| Super admin console: companies, plans, Meta settings, webhook, WhatsApp connect (Embedded Signup, connect link, manual), AI add-on, usage, health, audit, support sessions | Done |
+| Chats: inbound webhook, media, 24-hour window, templates, quick replies, notes, owners, pool, labels, resolve, favourites/archive | Done |
+| Automation: auto-assign, keyword rules, greeting/away flows | Done |
+| Content: templates (Meta create/sync/status), catalog, media gallery, broadcasts, flows | Done |
+| Calls Stage A: browser/mobile answers WhatsApp calls (WebRTC), ringing strategies, missed-call messages, scheduled calls, call settings and hours | Done |
+| Calls Stage B: hold, transfer, conference, recording, IVR on live calls, transcripts | **Open** — needs the media server proof of concept (04-whatsapp-integration.md) |
+| AI bot add-on: OpenAI/Anthropic, knowledge, examples, handoff, limits, logs | Done (PDF knowledge extraction open) |
+| Reports, dashboards, exports, billing estimates, business profile, number health | Done |
+| Mobile app | Expo / React Native (see 07-mobile-app.md) |
+| Deployment | Docker Compose + Caddy (docs/deploy.md) |
+| Load tests, row-level security, two-step login | **Open** (Phase 9 hardening) |
+
+Decisions that changed from this plan, and why:
+
+- **Drizzle ORM instead of Prisma.** Prisma needs native engine downloads at install time; Drizzle is
+  plain TypeScript, keeps SQL visible and gives smaller images. Migrations are SQL files in `backend/drizzle`.
+- **Expo / React Native instead of Flutter** for mobile, so the whole product is TypeScript and the
+  mobile app imports `@smart-reply/shared`.
+- **Caddy** as the reverse proxy for automatic HTTPS on one server.
+- **Calling Stage A first**: the agent's device is the WebRTC peer; Stage B features answer
+  `NOT_AVAILABLE` until the media server exists.
+- The screens keep their original view types; `frontend/src/lib/adapters.ts` maps API objects onto them
+  instead of renaming every field (Phase 1 task 1).
+
+---
+
 Phase 0 is setup; phases 1 to 9 build the product. Each ends with something that works and can be shown.
 Do them in order; later phases assume earlier ones.
 

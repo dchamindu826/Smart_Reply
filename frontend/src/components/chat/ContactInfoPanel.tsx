@@ -2,6 +2,8 @@
 
 import React from 'react';
 import { Contact, Staff, CallLogItem } from '@/types';
+import { useApp } from '@/context/AppContext';
+import { useConversationMedia } from '@/features/conversations';
 
 interface ContactInfoPanelProps {
   contact: Contact | null;
@@ -30,7 +32,10 @@ export default function ContactInfoPanel({
   onOwnerChange,
   onAddLabel
 }: ContactInfoPanelProps) {
+  const { team, activeConversationId, requestCallPermission } = useApp();
+  const media = useConversationMedia(contact ? activeConversationId : null);
   if (!contact) return null;
+  const mediaFiles = (media.data ?? []).flatMap(m => m.attachments).reverse();
 
   const contactCalls = calls.filter(k => k.c === contact.id && k.d !== 'ringing');
 
@@ -81,40 +86,41 @@ export default function ContactInfoPanel({
           </button>
           <button type="button" className="wa-info-act-btn dg" onClick={onBlock}>
             <span className="icon-circle">⊘</span>
-            <span>Block</span>
+            <span>{contact.blocked ? 'Unblock' : 'Block'}</span>
           </button>
         </div>
       </div>
 
-      {/* 3. Media, Links and Documents Section (Matching Screenshot) */}
+      {/* 3. Media, Links and Documents Section */}
       <div className="wa-info-section">
         <div className="wa-info-section-header">
           <span>Media, Links and Documents</span>
-          <span>›</span>
+          <span>{mediaFiles.length || ''}</span>
         </div>
         <div className="wa-media-grid">
-          <div className="wa-media-item">
-            <span>🖼</span>
-          </div>
-          <div className="wa-media-item">
-            <span>🖼</span>
-          </div>
-          <div className="wa-media-item">
-            <span>🖼</span>
-          </div>
+          {mediaFiles.slice(0, 6).map(f => (
+            <a key={f.id} className="wa-media-item" href={f.url} target="_blank" rel="noreferrer" title={f.name}>
+              {f.kind === 'image' ? (
+                <img src={f.url} alt={f.name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <span>{f.kind === 'audio' ? '🎙' : f.kind === 'video' ? '🎬' : '📄'}</span>
+              )}
+            </a>
+          ))}
+          {mediaFiles.length === 0 ? <span className="hint">No media shared yet</span> : null}
         </div>
       </div>
 
-      {/* 4. About and phone number Section (Matching Screenshot) */}
+      {/* 4. About and phone number */}
       <div className="wa-info-section">
         <div style={{ fontSize: '13.5px', fontWeight: 600, color: '#008069', marginBottom: '8px' }}>
           About and phone number
         </div>
-        <p style={{ fontSize: '13.5px', color: 'var(--wa-primary-text)', lineHeight: 1.4, margin: '4px 0 8px' }}>
-          &ldquo;Everyone should learn how to program because it teaches you how to think.&rdquo;
-        </p>
+        {contact.notes ? (
+          <p style={{ fontSize: '13.5px', color: 'var(--wa-primary-text)', lineHeight: 1.4, margin: '4px 0 8px' }}>{contact.notes}</p>
+        ) : null}
         <div style={{ fontSize: '13.5px', color: 'var(--wa-secondary-text)', marginTop: '6px' }}>
-          {contact.ph} · Mobile
+          {contact.ph || 'Number hidden by WhatsApp'} · {contact.optIn ? 'Agreed to marketing' : 'No marketing consent'}
         </div>
       </div>
 
@@ -131,7 +137,7 @@ export default function ContactInfoPanel({
           style={{ width: '100%', padding: '8px 10px', fontSize: '13px', borderRadius: '7px' }}
         >
           <option value="">{isStaff ? 'Release to team' : 'Unassigned'}</option>
-          {staff.map(s => (
+          {(isStaff ? staff : team).map(s => (
             <option key={s.id} value={s.id}>
               {s.n} · {s.stt}
             </option>
@@ -186,13 +192,16 @@ export default function ContactInfoPanel({
           Activity history
         </div>
         <div className="ln" style={{ padding: '4px 0' }}>
-          <span style={{ fontSize: '12.5px' }}>Quotation Q-1042</span>
-          <b className="chip ok">Open</b>
+          <span style={{ fontSize: '12.5px' }}>WhatsApp call permission</span>
+          <b className={`chip ${contact.perm ? 'ok' : ''}`}>
+            {contact.permStatus === 'permanent' ? 'Always' : contact.permStatus === 'temporary' ? 'Allowed (7 days)' : contact.permStatus === 'requested' ? 'Requested' : 'Not yet'}
+          </b>
         </div>
-        <div className="ln" style={{ padding: '4px 0' }}>
-          <span style={{ fontSize: '12.5px' }}>Sliding wardrobe inquiry</span>
-          <b className="chip">Resolved</b>
-        </div>
+        {!contact.perm ? (
+          <button type="button" className="chip" style={{ cursor: 'pointer', marginTop: 4 }} onClick={() => void requestCallPermission(contact.id)}>
+            Ask to allow calls
+          </button>
+        ) : null}
 
         <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--wa-primary-text)', marginTop: '12px', marginBottom: '6px' }}>
           Call history {contact.perm && <span className="chip i" style={{ marginLeft: '4px' }}>Permission ✓</span>}

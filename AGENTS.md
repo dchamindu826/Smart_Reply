@@ -9,8 +9,8 @@ before writing code.
 1. **The front-end design is final.** Do not change layout, class names, wording, colours,
    themes or wallpapers in `frontend/` unless the task says so. New screens reuse the
    styles in `frontend/src/app/globals.css`.
-2. **Work one phase at a time**, in the order in `docs/plan/06-phases.md`. Do not build
-   features from a later phase.
+2. **Phases 0–9 are built.** Open items are listed in `docs/plan/06-phases.md` under
+   "Status". Read `docs/dev/backend-guide.md` and `docs/dev/frontend-guide.md` before changing code.
 3. **Every row of business data belongs to one company.** Take the company from the
    session, never from the request. Go through the company-scoped repository layer. A row
    from another company answers 404.
@@ -48,7 +48,7 @@ before writing code.
 |---|---|
 | Language | TypeScript, strict mode, no `any` |
 | API fields | camelCase; ISO 8601 UTC times; money as `{ amountMinor, currency }` |
-| Database | snake_case; UUID v7 ids; `timestamptz`; migrations through Prisma only |
+| Database | snake_case; UUID v7 ids; `timestamptz`; schema in `backend/src/db/schema.ts`, migrations through drizzle-kit only |
 | Errors | `{ error: { code, message } }` with stable `code` strings |
 | Commits | Imperative subject with a scope, for example `feat(chats): send template outside window` |
 | Front-end data | TanStack Query hooks in `frontend/src/features/*`; no fetching inside components |
@@ -56,7 +56,7 @@ before writing code.
 
 ## Commands
 
-These are the commands the plan expects to exist after Phase 0.
+These commands exist and must stay green.
 
 ```
 npm ci                      install everything
@@ -65,6 +65,4 @@ npm run lint                all packages
 npm run typecheck           all packages
 npm run test                all packages
 npm run build               all packages
-npm run e2e                 end-to-end tests
-npm run visual              compare screens against the committed baseline
 ```

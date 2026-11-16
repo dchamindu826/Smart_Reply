@@ -1,5 +1,8 @@
 export type Role = 'manager' | 'staff';
 
+// These view types keep the field names the screens were designed with. `lib/adapters.ts`
+// maps the API objects from @smart-reply/shared onto them.
+
 export type StatusType = 'available' | 'oncall' | 'brk' | 'away' | 'dnd';
 
 export interface ChannelStatus {
@@ -33,6 +36,12 @@ export interface Staff {
   used: number;
   log: [string, string, number, string][];
   noteS?: string;
+  role?: 'manager' | 'staff';
+  email?: string;
+  phone?: string | null;
+  title?: string;
+  status?: 'invited' | 'active' | 'disabled';
+  permissions?: Record<string, boolean>;
 }
 
 export interface Contact {
@@ -47,6 +56,12 @@ export interface Contact {
   perm: boolean;
   labels: [string, string][];
   hist: [string, string, string][];
+  labelIds?: string[];
+  blocked?: boolean;
+  permStatus?: 'none' | 'requested' | 'temporary' | 'permanent';
+  permExpiresAt?: string | null;
+  optIn?: boolean;
+  notes?: string;
 }
 
 export interface Attachment {
@@ -56,6 +71,11 @@ export interface Attachment {
   url?: string;
   real?: boolean;
   dur?: string;
+  /** Stored file id, when the file is on the server. */
+  fileId?: string;
+  mime?: string;
+  /** A browser File waiting to be uploaded. */
+  file?: File;
 }
 
 export type MessageType = 'text' | 'tpl' | 'note' | 'sys';
@@ -70,6 +90,10 @@ export interface Message {
   read?: number;
   buttons?: string[];
   attachments?: Attachment[];
+  id?: string;
+  status?: 'queued' | 'sent' | 'delivered' | 'read' | 'failed';
+  error?: string | null;
+  at?: string;
 }
 
 export interface Conversation {
@@ -81,6 +105,11 @@ export interface Conversation {
   win: number | null;
   exp?: number;
   msgs: Message[];
+  status?: 'open' | 'resolved';
+  botActive?: boolean;
+  favorite?: boolean;
+  archived?: boolean;
+  lastAt?: string | null;
 }
 
 export interface CallLogItem {
@@ -92,6 +121,10 @@ export interface CallLogItem {
   note?: string;
   rec?: number;
   ai?: number;
+  id?: string;
+  recUrl?: string | null;
+  summary?: string | null;
+  startedAt?: string;
 }
 
 export interface Template {
@@ -105,6 +138,8 @@ export interface Template {
   body: string;
   why?: string;
   btn?: string[];
+  id?: string;
+  vars?: number;
 }
 
 export interface Product {
@@ -116,6 +151,10 @@ export interface Product {
   k: 'pantry' | 'vanity' | 'wardrobe' | 'overhead';
   sku: string;
   st: 'ok' | 'w';
+  id?: string;
+  img?: string | null;
+  collectionId?: string | null;
+  priceMinor?: number;
 }
 
 export interface QuickReply {
@@ -125,6 +164,9 @@ export interface QuickReply {
   att: Attachment[];
   used: number;
   by: string;
+  id?: string;
+  scope?: 'everyone' | 'only_me';
+  ownerId?: string | null;
 }
 
 export interface IVROption {
@@ -154,7 +196,7 @@ export interface CallConfig {
   };
 }
 
-export type MediaCategory = 'Products' | 'Workshop' | 'Installation' | 'Testimonials' | 'Promotions';
+export type MediaCategory = string;
 
 export interface MediaItem {
   id: string;
@@ -174,6 +216,8 @@ export interface MediaItem {
   shares?: number;
   width?: number;
   height?: number;
+  fileId?: string;
+  categoryId?: string | null;
 }
 
 export interface AIBotSettings {

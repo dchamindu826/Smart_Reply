@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect, useState } from 'react';
-import { Conversation, Contact, QuickReply, Attachment } from '@/types';
+import { Conversation, Contact, QuickReply, Attachment, Message } from '@/types';
 import { getWinClass, getWinText } from '@/utils/windowTime';
 import MessageAttachment from './ChatThread/MessageAttachment';
 import VoiceRecordingWidget from '@/components/modals/VoiceRecordingWidget';
@@ -29,9 +29,19 @@ interface ChatThreadPanelProps {
   onToggleNoteMode: () => void;
   isRecording: boolean;
   onToggleRecording: () => void;
-  onVoiceSend?: (durStr: string) => void;
+  onVoiceSend?: (durStr: string, audio: Blob) => void;
   onVoiceCancel?: () => void;
   onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}
+
+function dayLabel(iso: string): string {
+  const d = new Date(iso);
+  const start = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const days = Math.round((start(new Date()) - start(d)) / 86_400_000);
+  if (days === 0) return 'TODAY';
+  if (days === 1) return 'YESTERDAY';
+  if (days < 7) return d.toLocaleDateString('en-GB', { weekday: 'long' }).toUpperCase();
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
 }
 
 export default function ChatThreadPanel({
@@ -60,17 +70,19 @@ export default function ChatThreadPanel({
   onVoiceCancel,
   onFileSelect
 }: ChatThreadPanelProps) {
-  const { simulateCustomerReply, addToast } = useApp();
+  const { addToast, hasOlderMessages, loadOlderMessages, aiAddon, setBotActive } = useApp();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showScrollBottom, setShowScrollBottom] = useState(false);
 
   // Auto-scroll when messages change
+  const msgCount = conversation?.msgs.length ?? 0;
+  const lastMsgId = conversation?.msgs[msgCount - 1]?.id;
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     setShowScrollBottom(false);
-  }, [conversation?.msgs]);
+  }, [conversation?.id, lastMsgId]);
 
   const handleCanvasScroll = () => {
     if (!canvasRef.current) return;
@@ -98,101 +110,11 @@ export default function ChatThreadPanel({
   const winClass = getWinClass(conversation.exp);
   const winText = getWinText(conversation.exp);
 
-  return (
-    <main className="wa-col-thread">
-      {/* 1. Header (Matching WhatsApp Web Top Bar) */}
-      <div className="wa-header">
-        <div className="wa-user-meta" onClick={onToggleContactInfo} style={{ cursor: 'pointer' }}>
-          <div className={`wa-user-avatar av ${contact.a} md`}>
-            {contact.i}
-          </div>
-          <div>
-            <div className="wa-user-name">{contact.n}</div>
-            <div className="wa-user-sub">
-              <span className={`wt ${winClass}`} style={{ fontSize: '11px', padding: '1px 5px', borderRadius: '4px' }}>
-                ◷ {winText}
-              </span>
-              <span>{isWindowOpen ? '· Free replies window open' : '· Approved templates only'}</span>
-            </div>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button
-            type="button"
-            className="wa-header-test-btn"
-            onClick={() => simulateCustomerReply(conversation.id)}
-            style={{
-              borderRadius: '20px',
-              padding: '5px 13px',
-              background: '#00a884',
-              color: '#ffffff',
-              border: 'none',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontWeight: 600,
-              fontSize: '12.5px',
-              boxShadow: '0 2px 8px rgba(0, 168, 132, 0.4)',
-              transition: 'all 0.15s ease'
-            }}
-            title="Simulate incoming customer WhatsApp reply to test notification sound"
-            id="test-reply-header-btn"
-          >
-            <span>💬</span> Test Reply
-          </button>
-          <button
-            type="button"
-            className="wa-header-call-btn"
-            onClick={onCall}
-            style={{ borderRadius: '20px', padding: '5px 12px', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600, fontSize: '13px' }}
-          >
-            <span>☏</span> Call
-          </button>
-          <button
-            type="button"
-            className="wa-header-resolve-btn"
-            onClick={onResolve}
-            style={{ borderRadius: '20px', padding: '5px 12px', fontWeight: 600, fontSize: '13px' }}
-          >
-            Resolve
-          </button>
-          <button
-            type="button"
-            className="wa-icon-btn"
-            title="Send Template"
-            onClick={onOpenTemplates}
-          >
-            ▤
-          </button>
-          <button
-            type="button"
-            className="wa-icon-btn"
-            title={contactInfoOpen ? 'Hide Contact Info' : 'Show Contact Info'}
-            onClick={onToggleContactInfo}
-          >
-            {contactInfoOpen ? '✕' : 'ℹ'}
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Messages Canvas (WhatsApp Doodle Pattern) */}
-      <div className="wa-canvas" ref={canvasRef} onScroll={handleCanvasScroll}>
-        {/* Yellow Notice Banner (Matching Screenshot) */}
-        <div className="wa-chat-lock-banner">
-          🔒 Messages are end-to-end encrypted. Reply window: <b>◷ {winText}</b> ({isWindowOpen ? 'free replies' : 'meta templates'}).
-        </div>
-
-        {/* Date Pill */}
-        <div className="wa-date-pill">TODAY</div>
-
-        {/* Message Bubbles */}
-        {conversation.msgs.map((m, idx) => {
+  const renderBubble = (m: Message, idx: number) => {
           // Team Note Mode
           if (m.type === 'note') {
             return (
-              <div key={idx} className="nt" style={{ alignSelf: 'center', width: '85%' }}>
+              <div key={m.id ?? idx} className="nt" style={{ alignSelf: 'center', width: '85%' }}>
                 <b>Internal note · {m.sender || 'Team'} · customer cannot see</b>
                 {m.attachments?.length ? (
                   <div className="att" style={{ margin: '6px 0' }}>
@@ -209,7 +131,7 @@ export default function ChatThreadPanel({
           // System notification
           if (m.dir === 'sys') {
             return (
-              <div key={idx} className={`sys ${m.text.includes('Missed') ? 'b' : ''}`} style={{ alignSelf: 'center' }}>
+              <div key={m.id ?? idx} className={`sys ${m.text.includes('Missed') ? 'b' : ''}`} style={{ alignSelf: 'center' }}>
                 {m.text} · {m.time}
               </div>
             );
@@ -218,7 +140,7 @@ export default function ChatThreadPanel({
           const isOut = m.dir === 'out';
 
           return (
-            <div key={idx} className={`wa-bubble ${isOut ? 'out' : 'in'}`}>
+            <div key={m.id ?? idx} className={`wa-bubble ${isOut ? 'out' : 'in'}`}>
               {/* Template badge or sender */}
               {m.type === 'tpl' ? (
                 <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--magenta)', marginBottom: '3px' }}>
@@ -246,7 +168,13 @@ export default function ChatThreadPanel({
               <span className="wa-bubble-meta">
                 <span>{m.time}</span>
                 {isOut && (
-                  <span className="wa-ticks">{m.read ? '✓✓' : '✓'}</span>
+                  <span
+                    className="wa-ticks"
+                    title={m.status === 'failed' ? (m.error ?? 'Not delivered') : m.status}
+                    style={m.status === 'read' ? { color: '#53bdeb' } : m.status === 'failed' ? { color: '#ea0038' } : undefined}
+                  >
+                    {m.status === 'queued' ? '🕓' : m.status === 'failed' ? '⚠' : m.status === 'sent' ? '✓' : '✓✓'}
+                  </span>
                 )}
               </span>
 
@@ -259,15 +187,7 @@ export default function ChatThreadPanel({
                       type="button"
                       className="wa-bubble-btn"
                       style={{ flex: 1, cursor: 'pointer' }}
-                      onClick={() => {
-                        if (bText.toLowerCase().includes('call')) {
-                          onCall();
-                        } else if (bText.toLowerCase().includes('quote')) {
-                          addToast('Viewing quotation Q-1042 · Rs. 185,000 (Valid until 30 Sep).');
-                        } else {
-                          addToast(`Action: ${bText}`);
-                        }
-                      }}
+                      onClick={() => addToast(`The customer taps “${bText}” on WhatsApp.`)}
                     >
                       {bText}
                     </button>
@@ -276,6 +196,94 @@ export default function ChatThreadPanel({
               )}
             </div>
           );
+  };
+
+  return (
+    <main className="wa-col-thread">
+      {/* 1. Header (Matching WhatsApp Web Top Bar) */}
+      <div className="wa-header">
+        <div className="wa-user-meta" onClick={onToggleContactInfo} style={{ cursor: 'pointer' }}>
+          <div className={`wa-user-avatar av ${contact.a} md`}>
+            {contact.i}
+          </div>
+          <div>
+            <div className="wa-user-name">{contact.n}</div>
+            <div className="wa-user-sub">
+              <span className={`wt ${winClass}`} style={{ fontSize: '11px', padding: '1px 5px', borderRadius: '4px' }}>
+                ◷ {winText}
+              </span>
+              <span>{isWindowOpen ? '· Free replies window open' : '· Approved templates only'}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            type="button"
+            className="wa-header-call-btn"
+            onClick={onCall}
+            style={{ borderRadius: '20px', padding: '5px 12px', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600, fontSize: '13px' }}
+          >
+            <span>☏</span> Call
+          </button>
+          <button
+            type="button"
+            className="wa-header-resolve-btn"
+            onClick={onResolve}
+            style={{ borderRadius: '20px', padding: '5px 12px', fontWeight: 600, fontSize: '13px' }}
+          >
+            {conversation.status === 'resolved' ? 'Reopen' : 'Resolve'}
+          </button>
+          {aiAddon?.status === 'active' && (
+            <button
+              type="button"
+              className="wa-header-resolve-btn"
+              onClick={() => void setBotActive(conversation.id, !conversation.botActive)}
+              title={conversation.botActive ? 'The AI bot answers this chat. Take over to stop it.' : 'You are answering. Hand the chat back to the AI bot.'}
+              style={{ borderRadius: '20px', padding: '5px 12px', fontWeight: 600, fontSize: '13px' }}
+            >
+              {conversation.botActive ? '✦ Take over' : '✦ Hand to bot'}
+            </button>
+          )}
+          <button
+            type="button"
+            className="wa-icon-btn"
+            title="Send Template"
+            onClick={onOpenTemplates}
+          >
+            ▤
+          </button>
+          <button
+            type="button"
+            className="wa-icon-btn"
+            title={contactInfoOpen ? 'Hide Contact Info' : 'Show Contact Info'}
+            onClick={onToggleContactInfo}
+          >
+            {contactInfoOpen ? '✕' : 'ℹ'}
+          </button>
+        </div>
+      </div>
+
+      {/* 2. Messages Canvas (WhatsApp Doodle Pattern) */}
+      <div className="wa-canvas" ref={canvasRef} onScroll={handleCanvasScroll}>
+        {/* Yellow Notice Banner (Matching Screenshot) */}
+        <div className="wa-chat-lock-banner">
+          🔒 WhatsApp Business messages. Reply window: <b>◷ {winText}</b> ({isWindowOpen ? 'free replies' : 'meta templates'}).
+        </div>
+
+        {hasOlderMessages && (
+          <button type="button" className="wa-date-pill" style={{ cursor: 'pointer', border: 0 }} onClick={loadOlderMessages}>
+            Load older messages
+          </button>
+        )}
+
+        {/* Message Bubbles */}
+        {conversation.msgs.map((m, idx) => {
+          const day = m.at ? dayLabel(m.at) : '';
+          const prevDay = idx > 0 && conversation.msgs[idx - 1].at ? dayLabel(conversation.msgs[idx - 1].at!) : '';
+          const pill = day && day !== prevDay ? <div key={`d-${m.id ?? idx}`} className="wa-date-pill">{day}</div> : null;
+          const bubble = renderBubble(m, idx);
+          return pill ? [pill, bubble] : bubble;
         })}
 
         <div ref={messagesEndRef} />
@@ -342,20 +350,6 @@ export default function ChatThreadPanel({
               🖼 Gallery
             </button>
           )}
-          <button
-            type="button"
-            className="wa-quick-chip"
-            style={{
-              borderColor: '#00a884',
-              color: '#00a884',
-              fontWeight: 600,
-              background: 'rgba(0, 168, 132, 0.08)'
-            }}
-            onClick={() => simulateCustomerReply(conversation.id)}
-            title="Simulate incoming customer WhatsApp message & hear notification sound"
-          >
-            💬 Test Customer Reply
-          </button>
         </div>
 
 
@@ -378,6 +372,9 @@ export default function ChatThreadPanel({
         )}
 
         {/* Input Row */}
+        {conversation.status !== 'resolved' && contact.blocked ? (
+          <div className="wa-chat-lock-banner">This customer is blocked. Unblock them in contact info to message.</div>
+        ) : null}
         <form className="wa-composer-row" onSubmit={onSubmit}>
           {/* File attach button */}
           <label

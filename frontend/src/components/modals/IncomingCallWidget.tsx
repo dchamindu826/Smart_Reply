@@ -105,9 +105,8 @@ export default function IncomingCallWidget() {
     setView('call');
   };
 
-  const ivrText = ivr.on
-    ? `IVR ${ivr.opts[0]?.k} · ${ivr.opts[0]?.t.toUpperCase()}`
-    : 'SALES QUEUE';
+  const ownerName = caller?.to ? staff.find(s => s.id === caller.to)?.n : null;
+  const ivrText = ivr.on && ivr.opts.length ? 'WHATSAPP CALL · IVR' : ownerName ? `OWNER · ${ownerName.toUpperCase()}` : 'TEAM QUEUE';
 
   return (
     <div
@@ -176,9 +175,11 @@ export default function IncomingCallWidget() {
               <div className="wa-call-phone">
                 {caller.ph}
               </div>
-              <div className="wa-call-context-pill" title={`${caller.city} · slide wardrobe inquiry`}>
-                {caller.city} · slide wardrobe inquiry
-              </div>
+              {caller.city || caller.labels.length ? (
+                <div className="wa-call-context-pill" title={[caller.city, ...caller.labels.map(l => l[0])].filter(Boolean).join(' · ')}>
+                  {[caller.city, ...caller.labels.map(l => l[0])].filter(Boolean).join(' · ')}
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -324,7 +325,7 @@ export default function IncomingCallWidget() {
           >
             <div className="wa-call-fwd-info">
               <div style={{ fontWeight: 600, fontSize: '13px', color: '#e9edef' }}>
-                Sales Queue
+                Team Queue
               </div>
               <span style={{ fontSize: '11px', color: '#8696a0' }}>
                 Ring all available agents
@@ -340,7 +341,7 @@ export default function IncomingCallWidget() {
               <div
                 key={s.id}
                 className="wa-call-fwd-item"
-                onClick={() => !isOff && handleForward(s.id)}
+                onClick={() => !isOff && handleForward(`user:${s.id}`)}
                 style={{ opacity: isOff ? 0.6 : 1, cursor: isOff ? 'not-allowed' : 'pointer' }}
               >
                 <div className="wa-call-fwd-info">

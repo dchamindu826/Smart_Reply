@@ -10,7 +10,7 @@ import {
 
 interface VoiceRecordingWidgetProps {
   contact: Contact;
-  onSend: (durationStr: string) => void;
+  onSend: (durationStr: string, audio: Blob) => void;
   onCancel: () => void;
 }
 
@@ -47,89 +47,89 @@ export default function VoiceRecordingWidget({
     return () => clearInterval(timer);
   }, [isPaused, isClosing]);
 
-  // Audio mic input or animated waveform fallback
+  // Record from the microphone. The waveform follows the real input level.
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const pausedRef = useRef(false);
+  const [micError, setMicError] = useState('');
+  pausedRef.current = isPaused;
+
   useEffect(() => {
-    if (isClosing) return;
-
-    let isUsingMic = false;
-
-    // Try acquiring real microphone stream
-    if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
-      navigator.mediaDevices
-        .getUserMedia({ audio: true })
-        .then(stream => {
-          audioStreamRef.current = stream;
-          try {
-            const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-            const ctx = new AudioCtx();
-            audioContextRef.current = ctx;
-            const analyser = ctx.createAnalyser();
-            analyser.fftSize = 64;
-            analyserRef.current = analyser;
-
-            const source = ctx.createMediaStreamSource(stream);
-            source.connect(analyser);
-            isUsingMic = true;
-
-            const dataArray = new Uint8Array(analyser.frequencyBinCount);
-
-            const updateMicWave = () => {
-              if (isPaused) {
-                animFrameRef.current = requestAnimationFrame(updateMicWave);
-                return;
-              }
-
+    let cancelled = false;
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      setMicError('This browser cannot record audio.');
+      return;
+    }
+    navigator.mediaDevices
+      .getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } })
+      .then(stream => {
+        if (cancelled) {
+          stream.getTracks().forEach(t => t.stop());
+          return;
+        }
+        audioStreamRef.current = stream;
+        const mime = ['audio/ogg;codecs=opus', 'audio/webm;codecs=opus', 'audio/mp4'].find(m => MediaRecorder.isTypeSupported(m));
+        const recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+        recorder.ondataavailable = e => {
+          if (e.data.size) chunksRef.current.push(e.data);
+        };
+        recorder.start(250);
+        recorderRef.current = recorder;
+        try {
+          const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+          const ctx = new AudioCtx();
+          audioContextRef.current = ctx;
+          const analyser = ctx.createAnalyser();
+          analyser.fftSize = 64;
+          analyserRef.current = analyser;
+          ctx.createMediaStreamSource(stream).connect(analyser);
+          const dataArray = new Uint8Array(analyser.frequencyBinCount);
+          const updateMicWave = () => {
+            if (!pausedRef.current) {
               analyser.getByteFrequencyData(dataArray);
-
               const newBars: number[] = [];
               for (let i = 0; i < 34; i++) {
-                const sampleIdx = Math.floor((i / 34) * dataArray.length);
-                const val = dataArray[sampleIdx] || 0;
-                // Scale value between 4px and 44px
-                const height = Math.max(5, Math.min(44, Math.floor((val / 255) * 44) + 4));
-                newBars.push(height);
+                const val = dataArray[Math.floor((i / 34) * dataArray.length)] || 0;
+                newBars.push(Math.max(5, Math.min(44, Math.floor((val / 255) * 44) + 4)));
               }
               setWaveBars(newBars);
-              animFrameRef.current = requestAnimationFrame(updateMicWave);
-            };
-
+            }
             animFrameRef.current = requestAnimationFrame(updateMicWave);
-          } catch {
-            // Web Audio fallback
-          }
-        })
-        .catch(() => {
-          // Fallback to simulation if mic access denied
-        });
-    }
-
-    // Fallback simulation timer if mic is not active
-    const simInterval = setInterval(() => {
-      if (!isUsingMic && !isPaused) {
-        setWaveBars(
-          Array.from({ length: 34 }, (_, idx) => {
-            const base = Math.sin(idx * 0.4 + Date.now() / 250);
-            const rand = Math.random() * 0.6;
-            const h = Math.max(6, Math.floor((base + 1.2 + rand) * 11));
-            return Math.min(44, h);
-          })
-        );
-      }
-    }, 90);
+          };
+          animFrameRef.current = requestAnimationFrame(updateMicWave);
+        } catch {
+          // The waveform is decoration; recording still works without it.
+        }
+      })
+      .catch(() => setMicError('Microphone access was blocked. Allow the microphone in the browser and try again.'));
 
     return () => {
-      clearInterval(simInterval);
-      if (animFrameRef.current) {
-        cancelAnimationFrame(animFrameRef.current);
-      }
-      if (audioStreamRef.current) {
-        audioStreamRef.current.getTracks().forEach(t => t.stop());
-      }
-      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-        audioContextRef.current.close().catch(() => {});
-      }
+      cancelled = true;
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      if (recorderRef.current && recorderRef.current.state !== 'inactive') recorderRef.current.stop();
+      audioStreamRef.current?.getTracks().forEach(t => t.stop());
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') audioContextRef.current.close().catch(() => {});
     };
-  }, [isPaused, isClosing]);
+  }, []);
+
+  useEffect(() => {
+    const r = recorderRef.current;
+    if (!r) return;
+    if (isPaused && r.state === 'recording') r.pause();
+    if (!isPaused && r.state === 'paused') r.resume();
+  }, [isPaused]);
+
+  /** Stop recording and hand back the audio file. */
+  const finishRecording = (): Promise<Blob | null> =>
+    new Promise(resolve => {
+      const r = recorderRef.current;
+      if (!r || r.state === 'inactive') {
+        resolve(chunksRef.current.length ? new Blob(chunksRef.current, { type: r?.mimeType || 'audio/webm' }) : null);
+        return;
+      }
+      r.onstop = () => resolve(new Blob(chunksRef.current, { type: r.mimeType || 'audio/webm' }));
+      r.stop();
+    });
 
   const handleDiscard = () => {
     setIsClosing(true);
@@ -141,11 +141,15 @@ export default function VoiceRecordingWidget({
 
   const handleSend = () => {
     setIsClosing(true);
-    playSentSound();
     const durStr = formatTime(Math.max(1, seconds));
-    setTimeout(() => {
-      onSend(durStr);
-    }, 200);
+    void finishRecording().then(blob => {
+      if (!blob || blob.size === 0) {
+        onCancel();
+        return;
+      }
+      playSentSound();
+      onSend(durStr, blob);
+    });
   };
 
   const formatTimer = (totalSec: number) => {
@@ -173,6 +177,11 @@ export default function VoiceRecordingWidget({
         pointerEvents: isClosing ? 'none' : 'auto'
       }}
     >
+      {micError ? (
+        <div style={{ padding: '8px 12px', color: '#ea0038', fontSize: '12.5px' }} role="alert">
+          {micError}
+        </div>
+      ) : null}
       {/* Top Header */}
       <div className="wa-voice-header">
         <div className="wa-voice-brand">
