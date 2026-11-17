@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { CallsIcon, StaffManageIcon, LabelsIcon, BlockIcon } from '@/components/common/Icons';
 
 interface CustomerQuickActionsProps {
   onCall: () => void;
@@ -18,16 +19,16 @@ export default function CustomerQuickActions({
   return (
     <div className="acts4">
       <button type="button" onClick={onCall}>
-        <span>☏</span>Call
+        <span><CallsIcon size={14} style={{ display: 'inline', verticalAlign: '-2px' }} /></span>Call
       </button>
       <button type="button" onClick={onFocusOwner}>
-        <span>⚇</span>Owner
+        <span><StaffManageIcon size={14} style={{ display: 'inline', verticalAlign: '-2px' }} /></span>Owner
       </button>
       <button type="button" onClick={onOpenLabels}>
-        <span>◈</span>Label
+        <span><LabelsIcon size={14} style={{ display: 'inline', verticalAlign: '-2px' }} /></span>Label
       </button>
       <button type="button" className="dg" onClick={onBlock}>
-        <span>⊘</span>Block
+        <span><BlockIcon size={14} style={{ display: 'inline', verticalAlign: '-2px' }} /></span>Block
       </button>
     </div>
   );

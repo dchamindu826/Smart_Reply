@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { initialsOf } from '@smart-reply/shared';
 import BrandLogo from '@/components/layout/BrandLogo';
+import { NavIcon } from '@/components/common/Icons';
 import { useSession } from '@/features/session';
 import { useAdminHealth, useAiCompanies } from '@/features/admin';
 import { AdminScreen, useAdmin } from './AdminContext';
@@ -78,7 +79,7 @@ function Rail() {
                 onClick={() => go(item.id)}
               >
                 <span className="ic" aria-hidden="true">
-                  {item.icon}
+                  <NavIcon id={item.id} size={16} />
                 </span>
                 <span>{item.label}</span>
                 {badges[item.id] ? <span className="ct">{badges[item.id]}</span> : null}

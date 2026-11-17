@@ -17,7 +17,8 @@ import type {
   MeResponse,
   addManagerSchema,
   createCompanySchema,
-  updateCompanySchema
+  updateCompanySchema,
+  updateCompanyUserSchema
 } from '@smart-reply/shared';
 import { randomToken, sha256 } from '../../common/crypto';
 import { AppError, notFound } from '../../common/errors';
@@ -180,7 +181,15 @@ export class CompaniesService {
       .orderBy(asc(users.role), asc(users.name));
     return rows
       .filter((u): u is typeof u & { role: 'manager' | 'staff' } => u.role !== 'system_admin')
-      .map(u => ({ id: u.id, name: u.name, email: u.email, role: u.role, status: u.status, lastLoginAt: u.lastLoginAt?.toISOString() ?? null }));
+      .map(u => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        phone: u.phone,
+        role: u.role,
+        status: u.status,
+        lastLoginAt: u.lastLoginAt?.toISOString() ?? null
+      }));
   }
 
   /* ───────── Create ───────── */
@@ -398,6 +407,45 @@ export class CompaniesService {
 
   async addManager(s: Session, id: string, input: z.infer<typeof addManagerSchema>): Promise<Invite> {
     const c = await this.require(id);
+    const passwordHash = input.password ? await hashPassword(input.password) : null;
+    if (passwordHash) {
+      const user = await this.db.transaction(async tx => {
+        await this.assertEmailFree(input.email, tx);
+        const used = await this.seatsUsed(id, tx);
+        if (used >= c.seatLimit) throw new AppError('SEAT_LIMIT_REACHED', `All ${c.seatLimit} seats are in use. Raise the seat limit first.`);
+        const [u] = await tx
+          .insert(users)
+          .values({
+            companyId: id,
+            role: 'manager',
+            name: input.name,
+            initials: initialsOf(input.name),
+            title: 'Manager',
+            email: input.email,
+            phone: input.phone ? normalizePhone(input.phone) : null,
+            passwordHash,
+            status: 'active',
+            avatarColor: avatarColorFor(input.email)
+          })
+          .returning();
+        for (const channel of ['call', 'chat'] as const) {
+          await tx.insert(presence).values({ userId: u.id, channel, companyId: id, status: 'available' }).onConflictDoNothing();
+        }
+        await this.audit.log(s, id, { action: 'manager.created', targetType: 'user', targetId: u.id, summary: `Created active manager ${input.name}` }, tx);
+        return u;
+      });
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: 'manager',
+        title: 'Manager',
+        expiresAt: new Date(Date.now() + 86400000).toISOString(),
+        createdAt: user.createdAt.toISOString(),
+        link: ''
+      };
+    }
     const inv = await this.db.transaction(async tx => {
       await this.assertEmailFree(input.email, tx);
       const used = await this.seatsUsed(id, tx);
@@ -422,6 +470,68 @@ export class CompaniesService {
       expiresAt: inv.row.expiresAt.toISOString(),
       createdAt: inv.row.createdAt.toISOString(),
       link: inv.link
+    };
+  }
+
+  async updateUser(s: Session, companyId: string, userId: string, input: z.infer<typeof updateCompanyUserSchema>): Promise<AdminCompanyUser> {
+    await this.require(companyId);
+    const [u] = await this.db.select().from(users).where(and(eq(users.id, userId), eq(users.companyId, companyId))).limit(1);
+    if (!u) throw notFound('User');
+
+    const updates: Partial<typeof users.$inferInsert> = {};
+    if (input.name && input.name !== u.name) {
+      updates.name = input.name;
+      updates.initials = initialsOf(input.name);
+    }
+    if (input.email && input.email !== u.email) {
+      await this.assertEmailFree(input.email, this.db);
+      updates.email = input.email;
+      updates.avatarColor = avatarColorFor(input.email);
+    }
+    if (input.phone !== undefined) {
+      updates.phone = input.phone ? normalizePhone(input.phone) : null;
+    }
+    if (input.role && input.role !== u.role) {
+      updates.role = input.role;
+    }
+    if (input.status && input.status !== u.status) {
+      updates.status = input.status;
+      if (input.status === 'disabled') {
+        this.sessions.invalidate(userId);
+      }
+    }
+    if (input.password) {
+      updates.passwordHash = await hashPassword(input.password);
+      this.sessions.invalidate(userId);
+    }
+
+    if (Object.keys(updates).length > 0) {
+      const [updated] = await this.db.update(users).set(updates).where(eq(users.id, userId)).returning();
+      await this.audit.log(s, companyId, {
+        action: 'user.updated',
+        targetType: 'user',
+        targetId: userId,
+        summary: `Updated user ${updated.name}${input.password ? ' (password updated)' : ''}`
+      });
+      return {
+        id: updated.id,
+        name: updated.name,
+        email: updated.email,
+        phone: updated.phone,
+        role: updated.role as 'manager' | 'staff',
+        status: updated.status,
+        lastLoginAt: updated.lastLoginAt?.toISOString() ?? null
+      };
+    }
+
+    return {
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      phone: u.phone,
+      role: u.role as 'manager' | 'staff',
+      status: u.status,
+      lastLoginAt: u.lastLoginAt?.toISOString() ?? null
     };
   }
 

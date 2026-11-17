@@ -3,6 +3,7 @@
 import React from 'react';
 import { useApp } from '@/context/AppContext';
 import { NAV_STRUCTURE } from '@/lib/ui';
+import { NavIcon } from '@/components/common/Icons';
 import BrandLogo from './BrandLogo';
 
 export default function Rail() {
@@ -38,7 +39,9 @@ export default function Rail() {
                 onClick={() => setScreen(item.id)}
                 data-go={item.id}
               >
-                <span className="ic">{item.icon}</span>
+                <span className="ic" aria-hidden="true">
+                  <NavIcon id={item.id} size={16} />
+                </span>
                 <span>{item.label}</span>
                 {live[item.id] ? <span className="ct">{live[item.id]}</span> : null}
               </button>

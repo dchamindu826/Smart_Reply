@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import type { AdminCompany, Invite } from '@smart-reply/shared';
+import type { AdminCompany, AdminCompanyUser, CompanyRole, Invite } from '@smart-reply/shared';
 import { MAX_SEATS } from '@smart-reply/shared';
 import { useSession } from '@/features/session';
 import {
@@ -11,7 +11,8 @@ import {
   useImpersonate,
   usePlans,
   useSetCompanyStatus,
-  useUpdateCompany
+  useUpdateCompany,
+  useUpdateCompanyUser
 } from '@/features/admin';
 import { CompanyTab, useAdmin } from './AdminContext';
 import { TimezoneList } from './CompaniesScreen';
@@ -29,14 +30,18 @@ function AddManagerSheet({ companyId, companyName }: { companyId: string; compan
   const { toast, reportError, closeSheet } = useAdmin();
   const add = useAddManager(companyId);
   const [invite, setInvite] = useState<Invite | null>(null);
-  const [f, setF] = useState({ name: '', email: '', phone: '' });
+  const [f, setF] = useState({ name: '', email: '', phone: '', password: '' });
   if (invite) {
     return (
       <>
-        <h2>Invite sent to {invite.name}</h2>
-        <p className="sub">The link works once and expires {fmtDate(invite.expiresAt)}.</p>
+        <h2>{invite.link ? `Invite sent to ${invite.name}` : `Manager ${invite.name} created`}</h2>
+        <p className="sub">
+          {invite.link
+            ? `The link works once and expires ${fmtDate(invite.expiresAt)}.`
+            : `Account is active. They can log in immediately with ${invite.email}.`}
+        </p>
         {invite.link ? <CopyField id="mgr-invite" label="Invite link" value={invite.link} /> : null}
-        <button className="btn" style={{ marginTop: 18 }} onClick={closeSheet}>
+        <button className="btn pri" style={{ marginTop: 18 }} onClick={closeSheet}>
           Done
         </button>
       </>
@@ -47,10 +52,15 @@ function AddManagerSheet({ companyId, companyName }: { companyId: string; compan
       onSubmit={e => {
         e.preventDefault();
         add.mutate(
-          { name: f.name.trim(), email: f.email.trim(), phone: f.phone.trim() || undefined },
+          {
+            name: f.name.trim(),
+            email: f.email.trim(),
+            phone: f.phone.trim() || undefined,
+            password: f.password || undefined
+          },
           {
             onSuccess: inv => {
-              toast(`Invite created for ${inv.name}.`);
+              toast(f.password ? `Manager ${inv.name} created.` : `Invite created for ${inv.name}.`);
               setInvite(inv);
             },
             onError: reportError
@@ -64,11 +74,105 @@ function AddManagerSheet({ companyId, companyName }: { companyId: string; compan
       <input className="f-in" id="am-name" required value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
       <label className="f" htmlFor="am-email">Email</label>
       <input className="f-in" id="am-email" type="email" required value={f.email} onChange={e => setF({ ...f, email: e.target.value })} />
+      <label className="f" htmlFor="am-pass">Password (optional)</label>
+      <input
+        className="f-in"
+        id="am-pass"
+        type="password"
+        minLength={8}
+        placeholder="Set password now, or leave empty to send an invite"
+        value={f.password}
+        onChange={e => setF({ ...f, password: e.target.value })}
+      />
       <label className="f" htmlFor="am-phone">Phone (optional)</label>
       <input className="f-in" id="am-phone" type="tel" value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} />
       <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
         <button className="btn pri" type="submit" disabled={add.isPending}>
-          {add.isPending ? 'Sending…' : 'Send invite'}
+          {add.isPending ? 'Saving…' : f.password ? 'Create manager' : 'Send invite'}
+        </button>
+        <button className="btn" type="button" onClick={closeSheet}>
+          Cancel
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function EditUserSheet({ companyId, user }: { companyId: string; user: AdminCompanyUser }) {
+  const { toast, reportError, closeSheet } = useAdmin();
+  const update = useUpdateCompanyUser(companyId);
+  const [f, setF] = useState({
+    name: user.name,
+    email: user.email,
+    phone: user.phone ?? '',
+    role: user.role,
+    status: user.status === 'invited' ? 'active' : user.status,
+    password: ''
+  });
+
+  return (
+    <form
+      onSubmit={e => {
+        e.preventDefault();
+        update.mutate(
+          {
+            userId: user.id,
+            body: {
+              name: f.name.trim(),
+              email: f.email.trim(),
+              phone: f.phone.trim() || null,
+              role: f.role,
+              status: f.status as 'active' | 'disabled',
+              password: f.password || undefined
+            }
+          },
+          {
+            onSuccess: u => {
+              toast(`User ${u.name} updated.`);
+              closeSheet();
+            },
+            onError: reportError
+          }
+        );
+      }}
+    >
+      <h2>Edit person</h2>
+      <p className="sub">Update details or change password for {user.name}.</p>
+      <label className="f" htmlFor="eu-name">Name</label>
+      <input className="f-in" id="eu-name" required value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
+      <label className="f" htmlFor="eu-email">Email</label>
+      <input className="f-in" id="eu-email" type="email" required value={f.email} onChange={e => setF({ ...f, email: e.target.value })} />
+      <label className="f" htmlFor="eu-pass">New password (optional)</label>
+      <input
+        className="f-in"
+        id="eu-pass"
+        type="password"
+        minLength={8}
+        placeholder="Leave empty to keep existing password"
+        value={f.password}
+        onChange={e => setF({ ...f, password: e.target.value })}
+      />
+      <label className="f" htmlFor="eu-phone">Phone (optional)</label>
+      <input className="f-in" id="eu-phone" type="tel" value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} />
+      <div className="f-row f2">
+        <div>
+          <label className="f" htmlFor="eu-role">Role</label>
+          <select className="f-in" id="eu-role" value={f.role} onChange={e => setF({ ...f, role: e.target.value as CompanyRole })}>
+            <option value="manager">Manager</option>
+            <option value="staff">Staff</option>
+          </select>
+        </div>
+        <div>
+          <label className="f" htmlFor="eu-status">Status</label>
+          <select className="f-in" id="eu-status" value={f.status} onChange={e => setF({ ...f, status: e.target.value as 'active' | 'disabled' })}>
+            <option value="active">Active</option>
+            <option value="disabled">Disabled</option>
+          </select>
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 18 }}>
+        <button className="btn pri" type="submit" disabled={update.isPending}>
+          {update.isPending ? 'Saving…' : 'Save changes'}
         </button>
         <button className="btn" type="button" onClick={closeSheet}>
           Cancel
@@ -232,6 +336,7 @@ function OverviewTab({ company }: { company: AdminCompany }) {
                       <th>Role</th>
                       <th>Status</th>
                       <th>Last sign-in</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -252,6 +357,15 @@ function OverviewTab({ company }: { company: AdminCompany }) {
                           <span className={`chip ${u.status === 'active' ? 'ok' : u.status === 'invited' ? 'w' : 'b'}`}>{u.status}</span>
                         </td>
                         <td>{fmtDateTime(u.lastLoginAt)}</td>
+                        <td>
+                          <button
+                            type="button"
+                            className="btn sm"
+                            onClick={() => openSheet(<EditUserSheet companyId={company.id} user={u} />)}
+                          >
+                            Edit
+                          </button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

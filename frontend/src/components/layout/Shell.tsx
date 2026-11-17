@@ -4,6 +4,7 @@ import React from 'react';
 import { useApp } from '@/context/AppContext';
 import Rail from './Rail';
 import Header from './Header';
+import { ChatsIcon } from '@/components/common/Icons';
 
 // Screens
 import DashboardScreen from '../screens/DashboardScreen';
@@ -65,7 +66,9 @@ export default function Shell() {
     return (
       <div style={{ display: 'grid', placeItems: 'center', height: '100vh', background: '#0b141a', color: '#e9edef', fontFamily: 'sans-serif' }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '32px', marginBottom: '12px' }}>💬</div>
+          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+            <ChatsIcon size={40} style={{ color: '#00a884' }} />
+          </div>
           <div style={{ fontSize: '16px', fontWeight: 600 }}>Loading Smart Reply...</div>
         </div>
       </div>

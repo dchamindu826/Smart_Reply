@@ -8,6 +8,7 @@ import { hhmm } from '@/lib/adapters';
 import { formatDuration } from '@/lib/ui';
 import { Staff } from '@/types';
 import SectionThemeToggle from '@/components/common/SectionThemeToggle';
+import { CallsIcon, ChatsIcon } from '@/components/common/Icons';
 
 export default function LiveStatusScreen() {
   const {
@@ -193,8 +194,8 @@ export default function LiveStatusScreen() {
                       </div>
                     </td>
                     <td>
-                      <span className={`chip sc ${getStatusColor(s.call.st)}`}>
-                        ☏ {getStatusLabel(s.call.st, s.call.r)}{' '}
+                      <span className={`chip sc ${getStatusColor(s.call.st)}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <CallsIcon size={13} /> {getStatusLabel(s.call.st, s.call.r)}{' '}
                         <b className="tmr">{formatDuration(now - s.call.since)}</b>
                       </span>
                       {s.call.st === 'brk' && s.call.mins ? (
@@ -202,8 +203,8 @@ export default function LiveStatusScreen() {
                       ) : null}
                     </td>
                     <td>
-                      <span className={`chip sc ${getStatusColor(s.chat.st)}`}>
-                        ✉ {getStatusLabel(s.chat.st, s.chat.r)}{' '}
+                      <span className={`chip sc ${getStatusColor(s.chat.st)}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <ChatsIcon size={13} /> {getStatusLabel(s.chat.st, s.chat.r)}{' '}
                         <b className="tmr">{formatDuration(now - s.chat.since)}</b>
                       </span>
                     </td>
@@ -240,14 +241,14 @@ export default function LiveStatusScreen() {
                   </div>
                 </td>
                 <td>
-                  <span className={`chip sc ${getStatusColor(manager.call.st)}`}>
-                    ☏ {getStatusLabel(manager.call.st, manager.call.r)}{' '}
+                  <span className={`chip sc ${getStatusColor(manager.call.st)}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <CallsIcon size={13} /> {getStatusLabel(manager.call.st, manager.call.r)}{' '}
                     <b className="tmr">{formatDuration(now - manager.call.since)}</b>
                   </span>
                 </td>
                 <td>
-                  <span className={`chip sc ${getStatusColor(manager.chat.st)}`}>
-                    ✉ {getStatusLabel(manager.chat.st, manager.chat.r)}{' '}
+                  <span className={`chip sc ${getStatusColor(manager.chat.st)}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <ChatsIcon size={13} /> {getStatusLabel(manager.chat.st, manager.chat.r)}{' '}
                     <b className="tmr">{formatDuration(now - manager.chat.since)}</b>
                   </span>
                 </td>
@@ -316,23 +317,23 @@ export default function LiveStatusScreen() {
           </div>
           <div className="card-b">
             <div className="ln">
-              <span>☏ Available</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><CallsIcon size={13} /> Available</span>
               <b>Calls ring them</b>
             </div>
             <div className="ln">
-              <span>☏ Break / Away</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><CallsIcon size={13} /> Break / Away</span>
               <b>Calls → Sales queue</b>
             </div>
             <div className="ln">
-              <span>☏ Do not disturb</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><CallsIcon size={13} /> Do not disturb</span>
               <b>Missed-call message + callback</b>
             </div>
             <div className="ln">
-              <span>✉ Available</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><ChatsIcon size={13} /> Available</span>
               <b>New chats are assigned</b>
             </div>
             <div className="ln">
-              <span>✉ Break / Away</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><ChatsIcon size={13} /> Break / Away</span>
               <b>New chats → team, open chats wait</b>
             </div>
             <div className="ln">

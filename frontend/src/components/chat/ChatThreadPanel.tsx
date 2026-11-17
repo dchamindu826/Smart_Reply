@@ -6,6 +6,23 @@ import { getWinClass, getWinText } from '@/utils/windowTime';
 import MessageAttachment from './ChatThread/MessageAttachment';
 import VoiceRecordingWidget from '@/components/modals/VoiceRecordingWidget';
 import { useApp } from '@/context/AppContext';
+import {
+  ChatsIcon,
+  CallsIcon,
+  AiBotIcon,
+  MessageTemplatesIcon,
+  CatalogIcon,
+  MediaGalleryIcon,
+  PaperclipIcon,
+  MicIcon,
+  StopIcon,
+  NoteIcon,
+  SendIcon,
+  ClockIcon,
+  LockIcon,
+  InfoIcon,
+  CloseIcon
+} from '@/components/common/Icons';
 
 interface ChatThreadPanelProps {
   conversation?: Conversation;
@@ -94,7 +111,9 @@ export default function ChatThreadPanel({
     return (
       <main className="wa-col-thread" style={{ display: 'grid', placeItems: 'center', textAlign: 'center' }}>
         <div style={{ color: 'var(--wa-secondary-text)', maxWidth: '320px', padding: '20px' }}>
-          <div style={{ fontSize: '54px', marginBottom: '12px' }}>💬</div>
+          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+            <ChatsIcon size={56} style={{ color: 'var(--brand-teal, #00a884)', opacity: 0.85 }} />
+          </div>
           <h2 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--wa-primary-text)' }}>
             WhatsApp Web
           </h2>
@@ -209,8 +228,8 @@ export default function ChatThreadPanel({
           <div>
             <div className="wa-user-name">{contact.n}</div>
             <div className="wa-user-sub">
-              <span className={`wt ${winClass}`} style={{ fontSize: '11px', padding: '1px 5px', borderRadius: '4px' }}>
-                ◷ {winText}
+              <span className={`wt ${winClass}`} style={{ fontSize: '11px', padding: '1px 6px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <ClockIcon size={11} /> {winText}
               </span>
               <span>{isWindowOpen ? '· Free replies window open' : '· Approved templates only'}</span>
             </div>
@@ -222,9 +241,9 @@ export default function ChatThreadPanel({
             type="button"
             className="wa-header-call-btn"
             onClick={onCall}
-            style={{ borderRadius: '20px', padding: '5px 12px', display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 600, fontSize: '13px' }}
+            style={{ borderRadius: '20px', padding: '5px 12px', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, fontSize: '13px' }}
           >
-            <span>☏</span> Call
+            <CallsIcon size={14} /> Call
           </button>
           <button
             type="button"
@@ -240,9 +259,9 @@ export default function ChatThreadPanel({
               className="wa-header-resolve-btn"
               onClick={() => void setBotActive(conversation.id, !conversation.botActive)}
               title={conversation.botActive ? 'The AI bot answers this chat. Take over to stop it.' : 'You are answering. Hand the chat back to the AI bot.'}
-              style={{ borderRadius: '20px', padding: '5px 12px', fontWeight: 600, fontSize: '13px' }}
+              style={{ borderRadius: '20px', padding: '5px 12px', fontWeight: 600, fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
             >
-              {conversation.botActive ? '✦ Take over' : '✦ Hand to bot'}
+              <AiBotIcon size={13} /> {conversation.botActive ? 'Take over' : 'Hand to bot'}
             </button>
           )}
           <button
@@ -250,16 +269,18 @@ export default function ChatThreadPanel({
             className="wa-icon-btn"
             title="Send Template"
             onClick={onOpenTemplates}
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            ▤
+            <MessageTemplatesIcon size={18} />
           </button>
           <button
             type="button"
             className="wa-icon-btn"
             title={contactInfoOpen ? 'Hide Contact Info' : 'Show Contact Info'}
             onClick={onToggleContactInfo}
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            {contactInfoOpen ? '✕' : 'ℹ'}
+            {contactInfoOpen ? <CloseIcon size={16} /> : <InfoIcon size={18} />}
           </button>
         </div>
       </div>
@@ -267,8 +288,12 @@ export default function ChatThreadPanel({
       {/* 2. Messages Canvas (WhatsApp Doodle Pattern) */}
       <div className="wa-canvas" ref={canvasRef} onScroll={handleCanvasScroll}>
         {/* Yellow Notice Banner (Matching Screenshot) */}
-        <div className="wa-chat-lock-banner">
-          🔒 WhatsApp Business messages. Reply window: <b>◷ {winText}</b> ({isWindowOpen ? 'free replies' : 'meta templates'}).
+        <div className="wa-chat-lock-banner" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+          <LockIcon size={13} style={{ flexShrink: 0 }} />
+          <span>
+            WhatsApp Business messages. Reply window:{' '}
+            <b><ClockIcon size={11} style={{ display: 'inline', verticalAlign: '-1px', margin: '0 2px' }} />{winText}</b> ({isWindowOpen ? 'free replies' : 'meta templates'}).
+          </span>
         </div>
 
         {hasOlderMessages && (
@@ -331,23 +356,26 @@ export default function ChatThreadPanel({
             type="button"
             className="wa-quick-chip"
             onClick={onOpenTemplates}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
           >
-            ▤ Template
+            <MessageTemplatesIcon size={14} /> Template
           </button>
           <button
             type="button"
             className="wa-quick-chip"
             onClick={onOpenCatalog}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
           >
-            ▣ Catalog
+            <CatalogIcon size={14} /> Catalog
           </button>
           {onOpenGallery && (
             <button
               type="button"
               className="wa-quick-chip"
               onClick={onOpenGallery}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
             >
-              🖼 Gallery
+              <MediaGalleryIcon size={14} /> Gallery
             </button>
           )}
         </div>
@@ -358,13 +386,15 @@ export default function ChatThreadPanel({
           <div style={{ display: 'flex', gap: '8px', padding: '4px 0', flexWrap: 'wrap' }}>
             {pendingAttachments.map((att, idx) => (
               <div key={idx} style={{ position: 'relative', background: 'var(--wa-panel-bg)', padding: '6px 10px', borderRadius: '8px', border: '1px solid var(--wa-border)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '12px' }}>📎 {att.name}</span>
+                <span style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <PaperclipIcon size={13} /> {att.name}
+                </span>
                 <button
                   type="button"
-                  style={{ border: 0, background: 'none', cursor: 'pointer', color: '#ea0038', fontWeight: 700 }}
+                  style={{ border: 0, background: 'none', cursor: 'pointer', color: '#ea0038', display: 'flex', alignItems: 'center' }}
                   onClick={() => onRemoveAttachment(idx)}
                 >
-                  ×
+                  <CloseIcon size={14} />
                 </button>
               </div>
             ))}
@@ -380,9 +410,9 @@ export default function ChatThreadPanel({
           <label
             className="wa-icon-btn"
             title="Attach Photos, Voice, Documents"
-            style={{ cursor: 'pointer', fontSize: '20px' }}
+            style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            📎
+            <PaperclipIcon size={19} />
             <input
               type="file"
               ref={fileInputRef}
@@ -399,9 +429,9 @@ export default function ChatThreadPanel({
             className={`wa-icon-btn ${isRecording ? 'recon' : ''}`}
             title={isRecording ? 'Stop recording voice note' : 'Record WhatsApp voice note'}
             onClick={onToggleRecording}
-            style={{ fontSize: '19px', color: isRecording ? '#ea0038' : undefined }}
+            style={{ color: isRecording ? '#ea0038' : undefined, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            🎙
+            {isRecording ? <StopIcon size={19} /> : <MicIcon size={19} />}
           </button>
 
           {/* Internal team note toggle */}
@@ -410,13 +440,15 @@ export default function ChatThreadPanel({
             className="wa-icon-btn"
             title="Toggle Team Internal Note"
             style={{
-              fontSize: '18px',
               color: isNoteMode ? '#a96c08' : undefined,
-              background: isNoteMode ? '#fbe3de' : undefined
+              background: isNoteMode ? '#fbe3de' : undefined,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
             onClick={onToggleNoteMode}
           >
-            ✎
+            <NoteIcon size={18} />
           </button>
 
           {/* Text input */}
@@ -440,8 +472,9 @@ export default function ChatThreadPanel({
             type="submit"
             className="wa-send-btn"
             title="Send"
+            style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            ➤
+            <SendIcon size={16} />
           </button>
         </form>
       </div>

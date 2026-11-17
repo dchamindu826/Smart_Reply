@@ -23,6 +23,7 @@ import {
   simulateSchema,
   trainingExampleSchema,
   updateCompanySchema,
+  updateCompanyUserSchema,
   webhookEventsQuery
 } from '@smart-reply/shared';
 import type {
@@ -114,6 +115,16 @@ export class AdminCompaniesController {
   @Post('companies/:id/managers')
   addManager(@AnyAuth() s: Session, @Param('id') id: string, @ZBody(addManagerSchema) body: z.infer<typeof addManagerSchema>): Promise<Invite> {
     return this.companies.addManager(s, id, body);
+  }
+
+  @Patch('companies/:id/users/:userId')
+  updateUser(
+    @AnyAuth() s: Session,
+    @Param('id') id: string,
+    @Param('userId') userId: string,
+    @ZBody(updateCompanyUserSchema) body: z.infer<typeof updateCompanyUserSchema>
+  ): Promise<AdminCompanyUser> {
+    return this.companies.updateUser(s, id, userId, body);
   }
 
   @Post('companies/:id/impersonate')

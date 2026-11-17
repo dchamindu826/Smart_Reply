@@ -4,6 +4,7 @@ import React from 'react';
 import { Contact, Conversation } from '@/types';
 import { getWinClass, getWinText } from '@/utils/windowTime';
 import { useApp } from '@/context/AppContext';
+import { ChatsIcon, CallsIcon, CheckIcon } from '@/components/common/Icons';
 
 interface ThreadHeaderProps {
   contact: Contact;
@@ -40,15 +41,18 @@ export default function ThreadHeader({
         className="btn sm"
         onClick={() => simulateCustomerReply(conv.id)}
         title="Test incoming WhatsApp message notification & sound"
-        style={{ borderColor: 'var(--wa-teal, #00a884)', color: 'var(--wa-teal, #00a884)' }}
+        style={{ borderColor: 'var(--wa-teal, #00a884)', color: 'var(--wa-teal, #00a884)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
       >
-        💬 Test Reply
+        <ChatsIcon size={14} />
+        <span>Test Reply</span>
       </button>
-      <button className="btn sm" onClick={onCall}>
-        ☏ Call
+      <button className="btn sm" onClick={onCall} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+        <CallsIcon size={14} />
+        <span>Call</span>
       </button>
-      <button className="btn sm" onClick={onResolve}>
-        Resolve
+      <button className="btn sm" onClick={onResolve} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+        <CheckIcon size={14} />
+        <span>Resolve</span>
       </button>
     </div>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef } from 'react';
+import { PaperclipIcon, MicIcon, StopIcon, NoteIcon, SendIcon } from '@/components/common/Icons';
 
 interface MessageInputProps {
   inputText: string;
@@ -60,7 +61,7 @@ export default function MessageInput({
           pointerEvents: isDisabled ? 'none' : 'auto'
         }}
       >
-        📎
+        <PaperclipIcon size={18} />
         <input
           type="file"
           ref={fileInputRef}
@@ -79,7 +80,7 @@ export default function MessageInput({
         disabled={isDisabled}
         onClick={onToggleRecording}
       >
-        🎙
+        {isRecording ? <StopIcon size={18} /> : <MicIcon size={18} />}
       </button>
 
       {/* Internal note toggle */}
@@ -89,11 +90,12 @@ export default function MessageInput({
         title="Toggle Internal Team Note"
         onClick={onToggleNoteMode}
       >
-        ✎
+        <NoteIcon size={17} />
       </button>
 
-      <button className="btn pri" type="submit" style={{ flex: 'none' }}>
-        Send
+      <button className="btn pri" type="submit" style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+        <SendIcon size={14} />
+        <span>Send</span>
       </button>
     </form>
   );

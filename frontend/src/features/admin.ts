@@ -56,6 +56,16 @@ export interface AddManagerBody {
   name: string;
   email: string;
   phone?: string;
+  password?: string;
+}
+
+export interface UpdateCompanyUserBody {
+  name?: string;
+  email?: string;
+  phone?: string | null;
+  password?: string;
+  role?: 'manager' | 'staff';
+  status?: 'active' | 'disabled';
 }
 
 export interface PlanBody {
@@ -224,6 +234,15 @@ export function useAddManager(id: string) {
   const inv = useInvalidate();
   return useMutation({
     mutationFn: (body: AddManagerBody) => api.post<Invite>(`/admin/companies/${id}/managers`, body),
+    onSuccess: () => inv(ak.users(id), ak.companies)
+  });
+}
+
+export function useUpdateCompanyUser(id: string) {
+  const inv = useInvalidate();
+  return useMutation({
+    mutationFn: ({ userId, body }: { userId: string; body: UpdateCompanyUserBody }) =>
+      api.patch<AdminCompanyUser>(`/admin/companies/${id}/users/${userId}`, body),
     onSuccess: () => inv(ak.users(id), ak.companies)
   });
 }

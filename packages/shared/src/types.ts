@@ -807,6 +807,7 @@ export interface AdminCompanyUser {
   id: string;
   name: string;
   email: string;
+  phone?: string | null;
   role: CompanyRole;
   status: 'invited' | 'active' | 'disabled';
   lastLoginAt: Iso | null;

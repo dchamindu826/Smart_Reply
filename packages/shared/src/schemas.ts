@@ -481,7 +481,20 @@ export const updateCompanySchema = z.object({
   status: z.enum(['active', 'suspended', 'closed']).optional()
 });
 
-export const addManagerSchema = z.object({ name: required(80), email, phone: phone.optional() });
+export const addManagerSchema = z.object({
+  name: required(80),
+  email,
+  phone: phone.optional(),
+  password: password.optional()
+});
+export const updateCompanyUserSchema = z.object({
+  name: required(80).optional(),
+  email: email.optional(),
+  phone: phone.optional().nullable(),
+  password: password.optional(),
+  role: z.enum(['staff', 'manager']).optional(),
+  status: z.enum(['active', 'disabled']).optional()
+});
 export const impersonateSchema = z.object({ reason: required(200) });
 
 export const platformMetaSchema = z.object({

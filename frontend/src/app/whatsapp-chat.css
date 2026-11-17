@@ -208,6 +208,13 @@
   transition: background 0.15s, color 0.15s;
 }
 
+.wa-icon-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  flex: none;
+}
+
 .wa-icon-btn:hover {
   background: var(--wa-hover);
   color: var(--wa-primary-text);

@@ -387,11 +387,26 @@ a {
 }
 
 .nav .ic {
-  width: 16px;
-  text-align: center;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: none;
-  font-size: 13px;
   opacity: .85;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.nav .ic svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+}
+
+.nav button.on .ic {
+  opacity: 1;
+  color: var(--blue);
 }
 
 .nav .ct {

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { QuickReply } from '@/types';
+import { MessageTemplatesIcon, CatalogIcon, MediaGalleryIcon, MicIcon, PaperclipIcon } from '@/components/common/Icons';
 
 interface QuickReplyBarProps {
   quickReplies: QuickReply[];
@@ -30,21 +31,24 @@ export default function QuickReplyBar({
         >
           {q.cmd}
           {q.att.length > 0 && (
-            <span style={{ opacity: 0.6, marginLeft: '3px' }}>
-              {q.att[0].type === 'image' ? '🖼' : q.att[0].type === 'voice' ? '🎙' : '📎'}
+            <span style={{ opacity: 0.7, marginLeft: '4px', display: 'inline-flex', verticalAlign: 'middle' }}>
+              {q.att[0].type === 'image' ? <MediaGalleryIcon size={13} /> : q.att[0].type === 'voice' ? <MicIcon size={13} /> : <PaperclipIcon size={13} />}
             </span>
           )}
         </button>
       ))}
-      <button type="button" className="btn sm" onClick={onOpenTemplates}>
-        ▤ Template
+      <button type="button" className="btn sm" onClick={onOpenTemplates} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+        <MessageTemplatesIcon size={14} />
+        <span>Template</span>
       </button>
-      <button type="button" className="btn sm" onClick={onOpenCatalog}>
-        ▣ Catalog
+      <button type="button" className="btn sm" onClick={onOpenCatalog} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+        <CatalogIcon size={14} />
+        <span>Catalog</span>
       </button>
       {onOpenGallery && (
-        <button type="button" className="btn sm" onClick={onOpenGallery}>
-          🖼 Gallery
+        <button type="button" className="btn sm" onClick={onOpenGallery} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+          <MediaGalleryIcon size={14} />
+          <span>Gallery</span>
         </button>
       )}
     </div>

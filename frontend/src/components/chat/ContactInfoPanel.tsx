@@ -4,6 +4,16 @@ import React from 'react';
 import { Contact, Staff, CallLogItem } from '@/types';
 import { useApp } from '@/context/AppContext';
 import { useConversationMedia } from '@/features/conversations';
+import {
+  CallsIcon,
+  StaffManageIcon,
+  LabelsIcon,
+  BlockIcon,
+  CloseIcon,
+  MicIcon,
+  VideoIcon,
+  PaperclipIcon
+} from '@/components/common/Icons';
 
 interface ContactInfoPanelProps {
   contact: Contact | null;
@@ -47,11 +57,11 @@ export default function ContactInfoPanel({
           <button
             type="button"
             className="wa-icon-btn"
-            style={{ padding: '6px', fontSize: '16px' }}
+            style={{ padding: '6px' }}
             onClick={onClose}
             aria-label="Close Contact Info"
           >
-            ✕
+            <CloseIcon size={16} />
           </button>
           <span style={{ fontWeight: 600, fontSize: '16px', color: 'var(--wa-primary-text)' }}>
             Contact Info
@@ -73,19 +83,19 @@ export default function ContactInfoPanel({
         {/* 4 Action Buttons with Circular Icons */}
         <div className="wa-info-actions">
           <button type="button" className="wa-info-act-btn" onClick={onCall}>
-            <span className="icon-circle">☏</span>
+            <span className="icon-circle"><CallsIcon size={16} /></span>
             <span>Call</span>
           </button>
           <button type="button" className="wa-info-act-btn" onClick={onFocusOwner}>
-            <span className="icon-circle">⚇</span>
+            <span className="icon-circle"><StaffManageIcon size={16} /></span>
             <span>Owner</span>
           </button>
           <button type="button" className="wa-info-act-btn" onClick={onOpenLabels}>
-            <span className="icon-circle">◈</span>
+            <span className="icon-circle"><LabelsIcon size={16} /></span>
             <span>Label</span>
           </button>
           <button type="button" className="wa-info-act-btn dg" onClick={onBlock}>
-            <span className="icon-circle">⊘</span>
+            <span className="icon-circle"><BlockIcon size={16} /></span>
             <span>{contact.blocked ? 'Unblock' : 'Block'}</span>
           </button>
         </div>
@@ -103,7 +113,9 @@ export default function ContactInfoPanel({
               {f.kind === 'image' ? (
                 <img src={f.url} alt={f.name} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
-                <span>{f.kind === 'audio' ? '🎙' : f.kind === 'video' ? '🎬' : '📄'}</span>
+                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {f.kind === 'audio' ? <MicIcon size={20} /> : f.kind === 'video' ? <VideoIcon size={20} /> : <PaperclipIcon size={20} />}
+                </span>
               )}
             </a>
           ))}

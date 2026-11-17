@@ -4,6 +4,56 @@ import React, { useState, useEffect } from 'react';
 import { Conversation, Contact, Staff } from '@/types';
 import { getWinClass, getWinText } from '@/utils/windowTime';
 import { useApp } from '@/context/AppContext';
+import {
+  StatusRingIcon,
+  NewChatIcon,
+  CheckIcon,
+  CloseIcon,
+  ClockIcon,
+  DoubleCheckIcon,
+  MicIcon,
+  MediaGalleryIcon,
+  PaperclipIcon,
+  VideoIcon,
+  StaffManageIcon
+} from '@/components/common/Icons';
+
+function renderChatPreview(pv?: string) {
+  if (!pv) return null;
+  if (pv.startsWith('🎙')) {
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: 'var(--brand-teal, #00a884)' }}>
+        <MicIcon size={13} />
+        <span style={{ color: 'var(--wa-secondary-text)' }}>{pv.replace(/^🎙\s*/, '')}</span>
+      </span>
+    );
+  }
+  if (pv.startsWith('🖼')) {
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+        <MediaGalleryIcon size={13} />
+        <span>{pv.replace(/^🖼\s*/, '')}</span>
+      </span>
+    );
+  }
+  if (pv.startsWith('📎')) {
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+        <PaperclipIcon size={13} />
+        <span>{pv.replace(/^📎\s*/, '')}</span>
+      </span>
+    );
+  }
+  if (pv.startsWith('🎬')) {
+    return (
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+        <VideoIcon size={13} />
+        <span>{pv.replace(/^🎬\s*/, '')}</span>
+      </span>
+    );
+  }
+  return pv;
+}
 
 export type ChatFilterType = 'all' | 'unread' | 'exp' | 'labeled' | 'none';
 
@@ -298,7 +348,7 @@ export default function ChatListPanel({
             title="Update Live Agent Status & Breaks"
             onClick={onOpenStatusModal}
           >
-            ◌
+            <StatusRingIcon size={20} />
           </button>
           <button
             type="button"
@@ -306,7 +356,7 @@ export default function ChatListPanel({
             title="New WhatsApp Chat"
             onClick={onNewChat}
           >
-            💬
+            <NewChatIcon size={20} />
           </button>
         </div>
       </div>
@@ -315,7 +365,7 @@ export default function ChatListPanel({
       {showNotice && (
         <div className="wa-notice-banner">
           <div className="wa-notice-icon">
-            ✓
+            <CheckIcon size={16} />
           </div>
           <div className="wa-notice-content">
             <div className="wa-notice-title">{connected ? 'WhatsApp Business Connected' : 'WhatsApp not connected yet'}</div>
@@ -326,11 +376,11 @@ export default function ChatListPanel({
           <button
             type="button"
             className="wa-icon-btn"
-            style={{ padding: '4px', fontSize: '14px' }}
+            style={{ padding: '4px' }}
             onClick={() => setShowNotice(false)}
             aria-label="Dismiss banner"
           >
-            ✕
+            <CloseIcon size={16} />
           </button>
         </div>
       )}
@@ -354,10 +404,10 @@ export default function ChatListPanel({
             <button
               type="button"
               className="wa-icon-btn"
-              style={{ padding: '2px', fontSize: '13px' }}
+              style={{ padding: '2px' }}
               onClick={() => onSearchChange('')}
             >
-              ✕
+              <CloseIcon size={14} />
             </button>
           )}
         </div>
@@ -396,12 +446,12 @@ export default function ChatListPanel({
                 color: 'var(--wa-secondary-text)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '4px',
+                gap: '5px',
                 whiteSpace: 'nowrap',
                 flex: 'none'
               }}
             >
-              <span>👤</span> Staff:
+              <StaffManageIcon size={14} style={{ display: 'inline', verticalAlign: '-1px' }} /> Staff:
             </label>
             <div style={{ position: 'relative', flex: 1, minWidth: 0 }}>
               <select
@@ -523,19 +573,19 @@ export default function ChatListPanel({
                   </div>
 
                   <div className="wa-chat-row2">
-                    <span className="wa-chat-preview">
-                      <span className="wa-ticks">✓✓</span>
-                      {conv.pv}
+                    <span className="wa-chat-preview" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <DoubleCheckIcon size={14} style={{ flexShrink: 0, color: '#53bdeb' }} />
+                      {renderChatPreview(conv.pv)}
                     </span>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 'none' }}>
                       {/* Window badge */}
                       <span
                         className={`wt ${winClass}`}
-                        style={{ fontSize: '10.5px', padding: '1px 5px', borderRadius: '4px' }}
+                        style={{ fontSize: '10.5px', padding: '1px 5px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
                         title="Reply window"
                       >
-                        ◷ {winText}
+                        <ClockIcon size={10} /> {winText}
                       </span>
 
                       {/* Owner pill */}

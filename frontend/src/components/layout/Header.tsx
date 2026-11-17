@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { formatDuration } from '@/lib/ui';
+import { CallsIcon, ChatsIcon } from '@/components/common/Icons';
 
 export default function Header() {
   const {
@@ -107,12 +108,12 @@ export default function Header() {
     };
     const colorClass = colorMap[chan.st] || '';
 
-    const icon = type === 'call' ? '☏' : '✉';
+    const icon = type === 'call' ? <CallsIcon size={13} style={{ display: 'inline', verticalAlign: '-1px', marginRight: 4 }} /> : <ChatsIcon size={13} style={{ display: 'inline', verticalAlign: '-1px', marginRight: 4 }} />;
     const showTimer = chan.st !== 'available';
 
     return (
-      <span className={`chip sc ${colorClass}`}>
-        {icon} {label} {showTimer ? <b className="tmr">{type === 'call' ? callElapsed : chatElapsed}</b> : null}
+      <span className={`chip sc ${colorClass}`} style={{ display: 'inline-flex', alignItems: 'center' }}>
+        {icon} {label} {showTimer ? <b className="tmr" style={{ marginLeft: 4 }}>{type === 'call' ? callElapsed : chatElapsed}</b> : null}
       </span>
     );
   };
