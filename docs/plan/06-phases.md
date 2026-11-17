@@ -15,7 +15,7 @@ All phases were built in one pass on branch `feat/production-build`. What is don
 | Calls Stage B: hold, transfer, conference, recording, IVR on live calls, transcripts | **Open** — needs the media server proof of concept (04-whatsapp-integration.md) |
 | AI bot add-on: OpenAI/Anthropic, knowledge, examples, handoff, limits, logs | Done (PDF knowledge extraction open) |
 | Reports, dashboards, exports, billing estimates, business profile, number health | Done |
-| Mobile app | Expo / React Native (see 07-mobile-app.md) |
+| Mobile app | Flutter in `flutter_app/` (main); an Expo / React Native version also exists in `mobile/` |
 | Deployment | Docker Compose + Caddy (docs/deploy.md) |
 | Load tests, row-level security, two-step login | **Open** (Phase 9 hardening) |
 
@@ -23,8 +23,8 @@ Decisions that changed from this plan, and why:
 
 - **Drizzle ORM instead of Prisma.** Prisma needs native engine downloads at install time; Drizzle is
   plain TypeScript, keeps SQL visible and gives smaller images. Migrations are SQL files in `backend/drizzle`.
-- **Expo / React Native instead of Flutter** for mobile, so the whole product is TypeScript and the
-  mobile app imports `@smart-reply/shared`.
+- **Mobile**: built first in Expo / React Native (`mobile/`), then in Flutter (`flutter_app/`) as the
+  plan said. The Flutter app gets push through Firebase directly (`FCM_SERVICE_ACCOUNT_JSON`).
 - **Caddy** as the reverse proxy for automatic HTTPS on one server.
 - **Calling Stage A first**: the agent's device is the WebRTC peer; Stage B features answer
   `NOT_AVAILABLE` until the media server exists.

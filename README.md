@@ -8,7 +8,8 @@ app and the mobile app.
 |---|---|---|
 | Web app (manager, staff, super admin console) | `frontend/` | Next.js 16, React 19, TypeScript, TanStack Query, Socket.IO |
 | API and background workers | `backend/` | NestJS 11, PostgreSQL (Drizzle ORM), Redis, BullMQ, Socket.IO |
-| Mobile app (Android, iOS) | `mobile/` | Expo / React Native, TypeScript |
+| Mobile app (Android, iOS) | `flutter_app/` | Flutter (Dart) |
+| Mobile app, React Native version | `mobile/` | Expo / React Native, TypeScript |
 | Shared API types and validation | `packages/shared/` | TypeScript, zod |
 | Server deployment | `infra/` | Docker Compose, Caddy (automatic HTTPS) |
 
@@ -56,5 +57,6 @@ See **[docs/deploy.md](docs/deploy.md)** — one server, `docker compose up -d -
 - [docs/deploy.md](docs/deploy.md) — production setup, Meta app, backups
 - [docs/dev/backend-guide.md](docs/dev/backend-guide.md) and [docs/dev/frontend-guide.md](docs/dev/frontend-guide.md) — how the code is organised
 - [docs/plan/](docs/plan/README.md) — architecture, data model, API contract, WhatsApp integration, phases
-- [mobile/README.md](mobile/README.md) — running and publishing the mobile app
+- [flutter_app/README.md](flutter_app/README.md) — running and publishing the Flutter mobile app
+- [mobile/README.md](mobile/README.md) — the React Native version
 - [AGENTS.md](AGENTS.md) — rules for coding agents (Antigravity, Claude, Copilot)

@@ -6,6 +6,7 @@ import { devices, users } from '../db/schema';
 import { InjectDb } from '../infra/db';
 import { logger } from '../infra/logger';
 import { Queues } from '../infra/queues';
+import { fcmConfigured, sendFcm } from './fcm';
 
 /**
  * Push notifications to the mobile app through Expo's push service (which delivers through
@@ -34,9 +35,26 @@ export class PushService {
       .map(p => p.id);
     if (allowed.length === 0) return;
     const rows = await this.db.select().from(devices).where(inArray(devices.userId, allowed));
+    const channel = kind === 'call' ? 'calls' : 'messages';
+
+    // Flutter app: Firebase tokens go straight to FCM.
+    const fcmTargets = rows.filter(r => r.platform !== 'web' && !r.pushToken.startsWith('ExponentPushToken'));
+    if (fcmTargets.length && fcmConfigured()) {
+      const deadFcm: string[] = [];
+      for (const t of fcmTargets) {
+        try {
+          if ((await sendFcm(t.pushToken, { title: job.title, body: job.body, data: job.data, channel })) === 'unregistered') deadFcm.push(t.pushToken);
+        } catch (err) {
+          logger.warn({ err: err instanceof Error ? err.message : err }, 'FCM push failed');
+        }
+      }
+      if (deadFcm.length) await this.db.delete(devices).where(inArray(devices.pushToken, deadFcm));
+    }
+
+    // React Native (Expo) app: Expo push tokens.
     const targets = rows.filter(r => r.platform !== 'web' && r.pushToken.startsWith('ExponentPushToken'));
     if (targets.length === 0) return;
-    const messages = targets.map(t => ({ to: t.pushToken, title: job.title, body: job.body, data: job.data, sound: 'default', priority: 'high' as const, channelId: kind === 'call' ? 'calls' : 'messages' }));
+    const messages = targets.map(t => ({ to: t.pushToken, title: job.title, body: job.body, data: job.data, sound: 'default', priority: 'high' as const, channelId: channel }));
     const res = await fetch('https://exp.host/--/api/v2/push/send', {
       method: 'POST',
       headers: {
