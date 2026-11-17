@@ -37,3 +37,4 @@ backend/storage/
 *.tsbuildinfo
 frontend/next-env.d.ts
 backend/storage-test/
+dump.rdb
