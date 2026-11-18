@@ -16,7 +16,7 @@ export interface PlatformSecrets {
   embeddedSignupConfigId: string;
   systemToken: string | null;
   subscribedFields: string[];
-  ai: { provider: 'openai' | 'anthropic' | 'none'; apiKey: string | null; model: string; baseUrl: string; defaultPrompt: string; globalOff: boolean };
+  ai: { provider: 'openai' | 'anthropic' | 'none'; apiKey: string | null; model: string; baseUrl: string; defaultPrompt: string; globalOff: boolean; geminiApiKey: string | null };
 }
 
 const TTL = 30_000;
@@ -58,7 +58,8 @@ export class Platform {
         model: r.aiDefaultModel,
         baseUrl: r.aiBaseUrl,
         defaultPrompt: r.aiDefaultPrompt,
-        globalOff: r.aiGlobalOff
+        globalOff: r.aiGlobalOff,
+        geminiApiKey: decrypt(r.geminiApiKeyEnc) ?? (env.GEMINI_API_KEY || null)
       }
     };
     this.cache = { at: Date.now(), value };

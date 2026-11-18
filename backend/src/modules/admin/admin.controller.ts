@@ -24,9 +24,13 @@ import {
   trainingExampleSchema,
   updateCompanySchema,
   updateCompanyUserSchema,
+  voicePreviewSchema,
+  voiceTestSchema,
   webhookEventsQuery
 } from '@smart-reply/shared';
 import type {
+  VoiceServerStatus,
+  VoiceTestState,
   AdminAiCompanyRow,
   AdminAuditEntry,
   AdminCompany,
@@ -58,6 +62,7 @@ import { parse, ZBody, ZQuery } from '../../common/validation';
 import { AuthService } from '../auth/auth.service';
 import { setAuthCookies } from '../auth/auth.controller';
 import { AiAdminService } from './ai-admin.service';
+import { VoiceAdminService } from './voice-admin.service';
 import { CompaniesService } from './companies.service';
 import { OpsService } from './ops.service';
 import { PlatformAdminService } from './platform.service';
@@ -379,5 +384,43 @@ export class AdminOpsController {
   @Get('audit')
   audit(): Promise<AdminAuditEntry[]> {
     return this.svc.audit();
+  }
+}
+
+/** The AI voice agent: voice preview and browser test calls (system admin only). */
+@Roles('system_admin')
+@Controller('admin')
+export class AdminVoiceController {
+  constructor(private readonly svc: VoiceAdminService) {}
+
+  @Get('ai/voice/status')
+  status(): Promise<VoiceServerStatus> {
+    return this.svc.status();
+  }
+
+  @Post('companies/:id/ai/voice/preview')
+  @HttpCode(200)
+  async preview(@Param('id') id: string, @ZBody(voicePreviewSchema) body: z.infer<typeof voicePreviewSchema>, @Res() res: Response): Promise<void> {
+    const audio = await this.svc.preview(id, body);
+    res.setHeader('Content-Type', 'audio/wav');
+    res.setHeader('Cache-Control', 'no-store');
+    res.send(audio);
+  }
+
+  @Post('companies/:id/ai/voice/test')
+  @HttpCode(200)
+  startTest(@AnyAuth() s: Session, @Param('id') id: string, @ZBody(voiceTestSchema) body: z.infer<typeof voiceTestSchema>): Promise<{ testId: string; sdpAnswer: string }> {
+    return this.svc.startTest(s, id, body);
+  }
+
+  @Get('companies/:id/ai/voice/test/:testId')
+  test(@Param('id') id: string, @Param('testId') testId: string): Promise<VoiceTestState> {
+    return this.svc.test(id, testId);
+  }
+
+  @Post('companies/:id/ai/voice/test/:testId/hangup')
+  @HttpCode(200)
+  hangupTest(@Param('id') id: string, @Param('testId') testId: string): Promise<{ ok: true }> {
+    return this.svc.hangupTest(id, testId);
   }
 }

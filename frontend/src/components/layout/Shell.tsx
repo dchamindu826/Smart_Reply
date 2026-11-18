@@ -27,6 +27,7 @@ import ReportsScreen from '../screens/ReportsScreen';
 import BillingScreen from '../screens/BillingScreen';
 import BusinessProfileScreen from '../screens/BusinessProfileScreen';
 import NumberQualityScreen from '../screens/NumberQualityScreen';
+import BookingsScreen from '../screens/BookingsScreen';
 import RolesScreen from '../screens/RolesScreen';
 import IntegrationsScreen from '../screens/IntegrationsScreen';
 import AuditScreen from '../screens/AuditScreen';
@@ -76,7 +77,7 @@ export default function Shell() {
   }
 
   // Staff only get the screens in their menu. The API enforces this too.
-  const STAFF_SCREENS = ['mydash', 'chats', 'inbox', 'calls', 'gallery', 'fwd', 'myperf', 'quick', 'templates', 'profile'];
+  const STAFF_SCREENS = ['mydash', 'chats', 'inbox', 'calls', 'bookings', 'gallery', 'fwd', 'myperf', 'quick', 'templates', 'profile'];
   const shown = role === 'staff' && !STAFF_SCREENS.includes(screen) ? 'mydash' : screen;
 
   const renderScreen = () => {
@@ -88,6 +89,8 @@ export default function Shell() {
         return <InboxScreen />;
       case 'calls':
         return <CallsScreen />;
+      case 'bookings':
+        return <BookingsScreen />;
       case 'contacts':
         return <ContactsScreen />;
       case 'labels':

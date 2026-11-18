@@ -58,6 +58,16 @@ const envSchema = z.object({
   FCM_SERVICE_ACCOUNT_JSON: z.string().default(''),
   /** Expo push (mobile app). Empty access token still works for Expo's public endpoint. */
   EXPO_ACCESS_TOKEN: z.string().default(''),
+  /** Google Gemini key for the AI voice agent. The admin console setting wins over this. */
+  GEMINI_API_KEY: z.string().default(''),
+  GEMINI_API_URL: z.string().default('https://generativelanguage.googleapis.com'),
+  /** Public IPv4 of the server that runs the voice process; Meta sends call audio here. Empty: use the machine's own addresses. */
+  VOICE_PUBLIC_IP: z.string().default(''),
+  /** UDP ports for call audio (open them in the firewall and publish them in Docker). */
+  VOICE_PORT_MIN: z.coerce.number().int().min(1024).max(65535).default(40000),
+  VOICE_PORT_MAX: z.coerce.number().int().min(1024).max(65535).default(40199),
+  /** Calls one voice process takes at the same time. */
+  VOICE_MAX_CALLS: z.coerce.number().int().min(1).max(500).default(20),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   /** When true the API serves the OpenAPI-like route list at /api/docs. */
   ENABLE_DOCS: bool,

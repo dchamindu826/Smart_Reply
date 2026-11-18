@@ -40,6 +40,7 @@ export const NAV_STRUCTURE = {
     {
       title: 'Calls',
       items: [
+        { id: 'bookings', icon: '▦', label: 'Bookings', count: '' },
         { id: 'callset', icon: '◷', label: 'Call settings', count: '' },
         { id: 'ivr', icon: '⌗', label: 'IVR menu', count: '' },
         { id: 'fwd', icon: '⇄', label: 'Call forwarding', count: '' }
@@ -70,6 +71,7 @@ export const NAV_STRUCTURE = {
       items: [
         { id: 'chats', icon: '✉', label: 'My chats', count: '' },
         { id: 'calls', icon: '☏', label: 'My calls', count: '' },
+        { id: 'bookings', icon: '▦', label: 'Bookings', count: '' },
         { id: 'gallery', icon: '🖼', label: 'Media Gallery', count: '' },
         { id: 'fwd', icon: '⇄', label: 'Call forwarding', count: '' }
       ]

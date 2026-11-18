@@ -13,6 +13,7 @@ function ProviderCard({ initial }: { initial: PlatformAiSettings }) {
   const [f, setF] = useState({
     provider: initial.provider,
     apiKey: '',
+    geminiApiKey: '',
     defaultModel: initial.defaultModel,
     baseUrl: initial.baseUrl,
     defaultPrompt: initial.defaultPrompt,
@@ -25,6 +26,7 @@ function ProviderCard({ initial }: { initial: PlatformAiSettings }) {
       {
         provider: f.provider,
         apiKey: f.apiKey.trim() || undefined,
+        geminiApiKey: f.geminiApiKey.trim() || undefined,
         defaultModel: f.defaultModel.trim(),
         baseUrl: f.baseUrl.trim(),
         defaultPrompt: f.defaultPrompt,
@@ -32,7 +34,7 @@ function ProviderCard({ initial }: { initial: PlatformAiSettings }) {
       },
       {
         onSuccess: () => {
-          setF(prev => ({ ...prev, apiKey: '' }));
+          setF(prev => ({ ...prev, apiKey: '', geminiApiKey: '' }));
           toast('AI platform settings saved.');
         },
         onError: reportError
@@ -75,6 +77,18 @@ function ProviderCard({ initial }: { initial: PlatformAiSettings }) {
           value={f.apiKey}
           onChange={e => setF({ ...f, apiKey: e.target.value })}
         />
+        <label className="f" htmlFor="ap-gkey">Google Gemini API key (AI voice agent)</label>
+        <input
+          className="f-in"
+          id="ap-gkey"
+          type="password"
+          autoComplete="off"
+          minLength={10}
+          placeholder={initial.geminiApiKeyMasked ? `${initial.geminiApiKeyMasked} (saved; type to replace)` : 'Not set · from aistudio.google.com'}
+          value={f.geminiApiKey}
+          onChange={e => setF({ ...f, geminiApiKey: e.target.value })}
+        />
+        <p className="hint">The voice agent that answers WhatsApp calls uses Gemini (Live and TTS voices) whatever the chat provider is.</p>
         <label className="f" htmlFor="ap-url">Base URL (optional)</label>
         <input className="f-in" id="ap-url" type="url" placeholder="Provider default" value={f.baseUrl} onChange={e => setF({ ...f, baseUrl: e.target.value })} />
         <label className="f" htmlFor="ap-prompt">Default prompt</label>

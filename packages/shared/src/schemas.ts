@@ -526,7 +526,33 @@ export const platformAiSchema = z.object({
   defaultModel: trimmed(80),
   baseUrl: z.union([z.literal(''), z.string().url().max(300)]).default(''),
   defaultPrompt: trimmed(8000),
-  globalOff: z.boolean()
+  globalOff: z.boolean(),
+  /** Google Gemini key for the AI voice agent. Leave out to keep the saved one. */
+  geminiApiKey: z.string().trim().min(10).max(500).optional()
+});
+
+/** Hear the voice agent's greeting (or any line) in the company's chosen voice. */
+export const voicePreviewSchema = z.object({
+  text: trimmed(600).optional(),
+  mode: z.enum(['live', 'studio']).optional()
+});
+
+/** Talk to the voice agent from the admin's browser (nothing is saved). */
+export const voiceTestSchema = z.object({
+  sdpOffer: z.string().min(20).max(20_000),
+  mode: z.enum(['live', 'studio']).optional()
+});
+
+export const bookingsQuery = z.object({
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional(),
+  contactId: id.optional(),
+  status: z.enum(['booked', 'cancelled', 'done']).optional(),
+  limit: z.coerce.number().int().min(1).max(500).default(200)
+});
+
+export const updateBookingSchema = z.object({
+  status: z.enum(['booked', 'cancelled', 'done'])
 });
 
 export const aiAddonPlanSchema = z.object({
@@ -565,6 +591,21 @@ export const aiSettingsSchema = z.object({
   missedCallMessageTemplate: trimmed(1024),
   voiceLanguage: z.enum(['trilingual', 'sinhala', 'english']),
   voiceSpeed: z.number().min(0.8).max(1.2),
+  /* AI voice agent: optional so older clients that do not send them keep the saved values. */
+  voiceMode: z.enum(['live', 'studio']).optional(),
+  voiceAnswerWhen: z.enum(['always', 'after_hours', 'no_answer']).optional(),
+  voiceLiveModel: trimmed(80).optional(),
+  voiceLiveVoice: trimmed(40).optional(),
+  voiceTtsModel: trimmed(80).optional(),
+  voiceTtsVoice: trimmed(40).optional(),
+  voiceStyle: trimmed(500).optional(),
+  voiceBookingEnabled: z.boolean().optional(),
+  voiceServices: trimmed(4000).optional(),
+  voiceSlotMinutes: z.number().int().min(5).max(480).optional(),
+  voiceSlotCapacity: z.number().int().min(1).max(100).optional(),
+  voiceBookingDaysAhead: z.number().int().min(1).max(365).optional(),
+  voiceConfirmOnWhatsapp: z.boolean().optional(),
+  voiceMaxCallSeconds: z.number().int().min(60).max(3600).optional(),
   model: trimmed(80)
 });
 export type AiSettingsInput = z.infer<typeof aiSettingsSchema>;

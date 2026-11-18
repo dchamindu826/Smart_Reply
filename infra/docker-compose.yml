@@ -33,6 +33,7 @@ x-api-env: &api-env
   EXPO_ACCESS_TOKEN: ${EXPO_ACCESS_TOKEN:-}
   FCM_SERVICE_ACCOUNT_JSON: ${FCM_SERVICE_ACCOUNT_JSON:-}
   LOG_LEVEL: ${LOG_LEVEL:-info}
+  GEMINI_API_KEY: ${GEMINI_API_KEY:-}
 
 services:
   postgres:
@@ -94,6 +95,24 @@ services:
       redis: { condition: service_healthy }
     deploy: { replicas: 2 }
     stop_grace_period: 30s
+
+  # AI voice agent: answers WhatsApp calls (Stage B media). Meta sends call audio straight to
+  # VOICE_PUBLIC_IP on the UDP ports below, so open them in the server firewall too.
+  voice:
+    image: smart-reply-api:latest
+    restart: unless-stopped
+    environment:
+      <<: *api-env
+      VOICE_PUBLIC_IP: ${VOICE_PUBLIC_IP:-}
+      VOICE_PORT_MIN: "40000"
+      VOICE_PORT_MAX: "40099"
+      VOICE_MAX_CALLS: ${VOICE_MAX_CALLS:-20}
+    command: ["node", "dist/voice.js"]
+    ports: ["40000-40099:40000-40099/udp"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+    stop_grace_period: 20s
 
   web:
     build: { context: .., dockerfile: frontend/Dockerfile }

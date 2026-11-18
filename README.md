@@ -8,6 +8,7 @@ app and the mobile app.
 |---|---|---|
 | Web app (manager, staff, super admin console) | `frontend/` | Next.js 16, React 19, TypeScript, TanStack Query, Socket.IO |
 | API and background workers | `backend/` | NestJS 11, PostgreSQL (Drizzle ORM), Redis, BullMQ, Socket.IO |
+| AI voice agent (answers WhatsApp calls) | `backend/src/voice/` | werift WebRTC + Opus, Google Gemini Live and TTS; see docs/deploy.md |
 | Mobile app (Android, iOS) | `flutter_app/` | Flutter (Dart) |
 | Mobile app, React Native version | `mobile/` | Expo / React Native, TypeScript |
 | Shared API types and validation | `packages/shared/` | TypeScript, zod |
@@ -23,7 +24,7 @@ cp backend/.env.example backend/.env      # set DATABASE_URL, REDIS_URL, JWT_SEC
 npm run db:migrate:dev -w backend         # create tables
 npm run db:seed:dev -w backend            # plans + first super admin (SEED_ADMIN_* in backend/.env)
 npm run db:seed:demo -w backend           # optional demo company (development only)
-npm run dev                               # API :4000, worker, web :3000
+npm run dev                               # API :4000, worker, voice agent, web :3000
 ```
 
 Open http://localhost:3000. Demo logins: `manager@demo.test`, `staff1@demo.test`,

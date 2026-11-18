@@ -89,7 +89,32 @@ async function request<T>(method: string, path: string, body?: unknown, query?: 
   return data as T;
 }
 
+/** POST that returns a file (e.g. the voice preview WAV). Errors read like other API errors. */
+async function postBlob(path: string, body: unknown, retried = false): Promise<Blob> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'X-SR-Client': 'web', 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+  } catch {
+    throw new ApiError(0, 'NETWORK', 'Cannot reach Smart Reply. Check your internet connection.');
+  }
+  if (res.status === 401 && !retried) {
+    if (await refreshSession()) return postBlob(path, body, true);
+    onSignedOut?.();
+  }
+  if (!res.ok) {
+    const data = (await res.json().catch(() => null)) as ApiErrorBody | null;
+    throw new ApiError(res.status, data?.error?.code ?? 'INTERNAL', data?.error?.message ?? `Request failed (${res.status})`);
+  }
+  return res.blob();
+}
+
 export const api = {
+  blob: (path: string, body: unknown = {}) => postBlob(path, body),
   get: <T>(path: string, query?: Query) => request<T>('GET', path, undefined, query),
   post: <T>(path: string, body: unknown = {}) => request<T>('POST', path, body),
   put: <T>(path: string, body: unknown = {}) => request<T>('PUT', path, body),

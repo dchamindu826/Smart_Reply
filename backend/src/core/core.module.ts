@@ -9,6 +9,7 @@ import { RateLimitModule } from '../infra/rate-limit';
 import { RealtimeModule } from '../infra/realtime';
 import { StorageModule } from '../infra/storage';
 import { MetaModule } from '../meta/platform';
+import { VoiceBusModule } from '../voice/bus';
 import { FilesCoreModule } from './files.service';
 import { InboxCoreModule } from './inbox.service';
 import { MessagingCoreModule } from './messaging.service';
@@ -26,6 +27,7 @@ import { PushCoreModule } from './push.service';
     RateLimitModule,
     AuditModule,
     MetaModule,
+    VoiceBusModule,
     FilesCoreModule,
     InboxCoreModule,
     MessagingCoreModule,

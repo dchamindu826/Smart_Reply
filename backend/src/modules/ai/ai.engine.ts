@@ -105,6 +105,13 @@ export class AiEngine {
         '"confidence": integer 0-100 (how sure you are the reply is correct and complete), "handoff": boolean, "reason": string (why, in a few words)}'
     );
 
+    parts.push(...(await this.knowledgeContext(companyId)));
+    return parts.join('\n\n');
+  }
+
+  /** Knowledge, catalog and approved examples, as prompt sections. Shared with the voice agent. */
+  async knowledgeContext(companyId: string): Promise<string[]> {
+    const parts: string[] = [];
     const docs = await this.db
       .select({ title: knowledgeDocuments.title, content: knowledgeDocuments.content })
       .from(knowledgeDocuments)
@@ -147,7 +154,7 @@ export class AiEngine {
       }
       if (block) parts.push(`## Approved example answers\n${block.trim()}`);
     }
-    return parts.join('\n\n');
+    return parts;
   }
 
   /** Model answer plus the company's handoff rules. */
@@ -299,7 +306,8 @@ export class AiEngine {
           usageMonth: month,
           repliesThisMonth: sql`case when ${aiAddons.usageMonth} = ${month} then ${aiAddons.repliesThisMonth} + 1 else 1 end`,
           tokensThisMonth: sql`case when ${aiAddons.usageMonth} = ${month} then ${aiAddons.tokensThisMonth} + ${tokensUsed} else ${tokensUsed} end`,
-          costMinorThisMonth: sql`case when ${aiAddons.usageMonth} = ${month} then ${aiAddons.costMinorThisMonth} else 0 end`
+          costMinorThisMonth: sql`case when ${aiAddons.usageMonth} = ${month} then ${aiAddons.costMinorThisMonth} else 0 end`,
+          voiceSecondsThisMonth: sql`case when ${aiAddons.usageMonth} = ${month} then ${aiAddons.voiceSecondsThisMonth} else 0 end`
         })
         .where(eq(aiAddons.companyId, companyId));
     }

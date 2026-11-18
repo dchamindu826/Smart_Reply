@@ -42,7 +42,8 @@ export function handlers(app: INestApplicationContext): Partial<Record<JobName, 
   };
 }
 
-const CONCURRENCY: Record<QueueName, number> = {
+/** The `voice` queue belongs to the voice process. */
+const CONCURRENCY: Record<Exclude<QueueName, 'voice'>, number> = {
   webhooks: 8,
   outbound: 10,
   media: 4,
@@ -59,7 +60,7 @@ async function main(): Promise<void> {
   app.enableShutdownHooks();
   const map = handlers(app);
   const connection = createRedis();
-  const workers = (Object.keys(CONCURRENCY) as QueueName[]).map(
+  const workers = (Object.keys(CONCURRENCY) as Exclude<QueueName, 'voice'>[]).map(
     name =>
       new Worker(
         name,

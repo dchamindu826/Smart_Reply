@@ -178,7 +178,8 @@ export class PlatformAdminService {
       defaultModel: p.ai.model,
       baseUrl: p.ai.baseUrl,
       defaultPrompt: p.ai.defaultPrompt,
-      globalOff: p.ai.globalOff
+      globalOff: p.ai.globalOff,
+      geminiApiKeyMasked: maskSecret(p.ai.geminiApiKey)
     };
   }
 
@@ -192,7 +193,8 @@ export class PlatformAdminService {
         aiBaseUrl: input.baseUrl,
         aiDefaultPrompt: input.defaultPrompt,
         aiGlobalOff: input.globalOff,
-        ...(input.apiKey ? { aiApiKeyEnc: encrypt(input.apiKey) } : {})
+        ...(input.apiKey ? { aiApiKeyEnc: encrypt(input.apiKey) } : {}),
+        ...(input.geminiApiKey ? { geminiApiKeyEnc: encrypt(input.geminiApiKey) } : {})
       })
       .where(eq(platformSettings.id, 1));
     this.platform.invalidate();
@@ -200,7 +202,7 @@ export class PlatformAdminService {
       action: 'platform.ai_updated',
       targetType: 'platform',
       targetId: 'ai',
-      summary: `AI platform settings saved (${input.provider}, ${input.defaultModel || 'no model'}${input.globalOff ? ', bot switched off everywhere' : ''}${input.apiKey ? ', new API key' : ''})`
+      summary: `AI platform settings saved (${input.provider}, ${input.defaultModel || 'no model'}${input.globalOff ? ', bot switched off everywhere' : ''}${input.apiKey ? ', new API key' : ''}${input.geminiApiKey ? ', new Gemini key' : ''})`
     });
     return this.ai();
   }

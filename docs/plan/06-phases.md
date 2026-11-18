@@ -12,7 +12,8 @@ All phases were built in one pass on branch `feat/production-build`. What is don
 | Automation: auto-assign, keyword rules, greeting/away flows | Done |
 | Content: templates (Meta create/sync/status), catalog, media gallery, broadcasts, flows | Done |
 | Calls Stage A: browser/mobile answers WhatsApp calls (WebRTC), ringing strategies, missed-call messages, scheduled calls, call settings and hours | Done |
-| Calls Stage B: hold, transfer, conference, recording, IVR on live calls, transcripts | **Open** — needs the media server proof of concept (04-whatsapp-integration.md) |
+| AI voice agent (Stage B media for AI calls): server WebRTC peer (werift + Opus), Gemini Live and Studio (Gemini TTS) modes, booking tools, transcript, summary, WhatsApp confirmation, admin test call | **Built** — `backend/src/voice/`, `npm run start:voice`; real WhatsApp call test still to do on the server |
+| Calls Stage B for people: hold, transfer, conference, recording, IVR on live calls | **Open** — can reuse `backend/src/voice/media.ts` as the media peer |
 | AI bot add-on: OpenAI/Anthropic, knowledge, examples, handoff, limits, logs | Done (PDF knowledge extraction open) |
 | Reports, dashboards, exports, billing estimates, business profile, number health | Done |
 | Mobile app | Flutter in `flutter_app/` (main); an Expo / React Native version also exists in `mobile/` |

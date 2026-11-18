@@ -54,6 +54,7 @@ export async function presentAddons(db: DbOrTx, companyIds: string[]): Promise<M
         repliesThisMonth: 0,
         tokensThisMonth: 0,
         costThisMonth: { amountMinor: 0, currency: 'LKR' },
+        voiceMinutesThisMonth: 0,
         requestedAt: null,
         requestedByName: null
       });
@@ -76,6 +77,7 @@ export async function presentAddons(db: DbOrTx, companyIds: string[]): Promise<M
         amountMinor: (a.status === 'active' ? (plan?.priceMinor ?? 0) : 0) + (current ? a.costMinorThisMonth : 0),
         currency: plan?.currency ?? 'LKR'
       },
+      voiceMinutesThisMonth: current ? Math.ceil(a.voiceSecondsThisMonth / 60) : 0,
       requestedAt: a.requestedAt?.toISOString() ?? null,
       requestedByName: a.requestedBy ? (names.get(a.requestedBy) ?? null) : null
     });
@@ -109,6 +111,20 @@ export function presentSettings(r: AiSettingsRow): AiBotSettings {
     missedCallMessageTemplate: r.missedCallMessageTemplate,
     voiceLanguage: r.voiceLanguage,
     voiceSpeed: r.voiceSpeed,
+    voiceMode: r.voiceMode,
+    voiceAnswerWhen: r.voiceAnswerWhen,
+    voiceLiveModel: r.voiceLiveModel,
+    voiceLiveVoice: r.voiceLiveVoice,
+    voiceTtsModel: r.voiceTtsModel,
+    voiceTtsVoice: r.voiceTtsVoice,
+    voiceStyle: r.voiceStyle,
+    voiceBookingEnabled: r.voiceBookingEnabled,
+    voiceServices: r.voiceServices,
+    voiceSlotMinutes: r.voiceSlotMinutes,
+    voiceSlotCapacity: r.voiceSlotCapacity,
+    voiceBookingDaysAhead: r.voiceBookingDaysAhead,
+    voiceConfirmOnWhatsapp: r.voiceConfirmOnWhatsapp,
+    voiceMaxCallSeconds: r.voiceMaxCallSeconds,
     model: r.model
   };
 }

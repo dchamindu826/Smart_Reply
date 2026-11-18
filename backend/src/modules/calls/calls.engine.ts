@@ -14,12 +14,14 @@ import { ContactRow, InboxService } from '../../core/inbox.service';
 import { MessagingService, windowOpen } from '../../core/messaging.service';
 import { PushService } from '../../core/push.service';
 import type { Db } from '../../db/client';
-import { aiBotSettings, calls, companies, contacts, quickReplies } from '../../db/schema';
+import { aiBotSettings, calls, companies, contacts, conversations, quickReplies } from '../../db/schema';
 import { InjectDb } from '../../infra/db';
 import { logger } from '../../infra/logger';
 import { Queues } from '../../infra/queues';
 import { Realtime, rooms } from '../../infra/realtime';
 import { WhatsappAccounts } from '../../meta/platform';
+import { VoiceBus } from '../../voice/bus';
+import { VoicePolicy } from '../../voice/voice-policy';
 import {
   CallRow,
   CallsCore,
@@ -78,7 +80,9 @@ export class CallsEngine {
     private readonly push: PushService,
     private readonly queues: Queues,
     private readonly whatsapp: WhatsappAccounts,
-    private readonly realtime: Realtime
+    private readonly realtime: Realtime,
+    private readonly voicePolicy: VoicePolicy,
+    private readonly voiceBus: VoiceBus
   ) {}
 
   /* ───────── Webhooks ───────── */
@@ -168,10 +172,12 @@ export class CallsEngine {
   /** Ring timer fired: move to the next person or apply the no-answer rule. */
   async ringTimeout(callId: string, round: number): Promise<void> {
     const [row] = await this.db.select().from(calls).where(eq(calls.id, callId)).limit(1);
-    if (!row || row.outcome !== 'ringing' || row.direction !== 'in') return;
+    if (!row || row.outcome !== 'ringing' || row.direction !== 'in' || row.handledByAi) return;
     const rounds = await this.core.ringRounds(row.id);
     const last = rounds[rounds.length - 1];
     if (!last || last.round !== round) return; // an older timer, or already moved on
+    // "AI answers calls nobody takes": hand over after the first unanswered round, while the caller is still there.
+    if ((await this.voicePolicy.when(row.companyId)) === 'no_answer' && (await this.handToAi(row, 'no_answer'))) return;
     const st = await this.core.settings(row.companyId);
     const excluded = new Set(rounds.flatMap(r => r.userIds));
     if (Date.now() - row.startedAt.getTime() < RING_WINDOW_MS) {
@@ -208,7 +214,13 @@ export class CallsEngine {
       bsuid,
       profileName: waContact?.profile?.name ?? ''
     });
-    await this.inbox.ensureConversation(companyId, contact.id);
+    const conv = await this.inbox.ensureConversation(companyId, contact.id);
+    // A user-initiated call starts or refreshes the 24-hour customer service window, answered or not (Meta, calling pricing).
+    const callAt = unixToDate(c.timestamp) ?? new Date();
+    const until = new Date(callAt.getTime() + 24 * 3600_000);
+    if (!conv.windowExpiresAt || conv.windowExpiresAt.getTime() < until.getTime()) {
+      await this.db.update(conversations).set({ windowExpiresAt: until }).where(eq(conversations.id, conv.id));
+    }
     const [row] = await this.db
       .insert(calls)
       .values({
@@ -245,6 +257,8 @@ export class CallsEngine {
 
   private async routeIncoming(row: CallRow, contact: ContactRow): Promise<void> {
     const st = await this.core.settings(row.companyId);
+    const aiWhen = await this.voicePolicy.when(row.companyId);
+    if ((aiWhen === 'always' || (aiWhen === 'after_hours' && !isOpen(st.hours))) && (await this.handToAi(row, aiWhen))) return;
     const rules = await this.core.assignment(row.companyId);
     let dest = 'queue';
     if (!isOpen(st.hours)) {
@@ -356,6 +370,11 @@ export class CallsEngine {
    * send the customer the message the destination asks for.
    */
   async finishMissed(row: CallRow, dest: string, opts: { rejectOnMeta: boolean; reason: string }): Promise<void> {
+    // The AI takes calls that would be missed (not when the caller already hung up, or the AI itself failed).
+    if (opts.rejectOnMeta && opts.reason !== 'ai_unavailable' && !row.handledByAi) {
+      const when = await this.voicePolicy.when(row.companyId);
+      if (when === 'no_answer' && (await this.handToAi(row, 'no_answer'))) return;
+    }
     const [u] = await this.db
       .update(calls)
       .set({ outcome: 'missed', endedAt: new Date(), ringingUserIds: [] })
@@ -421,6 +440,36 @@ export class CallsEngine {
     }
   }
 
+  /* ───────── AI voice agent ───────── */
+
+  /**
+   * Give a ringing call to the AI voice agent: stop ringing people and ask the voice process to
+   * answer. Returns false when the call is no longer ringing.
+   */
+  async handToAi(row: CallRow, why: string): Promise<boolean> {
+    if (row.direction !== 'in' || !row.sdpOffer || !row.waCallId) return false;
+    const [u] = await this.db
+      .update(calls)
+      .set({ handledByAi: true, ringingUserIds: [] })
+      .where(and(eq(calls.id, row.id), eq(calls.outcome, 'ringing'), eq(calls.handledByAi, false)))
+      .returning();
+    if (!u) return false;
+    await this.core.event(u.companyId, u.id, 'ai_handoff', null, { why });
+    await this.core.emitUpdated(u);
+    await this.queues.add('voice.answer', { callId: u.id }, { attempts: 1, jobId: `voice-${u.id}` });
+    return true;
+  }
+
+  /** The voice process could not take the call: fall back to the normal missed-call rule. */
+  async aiUnavailable(callId: string, reason: string): Promise<void> {
+    const [row] = await this.db.select().from(calls).where(eq(calls.id, callId)).limit(1);
+    if (!row || row.outcome !== 'ringing') return;
+    logger.warn({ callId, reason }, 'AI voice agent could not answer');
+    await this.core.event(row.companyId, row.id, 'ai_failed', null, { reason });
+    const st = await this.core.settings(row.companyId);
+    await this.finishMissed(row, st.forwarding.noAnswer, { rejectOnMeta: true, reason: 'ai_unavailable' });
+  }
+
   /* ───────── Business-initiated ───────── */
 
   /** The customer's device answered our offer: hand the SDP answer to the caller's device. */
@@ -455,6 +504,7 @@ export class CallsEngine {
       .where(and(eq(calls.companyId, companyId), eq(calls.waCallId, c.id!)))
       .limit(1);
     if (!row) return;
+    if (row.handledByAi) await this.voiceBus.control({ action: 'hangup', callId: row.id });
     const endedAt = unixToDate(c.end_time) ?? new Date();
     const metaDuration = c.duration !== undefined && c.duration !== null && c.duration !== '' ? Number(c.duration) : NaN;
     const duration = Number.isFinite(metaDuration) ? Math.round(metaDuration) : null;
@@ -506,7 +556,7 @@ export class CallsEngine {
     if (row.direction === 'out') await this.core.resetUnanswered(row.contactId);
     if (row.handledByUserId) await this.core.setCallPresence(row.companyId, row.handledByUserId, 'available', ['oncall']);
     await this.core.event(row.companyId, row.id, 'ended', null, { seconds });
-    const name = await this.core.userName(row.handledByUserId);
+    const name = row.handledByAi ? 'AI agent' : await this.core.userName(row.handledByUserId);
     await this.core.systemLine(row.companyId, row.contactId, `Voice call · ${mmss(seconds)}${name ? ` · ${name}` : ''}`);
     await this.core.emitUpdated(row);
   }

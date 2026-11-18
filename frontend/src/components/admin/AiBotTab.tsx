@@ -21,6 +21,7 @@ import {
   useSimulate
 } from '@/features/admin';
 import { useAdmin } from './AdminContext';
+import { VoiceAgentCard, pickVoice } from './VoiceAgentCard';
 import { AiChip, Loading, QueryState, fmtDate, fmtDateTime, fromDateInput, money, num, toDateInput } from './ui';
 
 /* ───────── Add-on ───────── */
@@ -133,7 +134,7 @@ function Check({ label, checked, onChange }: { label: string; checked: boolean; 
   );
 }
 
-function SettingsCard({ companyId, initial }: { companyId: string; initial: AiBotSettings }) {
+function SettingsCard({ companyId, initial, current }: { companyId: string; initial: AiBotSettings; current: AiBotSettings }) {
   const { toast, reportError } = useAdmin();
   const save = useSaveCompanyAiSettings(companyId);
   const [s, setS] = useState<AiBotSettings>(initial);
@@ -148,7 +149,8 @@ function SettingsCard({ companyId, initial }: { companyId: string; initial: AiBo
       className="card"
       onSubmit={e => {
         e.preventDefault();
-        save.mutate(s, { onSuccess: () => toast('AI bot settings saved.'), onError: reportError });
+        // Voice agent settings belong to their own card: keep the saved ones.
+        save.mutate({ ...s, ...pickVoice(current) }, { onSuccess: () => toast('AI bot settings saved.'), onError: reportError });
       }}
     >
       <div className="card-h">
@@ -160,7 +162,6 @@ function SettingsCard({ companyId, initial }: { companyId: string; initial: AiBo
       </div>
       <div className="card-b">
         <Check label="Chat bot on" checked={s.chatBotEnabled} onChange={v => set('chatBotEnabled', v)} />
-        <Check label="Voice bot on" checked={s.voiceBotEnabled} onChange={v => set('voiceBotEnabled', v)} />
         <div className="f-row f2">
           <div>
             <label className="f" htmlFor="as-persona">Persona name</label>
@@ -222,33 +223,6 @@ function SettingsCard({ companyId, initial }: { companyId: string; initial: AiBo
         <Check label="Follow up missed calls on WhatsApp" checked={s.missedCallAutoFollowup} onChange={v => set('missedCallAutoFollowup', v)} />
         <label className="f" htmlFor="as-missed">Missed-call message</label>
         <textarea className="f-in" id="as-missed" maxLength={1024} {...text('missedCallMessageTemplate')} />
-        <div className="f-row f2">
-          <div>
-            <label className="f" htmlFor="as-vmodel">Voice model</label>
-            <input className="f-in" id="as-vmodel" maxLength={60} {...text('voiceModel')} />
-          </div>
-          <div>
-            <label className="f" htmlFor="as-vlang">Voice language</label>
-            <select className="f-in" id="as-vlang" value={s.voiceLanguage} onChange={e => set('voiceLanguage', e.target.value as AiBotSettings['voiceLanguage'])}>
-              <option value="trilingual">Sinhala, Tamil and English</option>
-              <option value="sinhala">Sinhala</option>
-              <option value="english">English</option>
-            </select>
-          </div>
-        </div>
-        <label className="f" htmlFor="as-vgreet">Voice greeting</label>
-        <textarea className="f-in" id="as-vgreet" maxLength={1024} {...text('voiceGreeting')} />
-        <label className="f" htmlFor="as-vspeed">Voice speed: {s.voiceSpeed.toFixed(2)}×</label>
-        <input
-          id="as-vspeed"
-          type="range"
-          min={0.8}
-          max={1.2}
-          step={0.05}
-          style={{ width: '100%', accentColor: 'var(--blue)' }}
-          value={s.voiceSpeed}
-          onChange={e => set('voiceSpeed', Number(e.target.value))}
-        />
       </div>
     </form>
   );
@@ -664,7 +638,12 @@ export default function AiBotTab({ company }: { company: AdminCompany }) {
           ) : (
             <QueryState q={ai}>{() => null}</QueryState>
           )}
-          <QueryState q={settings}>{s => <SettingsCard key={company.id} companyId={company.id} initial={s} />}</QueryState>
+          <QueryState q={settings}>{s => (
+            <>
+              <SettingsCard key={company.id} companyId={company.id} initial={s} current={s} />
+              <VoiceAgentCard key={`v${company.id}`} companyId={company.id} current={s} />
+            </>
+          )}</QueryState>
         </div>
         <div>
           <Simulator companyId={company.id} />

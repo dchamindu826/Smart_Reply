@@ -7,6 +7,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { AiModule } from './modules/ai/ai.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CallsModule } from './modules/calls/calls.module';
+import { BookingsModule } from './modules/bookings/bookings.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
 import { ContentModule } from './modules/content/content.module';
 import { ConversationsModule } from './modules/conversations/conversations.module';
@@ -29,6 +30,7 @@ import { WebhooksModule } from './modules/webhooks/webhooks.module';
     TeamModule,
     ContentModule,
     CallsModule,
+    BookingsModule,
     AiModule,
     InsightModule,
     AdminModule

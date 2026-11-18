@@ -300,7 +300,7 @@ export default function CallsScreen() {
     () =>
       loaded
         .filter(c => inTimeSlot(c.startedAt, timeFilter))
-        .filter(c => !(isManager && staffFilter === 'unassigned') || c.handledBy === null)
+        .filter(c => !(isManager && staffFilter === 'unassigned') || (c.handledBy === null && !c.aiAgent))
         .map(c => ({ call: c, item: toCallLog(c) })),
     [loaded, timeFilter, staffFilter, isManager]
   );

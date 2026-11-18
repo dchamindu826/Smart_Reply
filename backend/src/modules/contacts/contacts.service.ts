@@ -472,7 +472,8 @@ export class ContactsService {
         recordingUrl: rec?.url ?? null,
         hasSummary: Boolean(r.aiSummary),
         summary: r.aiSummary,
-        ivrOption: r.ivrOption
+        ivrOption: r.ivrOption,
+        aiAgent: r.handledByAi
       };
     });
   }

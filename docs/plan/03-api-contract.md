@@ -263,3 +263,19 @@ The client connects once after login. The server decides which rooms the socket 
 | `mydash` | `/me/dashboard`, `/conversations?filter=`, `/me/breaks` | `/me/presence` |
 | `myperf` | `/me/performance` | `/exports` |
 | `profile` | `/me` | `/me`, `/me/password` |
+
+## AI voice agent and bookings (added Nov 2026)
+
+| Method | Path | Who | Notes |
+|---|---|---|---|
+| GET | `/admin/ai/voice/status` | system admin | `VoiceServerStatus`: voice process online, calls in progress, Gemini key set |
+| POST | `/admin/companies/:id/ai/voice/preview` | system admin | body `voicePreviewSchema`; returns `audio/wav` of the greeting or `text` |
+| POST | `/admin/companies/:id/ai/voice/test` | system admin | body `{ sdpOffer, mode? }` → `{ testId, sdpAnswer }`; browser test call, nothing saved |
+| GET | `/admin/companies/:id/ai/voice/test/:testId` | system admin | `VoiceTestState` (status, transcript, test bookings) |
+| POST | `/admin/companies/:id/ai/voice/test/:testId/hangup` | system admin | ends the test call |
+| GET | `/bookings` | manager, staff | `bookingsQuery` → `Booking[]` |
+| PATCH | `/bookings/:id` | manager, staff | `{ status }` |
+
+`AiBotSettings` gains the `voice*` agent fields (optional on save), `PlatformAiSettings` gains
+`geminiApiKeyMasked` (save with `geminiApiKey`), `Call` gains `aiAgent`, `AiAddon` gains
+`voiceMinutesThisMonth`.

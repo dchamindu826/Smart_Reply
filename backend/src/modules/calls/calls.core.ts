@@ -242,6 +242,7 @@ export class CallsCore {
           hasSummary: r.aiSummary !== null && r.aiSummary !== '',
           summary: r.aiSummary,
           ivrOption: r.ivrOption,
+          aiAgent: r.handledByAi,
           ringingUserIds: r.outcome === 'ringing' ? r.ringingUserIds : []
         };
       });

@@ -19,7 +19,7 @@ workers, web app and automatic HTTPS. Plan about 1 hour the first time.
 ssh root@YOUR_SERVER_IP
 apt update && apt -y upgrade
 curl -fsSL https://get.docker.com | sh
-ufw allow OpenSSH && ufw allow 80 && ufw allow 443 && ufw --force enable
+ufw allow OpenSSH && ufw allow 80 && ufw allow 443 && ufw allow 40000:40099/udp && ufw --force enable
 ```
 
 ## 2. Get the code
@@ -127,3 +127,31 @@ WhatsApp calls with WebRTC, and the API relays the SDP to Meta. Meta requires th
 messaging limit to be at least 2,000 to turn calling on (Call settings → Enable calling).
 Hold, transfer, conference, recording and the IVR on live calls need a media server
 (Stage B in `docs/plan/04-whatsapp-integration.md`); those buttons explain this when pressed.
+
+## AI voice agent (answers WhatsApp calls)
+
+The `voice` service answers calls with a Google Gemini voice agent: it greets the caller,
+answers from the company's AI knowledge, saves the caller's name, checks free times and books
+appointments, asks staff to call back, and after the call saves a transcript and summary and
+sends a WhatsApp booking confirmation. It is part of the AI add-on; only the system admin
+turns it on.
+
+1. Put the server's public IP in `infra/.env` as `VOICE_PUBLIC_IP` and open UDP 40000–40099
+   (the `ufw` line above does). Meta sends call audio straight to these ports.
+2. Admin console → **AI → Platform**: paste the Gemini API key (aistudio.google.com → Get API key).
+3. Admin console → company → **AI bot**: activate the add-on, then in **AI voice agent**:
+   - turn it on and choose when it answers: calls nobody answers, after hours, or every call;
+   - choose the mode:
+     - **Studio**: Gemini TTS voice such as **Hali** on `gemini-3.8-flash-tts`, about 2–3 s to reply;
+     - **Live**: `gemini-3.8-live`, about 1 s, its own voices.
+     If Live cannot start, the call continues in Studio.
+   - **Hear Studio voice / Hear Live voice** plays the greeting;
+   - **Talk to the agent** makes a test call from your browser microphone. Nothing is saved.
+4. Turn on bookings and list the services if the agent should book appointments. Free times
+   come from the business hours in Call settings.
+
+The chip on the card shows whether the voice server is online. `docker compose logs voice` shows
+each call (no customer words are logged). Customer audio and transcripts go to Google Gemini.
+Managers see AI calls in the call log as "AI agent" with the summary, and appointments under
+**Bookings**.
+

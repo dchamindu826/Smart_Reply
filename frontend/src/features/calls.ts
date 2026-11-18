@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
+  Booking,
   Call,
   CallFilter,
   CallSettings,
@@ -199,4 +200,20 @@ export function useTestIvr() {
 /** Upload an IVR greeting; returns the file id to put in `greetingFileId`. */
 export function useUploadIvrGreeting() {
   return useMutation({ mutationFn: (file: File) => uploadFile(file, file.name, 'ivr') });
+}
+
+/* ───────── Bookings (made by the AI voice agent) ───────── */
+
+const bookingsKey = ['bookings'] as const;
+
+export function useBookings(params: { from?: string; status?: Booking['status'] }) {
+  return useQuery({ queryKey: [...bookingsKey, params] as const, queryFn: () => api.get<Booking[]>('/bookings', params) });
+}
+
+export function useUpdateBooking() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { id: string; status: Booking['status'] }) => api.patch<Booking>(`/bookings/${v.id}`, { status: v.status }),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: bookingsKey })
+  });
 }

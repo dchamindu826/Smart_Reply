@@ -420,6 +420,8 @@ export interface Call {
   hasSummary: boolean;
   summary: string | null;
   ivrOption: string | null;
+  /** Answered by the AI voice agent. */
+  aiAgent: boolean;
   /** Users being rung right now (incoming calls while `outcome` is `ringing`). A device not in this list stops ringing. */
   ringingUserIds?: string[];
 }
@@ -525,6 +527,23 @@ export interface AiBotSettings {
   missedCallMessageTemplate: string;
   voiceLanguage: 'trilingual' | 'sinhala' | 'english';
   voiceSpeed: number;
+  /** `live`: Gemini Live speech-to-speech (fastest). `studio`: listen, think, then speak with a Gemini TTS voice (best voice). */
+  voiceMode: 'live' | 'studio';
+  /** When the AI answers: every call, only after hours, or only calls nobody answers. */
+  voiceAnswerWhen: 'always' | 'after_hours' | 'no_answer';
+  voiceLiveModel: string;
+  voiceLiveVoice: string;
+  voiceTtsModel: string;
+  voiceTtsVoice: string;
+  voiceStyle: string;
+  voiceBookingEnabled: boolean;
+  /** One service per line. */
+  voiceServices: string;
+  voiceSlotMinutes: number;
+  voiceSlotCapacity: number;
+  voiceBookingDaysAhead: number;
+  voiceConfirmOnWhatsapp: boolean;
+  voiceMaxCallSeconds: number;
   model: string;
 }
 
@@ -541,6 +560,8 @@ export interface AiAddon {
   repliesThisMonth: number;
   tokensThisMonth: number;
   costThisMonth: Money;
+  /** Minutes the AI voice agent spent on calls this month. */
+  voiceMinutesThisMonth: number;
   requestedAt: Iso | null;
   requestedByName: string | null;
 }
@@ -832,6 +853,42 @@ export interface PlatformAiSettings {
   baseUrl: string;
   defaultPrompt: string;
   globalOff: boolean;
+  geminiApiKeyMasked: string | null;
+}
+
+export interface VoiceServerStatus {
+  online: boolean;
+  activeCalls: number;
+  publicIp: string;
+  ports: string;
+  geminiKeySet: boolean;
+}
+
+export interface VoiceTestState {
+  status: 'connecting' | 'live' | 'ended' | 'failed';
+  error?: string;
+  mode?: 'live' | 'studio';
+  transcript: { role: 'caller' | 'agent'; text: string; at: Iso }[];
+  bookings: { service: string; when: string }[];
+  callback: string | null;
+  endReason?: string;
+  seconds?: number;
+}
+
+export interface Booking {
+  id: string;
+  contactId: string;
+  contactName: string;
+  contactPhone: string;
+  callId: string | null;
+  service: string;
+  startsAt: Iso;
+  durationMinutes: number;
+  customerName: string;
+  note: string;
+  status: 'booked' | 'cancelled' | 'done';
+  createdBy: 'ai' | 'staff';
+  createdAt: Iso;
 }
 
 export interface AiAddonPlan {

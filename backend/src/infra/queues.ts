@@ -16,10 +16,13 @@ export interface JobMap {
   'push.send': { userIds: string[]; title: string; body: string; data: Record<string, string> };
   'maintenance.tick': Record<string, never>;
   'maintenance.daily': Record<string, never>;
+  /** Run by the voice process (`src/voice.ts`), not the worker. */
+  'voice.answer': { callId: string };
+  'voice.test': { testId: string; companyId: string; sdpOffer: string; mode: 'live' | 'studio' | null };
 }
 export type JobName = keyof JobMap;
 
-export const QUEUE_NAMES = ['webhooks', 'outbound', 'media', 'broadcasts', 'ai', 'automation', 'maintenance', 'calls', 'push'] as const;
+export const QUEUE_NAMES = ['webhooks', 'outbound', 'media', 'broadcasts', 'ai', 'automation', 'maintenance', 'calls', 'push', 'voice'] as const;
 export type QueueName = (typeof QUEUE_NAMES)[number];
 
 export const JOB_QUEUE: Record<JobName, QueueName> = {
@@ -33,7 +36,9 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'call.ring_timeout': 'calls',
   'push.send': 'push',
   'maintenance.tick': 'maintenance',
-  'maintenance.daily': 'maintenance'
+  'maintenance.daily': 'maintenance',
+  'voice.answer': 'voice',
+  'voice.test': 'voice'
 };
 
 const DEFAULTS: JobsOptions = {

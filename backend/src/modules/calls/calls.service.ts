@@ -83,6 +83,7 @@ export class CallsService {
   private assertRingingIncoming(row: CallRow): void {
     if (row.direction !== 'in') throw new AppError('CALL_STATE', 'This is not an incoming call.');
     if (row.outcome !== 'ringing') throw new AppError('CALL_STATE', 'This call is no longer ringing.');
+    if (row.handledByAi) throw new AppError('CALL_STATE', 'The AI agent is answering this call.');
   }
 
   /* ───────── Log ───────── */

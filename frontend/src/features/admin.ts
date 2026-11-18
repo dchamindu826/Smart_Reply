@@ -7,6 +7,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   AdminAiCompanyRow,
+  VoiceServerStatus,
+  VoiceTestState,
   AdminAuditEntry,
   AdminCompany,
   AdminCompanyCreated,
@@ -93,6 +95,7 @@ export interface PlatformWebhookBody {
 export interface PlatformAiBody {
   provider: PlatformAiSettings['provider'];
   apiKey?: string;
+  geminiApiKey?: string;
   defaultModel: string;
   baseUrl: string;
   defaultPrompt: string;
@@ -503,5 +506,38 @@ export function useCompanyAiLogs(id: string) {
     queryKey: ak.companyLogs(id),
     queryFn: () => api.get<AiBotLog[]>(`/admin/companies/${id}/ai/logs`),
     enabled: !!id
+  });
+}
+
+/* ───────── AI voice agent ───────── */
+
+export function useVoiceStatus() {
+  return useQuery({
+    queryKey: ['admin', 'voice-status'] as const,
+    queryFn: () => api.get<VoiceServerStatus>('/admin/ai/voice/status'),
+    refetchInterval: 15_000
+  });
+}
+
+export function useVoicePreview(companyId: string) {
+  return useMutation({
+    mutationFn: (body: { text?: string; mode?: 'live' | 'studio' }) => api.blob(`/admin/companies/${companyId}/ai/voice/preview`, body)
+  });
+}
+
+export function startVoiceTest(companyId: string, body: { sdpOffer: string; mode?: 'live' | 'studio' }) {
+  return api.post<{ testId: string; sdpAnswer: string }>(`/admin/companies/${companyId}/ai/voice/test`, body);
+}
+
+export function hangupVoiceTest(companyId: string, testId: string) {
+  return api.post<{ ok: true }>(`/admin/companies/${companyId}/ai/voice/test/${testId}/hangup`);
+}
+
+export function useVoiceTest(companyId: string, testId: string | null) {
+  return useQuery({
+    queryKey: ['admin', 'voice-test', companyId, testId] as const,
+    queryFn: () => api.get<VoiceTestState>(`/admin/companies/${companyId}/ai/voice/test/${testId}`),
+    enabled: !!testId,
+    refetchInterval: q => (q.state.data?.status === 'ended' || q.state.data?.status === 'failed' ? false : 2000)
   });
 }

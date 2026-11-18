@@ -64,6 +64,8 @@ export const platformSettings = pgTable('platform_settings', {
   aiBaseUrl: text().notNull().default(''),
   aiDefaultPrompt: text().notNull().default(''),
   aiGlobalOff: boolean().notNull().default(false),
+  /** Google Gemini key for the AI voice agent (Live and Studio modes). `GEMINI_API_KEY` is the fallback. */
+  geminiApiKeyEnc: text(),
   updatedAt: updated()
 });
 
@@ -399,6 +401,8 @@ export const aiAddons = pgTable('ai_addons', {
   repliesThisMonth: integer().notNull().default(0),
   tokensThisMonth: integer().notNull().default(0),
   costMinorThisMonth: integer().notNull().default(0),
+  /** Seconds the AI voice agent spent on calls in `usageMonth`. */
+  voiceSecondsThisMonth: integer().notNull().default(0),
   requestedAt: ts(),
   requestedBy: uuid(),
   requestMessage: text().notNull().default(''),
@@ -427,6 +431,21 @@ export const aiBotSettings = pgTable('ai_bot_settings', {
   missedCallMessageTemplate: text().notNull().default(''),
   voiceLanguage: text().$type<'trilingual' | 'sinhala' | 'english'>().notNull().default('trilingual'),
   voiceSpeed: real().notNull().default(1),
+  /* AI voice agent (answers WhatsApp calls). `voiceModel` is the Studio-mode brain model. */
+  voiceMode: text().$type<'live' | 'studio'>().notNull().default('studio'),
+  voiceAnswerWhen: text().$type<'always' | 'after_hours' | 'no_answer'>().notNull().default('no_answer'),
+  voiceLiveModel: text().notNull().default('gemini-3.8-live'),
+  voiceLiveVoice: text().notNull().default('Kore'),
+  voiceTtsModel: text().notNull().default('gemini-3.8-flash-tts'),
+  voiceTtsVoice: text().notNull().default('Hali'),
+  voiceStyle: text().notNull().default(''),
+  voiceBookingEnabled: boolean().notNull().default(false),
+  voiceServices: text().notNull().default(''),
+  voiceSlotMinutes: integer().notNull().default(30),
+  voiceSlotCapacity: integer().notNull().default(1),
+  voiceBookingDaysAhead: integer().notNull().default(14),
+  voiceConfirmOnWhatsapp: boolean().notNull().default(true),
+  voiceMaxCallSeconds: integer().notNull().default(600),
   model: text().notNull().default(''),
   updatedBy: uuid(),
   updatedAt: updated()
@@ -891,6 +910,8 @@ export const calls = pgTable(
       .notNull()
       .default('ringing'),
     handledByUserId: uuid(),
+    /** Answered by the AI voice agent instead of a person. */
+    handledByAi: boolean().notNull().default(false),
     ringingUserIds: uuid().array().notNull().default(sql`ARRAY[]::uuid[]`),
     sdpOffer: text(),
     ivrOption: text(),
@@ -942,6 +963,30 @@ export const scheduledCalls = pgTable(
     createdAt: created()
   },
   t => [index('scheduled_calls_company_idx').on(t.companyId, t.scheduledAt)]
+);
+
+/** Appointments, made by the AI voice agent on a call or by staff. */
+export const bookings = pgTable(
+  'bookings',
+  {
+    id: pk(),
+    companyId: companyRef(),
+    contactId: uuid()
+      .notNull()
+      .references(() => contacts.id, { onDelete: 'cascade' }),
+    callId: uuid().references(() => calls.id, { onDelete: 'set null' }),
+    service: text().notNull().default(''),
+    startsAt: ts().notNull(),
+    durationMinutes: integer().notNull().default(30),
+    customerName: text().notNull().default(''),
+    note: text().notNull().default(''),
+    status: text().$type<'booked' | 'cancelled' | 'done'>().notNull().default('booked'),
+    createdBy: text().$type<'ai' | 'staff'>().notNull().default('ai'),
+    createdByUserId: uuid(),
+    createdAt: created(),
+    updatedAt: updated()
+  },
+  t => [index('bookings_company_starts_idx').on(t.companyId, t.startsAt), index('bookings_contact_idx').on(t.contactId)]
 );
 
 /* ───────────────────────── Insight and trail ───────────────────────── */

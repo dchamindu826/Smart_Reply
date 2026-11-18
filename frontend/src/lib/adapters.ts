@@ -242,7 +242,7 @@ export function toCallLog(c: ApiCall): CallLogItem {
     d,
     t: c.outcome === 'ringing' ? 'now' : logTime(c.startedAt),
     dur: c.durationSeconds ? mmss(c.durationSeconds) : undefined,
-    by: c.handledBy?.name ?? '—',
+    by: c.aiAgent ? 'AI agent' : (c.handledBy?.name ?? '—'),
     note: c.note || undefined,
     rec: c.hasRecording ? 1 : 0,
     ai: c.hasSummary ? 1 : 0,
