@@ -92,11 +92,14 @@ export class StudioSession implements AgentSession {
       this.d.log('Caller interrupted');
       this.abort.abort();
       this.abort = null;
+      this.busy = false;
       this.d.media.clearPlayback();
     }
     if (ev?.kind === 'end' && ev.audio.length > 16000 * 0.3) {
       const turn = ++this.turn;
-      void this.reply(turn, null, ev.audio);
+      void this.reply(turn, null, ev.audio).catch(err => {
+        if (!this.closed) this.d.log('Turn reply error', { error: err instanceof Error ? err.message : String(err) });
+      });
     }
   }
 
@@ -112,10 +115,11 @@ export class StudioSession implements AgentSession {
         ? [{ inlineData: { mimeType: 'audio/wav', data: wav(audio, 16000).toString('base64') } }]
         : [{ text: instruction ?? '' }];
       const userTurn: Content = { role: 'user', parts: userParts };
-      const transcript = audio ? this.transcribe(audio, abort.signal) : Promise.resolve(null);
+      const transcript = audio ? this.transcribe(audio, abort.signal).catch(() => null) : Promise.resolve(null);
       const working: Content[] = [...this.history, userTurn];
       let text = '';
       for (let step = 0; step < 5; step++) {
+        if (abort.signal.aborted) return;
         const parts = await this.think(working, abort.signal);
         const calls = parts.filter(p => p.functionCall);
         text = parts
@@ -136,7 +140,7 @@ export class StudioSession implements AgentSession {
       }
       if (abort.signal.aborted || turn !== this.turn) return;
       // Keep text, not audio, in the history.
-      const heard = await transcript.catch(() => null);
+      const heard = await transcript;
       if (heard) addLine(this.d.transcript, 'caller', heard);
       working[this.history.length] = { role: 'user', parts: [{ text: audio ? `(caller said) ${heard ?? '[not clear]'}` : (instruction ?? '') }] };
       this.history = working.slice(-MAX_HISTORY);
@@ -152,7 +156,7 @@ export class StudioSession implements AgentSession {
         this.end('agent_ended');
       }
     } catch (err) {
-      if (abort.signal.aborted) return;
+      if (abort.signal.aborted || (err instanceof Error && err.name === 'AbortError')) return;
       this.failures++;
       this.d.log('Studio turn failed', { error: err instanceof Error ? err.message : String(err), failures: this.failures });
       if (this.failures >= 2) {
@@ -162,7 +166,7 @@ export class StudioSession implements AgentSession {
         this.end('ai_error');
       }
     } finally {
-      if (this.abort === abort) {
+      if (this.abort === abort || !this.abort) {
         this.abort = null;
         this.busy = false;
       }
@@ -222,12 +226,22 @@ export class StudioSession implements AgentSession {
     const next: Promise<{ pcm: Int16Array; rate: number }[]>[] = [];
     if (lines[1]) next[1] = this.synth(lines[1], signal);
     next[1]?.catch(() => undefined);
-    await this.d.gemini.speak(this.opts.ttsModel, this.opts.voice, `${this.opts.style}\n${lines[0]}`, (pcm, rate) => ok() && this.d.media.play(pcm, rate), signal);
+    await this.d.gemini
+      .speak(this.opts.ttsModel, this.opts.voice, `${this.opts.style}\n${lines[0]}`, (pcm, rate) => ok() && this.d.media.play(pcm, rate), signal)
+      .catch(err => {
+        if (signal?.aborted || (err instanceof Error && err.name === 'AbortError')) return;
+        throw err;
+      });
     for (let i = 1; i < lines.length; i++) {
-      const chunks = await next[i];
+      let chunks: { pcm: Int16Array; rate: number }[] = [];
+      try {
+        chunks = (await next[i]) ?? [];
+      } catch {
+        if (!ok()) return;
+      }
       if (lines[i + 1]) {
         next[i + 1] = this.synth(lines[i + 1], signal);
-        next[i + 1].catch(() => undefined);
+        next[i + 1]?.catch(() => undefined);
       }
       if (!ok()) return;
       for (const c of chunks) this.d.media.play(c.pcm, c.rate);
@@ -236,7 +250,12 @@ export class StudioSession implements AgentSession {
 
   private async synth(line: string, signal?: AbortSignal): Promise<{ pcm: Int16Array; rate: number }[]> {
     const chunks: { pcm: Int16Array; rate: number }[] = [];
-    await this.d.gemini.speak(this.opts.ttsModel, this.opts.voice, `${this.opts.style}\n${line}`, (pcm, rate) => chunks.push({ pcm, rate }), signal);
+    try {
+      await this.d.gemini.speak(this.opts.ttsModel, this.opts.voice, `${this.opts.style}\n${line}`, (pcm, rate) => chunks.push({ pcm, rate }), signal);
+    } catch (err) {
+      if (signal?.aborted || (err instanceof Error && err.name === 'AbortError')) return chunks;
+      throw err;
+    }
     return chunks;
   }
 }

@@ -55,6 +55,12 @@ async function main(): Promise<void> {
   };
   process.on('SIGTERM', () => void stop());
   process.on('SIGINT', () => void stop());
+  process.on('unhandledRejection', (err) => {
+    logger.warn({ err: err instanceof Error ? { message: err.message, stack: err.stack } : err }, 'Unhandled promise rejection in voice process');
+  });
+  process.on('uncaughtException', (err) => {
+    logger.error({ err: err instanceof Error ? { message: err.message, stack: err.stack } : err }, 'Uncaught exception in voice process');
+  });
 }
 
 if (require.main === module) {
