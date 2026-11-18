@@ -18,7 +18,7 @@ import { AgentSession, addLine, EndReason, SessionDeps } from './session';
 export const FAST_MODEL = 'gemini-3.5-flash-lite';
 /** Keep the history small: audio of past turns is replaced by text. */
 const MAX_HISTORY = 30;
-const BARGE_IN_MS = 350;
+const BARGE_IN_MS = 600;
 
 /** Which thinking setting the brain model accepts; learned on the first call and kept. */
 let thinkingMode: 'level' | 'budget' | 'none' = 'level';
@@ -87,8 +87,8 @@ export class StudioSession implements AgentSession {
     if (this.closed || this.ending) return;
     const ev = this.vad.push(pcm);
     if (ev?.kind === 'start') this.speechStartedAt = Date.now();
-    // Barge-in: the caller has been talking for a moment while we speak or think.
-    if (this.vad.speaking && (this.d.media.playing || this.busy) && Date.now() - this.speechStartedAt > BARGE_IN_MS && this.abort) {
+    // Barge-in: the caller has been talking for a moment while we speak.
+    if (this.vad.speaking && (this.d.media.playing || (this.busy && Date.now() - this.speechStartedAt > 1000)) && Date.now() - this.speechStartedAt > BARGE_IN_MS && this.abort) {
       this.d.log('Caller interrupted');
       this.abort.abort();
       this.abort = null;
@@ -227,7 +227,7 @@ export class StudioSession implements AgentSession {
     if (lines[1]) next[1] = this.synth(lines[1], signal);
     next[1]?.catch(() => undefined);
     await this.d.gemini
-      .speak(this.opts.ttsModel, this.opts.voice, `${this.opts.style}\n${lines[0]}`, (pcm, rate) => ok() && this.d.media.play(pcm, rate), signal)
+      .speak(this.opts.ttsModel, this.opts.voice, lines[0], (pcm, rate) => ok() && this.d.media.play(pcm, rate), signal)
       .catch(err => {
         if (signal?.aborted || (err instanceof Error && err.name === 'AbortError')) return;
         throw err;
@@ -251,7 +251,7 @@ export class StudioSession implements AgentSession {
   private async synth(line: string, signal?: AbortSignal): Promise<{ pcm: Int16Array; rate: number }[]> {
     const chunks: { pcm: Int16Array; rate: number }[] = [];
     try {
-      await this.d.gemini.speak(this.opts.ttsModel, this.opts.voice, `${this.opts.style}\n${line}`, (pcm, rate) => chunks.push({ pcm, rate }), signal);
+      await this.d.gemini.speak(this.opts.ttsModel, this.opts.voice, line, (pcm, rate) => chunks.push({ pcm, rate }), signal);
     } catch (err) {
       if (signal?.aborted || (err instanceof Error && err.name === 'AbortError')) return chunks;
       throw err;
@@ -269,6 +269,6 @@ export async function synthAll(
   text: string
 ): Promise<{ pcm: Int16Array; rate: number }[]> {
   const out: { pcm: Int16Array; rate: number }[] = [];
-  await gemini.speak(model, voice, `${style}\n${text}`, (pcm, rate) => out.push({ pcm, rate }));
+  await gemini.speak(model, voice, text, (pcm, rate) => out.push({ pcm, rate }));
   return out;
 }

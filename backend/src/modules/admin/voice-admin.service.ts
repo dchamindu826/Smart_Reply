@@ -62,7 +62,7 @@ export class VoiceAdminService {
         await gemini.speak(
           settings.voiceTtsModel,
           settings.voiceTtsVoice,
-          `${speakingStyle(settings.voiceLanguage, settings.voiceStyle, settings.voiceSpeed)}\n${text}`,
+          text,
           (pcm, r) => {
             chunks.push(pcm);
             rate = r;
