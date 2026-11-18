@@ -62,10 +62,7 @@ export function withVoiceDefaults<T extends Pick<AiSettingsRow, 'voiceLiveModel'
     ...s,
     voiceLiveModel: s.voiceLiveModel.trim() || 'gemini-3.8-live',
     voiceLiveVoice: s.voiceLiveVoice.trim() || 'Kore',
-    voiceTtsModel:
-      s.voiceTtsModel.trim() === 'gemini-3.8-flash-tts'
-        ? 'gemini-3.8-flash-lite-tts'
-        : (s.voiceTtsModel.trim() || 'gemini-3.8-flash-lite-tts'),
+    voiceTtsModel: s.voiceTtsModel.trim() || 'gemini-3.8-flash-tts',
     voiceTtsVoice: s.voiceTtsVoice.trim() || 'Hali',
     voiceModel:
       s.voiceModel.trim() && !s.voiceModel.includes('-tts') && !s.voiceModel.includes('-live')
