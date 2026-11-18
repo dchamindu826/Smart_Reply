@@ -146,8 +146,8 @@ export default function AIBotScreen() {
         model: formData.model
       });
       addToast('AI bot settings saved successfully!');
-    } catch (err: any) {
-      addToast(err?.message || 'Failed to save settings.');
+    } catch (err: unknown) {
+      addToast(err instanceof Error && err.message ? err.message : 'Failed to save settings.');
     }
   };
 
@@ -389,7 +389,7 @@ export default function AIBotScreen() {
                     className="f-in"
                     style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--rule)', background: 'var(--card-2)', fontSize: '13px' }}
                     value={formData.languageMode}
-                    onChange={e => updateField('languageMode', e.target.value as any)}
+                    onChange={e => updateField('languageMode', e.target.value as AiBotSettingsSummary['languageMode'])}
                   >
                     <option value="trilingual">Trilingual (Sinhala, English, Singlish)</option>
                     <option value="sinhala">Sinhala Priority (සිංහල)</option>
@@ -664,7 +664,7 @@ export default function AIBotScreen() {
                   className="f-in"
                   style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--rule)', background: 'var(--card-2)', fontSize: '13px' }}
                   value={formData.voiceLanguage}
-                  onChange={e => updateField('voiceLanguage', e.target.value as any)}
+                  onChange={e => updateField('voiceLanguage', e.target.value as AiBotSettingsSummary['voiceLanguage'])}
                 >
                   <option value="trilingual">Trilingual (Sinhala, English, Tamil)</option>
                   <option value="sinhala">Sinhala (සිංහල)</option>

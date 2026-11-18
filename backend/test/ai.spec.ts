@@ -123,19 +123,22 @@ describe('AI bot', () => {
     expect(await db().select().from(aiBotLogs).where(eq(aiBotLogs.messageId, messageId))).toHaveLength(0);
   });
 
-  it('gives managers read-only views and no write routes', async () => {
+  it('lets managers see and edit their bot settings, but not the admin routes', async () => {
     const status = await mgr.get('/api/v1/ai/status');
     expect(status.status).toBe(200);
     expect(status.body.status).toBe('off');
     const settings = await mgr.get('/api/v1/ai/settings');
     expect(settings.status).toBe(200);
-    expect(settings.body).not.toHaveProperty('systemPrompt');
+    expect(settings.body).toHaveProperty('systemPrompt');
     expect(settings.body.knowledgeDocuments).toBe(0);
     expect((await mgr.get('/api/v1/ai/logs?channel=chat')).status).toBe(200);
     expect((await staff.get('/api/v1/ai/status')).status).toBe(403);
 
+    const saved = await mgr.put('/api/v1/ai/settings', SETTINGS);
+    expect(saved.status).toBe(200);
+    expect(saved.body.personaName).toBe(SETTINGS.personaName);
+    expect((await staff.put('/api/v1/ai/settings', SETTINGS)).status).toBe(403);
     for (const [method, path] of [
-      ['put', '/api/v1/ai/settings'],
       ['post', '/api/v1/ai/settings'],
       ['post', '/api/v1/ai/activate'],
       ['put', '/api/v1/ai/addon'],
