@@ -50,6 +50,11 @@ export class CallMedia {
       if (state === 'connected') this.startPacing();
       if (state === 'failed' || state === 'closed') this.finish(state === 'failed' ? 'media_failed' : 'closed');
     });
+    pc.iceConnectionStateChange.subscribe(state => {
+      if (state === 'disconnected' || state === 'failed' || state === 'closed') {
+        this.finish(state === 'failed' ? 'media_failed' : 'closed');
+      }
+    });
   }
 
   /** Answer an SDP offer. Resolves with the media session and our complete SDP answer. */
