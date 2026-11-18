@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { AiAddon, AiBotSettingsSummary } from '@smart-reply/shared';
 import { useApp } from '@/context/AppContext';
-import { useAiLogs, useAiSettingsSummary, useAiStatus, useRequestAiActivation } from '@/features/ai';
+import { useAiLogs, useAiSettingsSummary, useAiStatus, useRequestAiActivation, useUpdateAiSettings } from '@/features/ai';
 import { logTime, toAiLog } from '@/lib/adapters';
 import { AIBotLog } from '@/types';
 import SectionThemeToggle from '@/components/common/SectionThemeToggle';
@@ -94,7 +94,7 @@ function ActivationSheet() {
 }
 
 export default function AIBotScreen() {
-  const { role, setScreen, openSheet } = useApp();
+  const { role, setScreen, openSheet, addToast } = useApp();
   const isManager = role === 'manager';
 
   const [activeTab, setActiveTab] = useState<'chat' | 'voice' | 'logs'>('chat');
@@ -105,6 +105,51 @@ export default function AIBotScreen() {
   const settingsQ = useAiSettingsSummary(isManager);
   const allLogsQ = useAiLogs('all', isManager);
   const logsQ = useAiLogs(logChannelFilter, isManager);
+  const updateMutation = useUpdateAiSettings();
+
+  const [formData, setFormData] = useState<AiBotSettingsSummary | null>(null);
+
+  useEffect(() => {
+    if (settingsQ.data) {
+      setFormData(settingsQ.data);
+    }
+  }, [settingsQ.data]);
+
+  const updateField = <K extends keyof AiBotSettingsSummary>(key: K, value: AiBotSettingsSummary[K]) => {
+    setFormData(prev => (prev ? { ...prev, [key]: value } : prev));
+  };
+
+  const handleSave = async () => {
+    if (!formData) return;
+    try {
+      await updateMutation.mutateAsync({
+        chatBotEnabled: formData.chatBotEnabled,
+        voiceBotEnabled: formData.voiceBotEnabled,
+        chatBotMode: formData.chatBotMode,
+        personaName: formData.personaName,
+        languageMode: formData.languageMode,
+        systemPrompt: formData.systemPrompt ?? '',
+        confidenceThreshold: formData.confidenceThreshold,
+        autoHandoffOnNegotiation: formData.autoHandoffOnNegotiation,
+        autoHandoffOnComplaint: formData.autoHandoffOnComplaint,
+        autoHandoffOnStaffRequest: formData.autoHandoffOnStaffRequest,
+        welcomeMessage: formData.welcomeMessage,
+        fallbackMessage: formData.fallbackMessage,
+        voiceModel: formData.voiceModel,
+        voiceGreeting: formData.voiceGreeting,
+        autoTranscribeCalls: formData.autoTranscribeCalls,
+        autoSummarizeCalls: formData.autoSummarizeCalls,
+        missedCallAutoFollowup: formData.missedCallAutoFollowup,
+        missedCallMessageTemplate: formData.missedCallMessageTemplate,
+        voiceLanguage: formData.voiceLanguage,
+        voiceSpeed: formData.voiceSpeed,
+        model: formData.model
+      });
+      addToast('AI bot settings saved successfully!');
+    } catch (err: any) {
+      addToast(err?.message || 'Failed to save settings.');
+    }
+  };
 
   const allLogs = useMemo(() => allLogsQ.data ?? [], [allLogsQ.data]);
   const filteredLogs = useMemo(() => (logsQ.data ?? []).map(toAiLog), [logsQ.data]);
@@ -127,7 +172,7 @@ export default function AIBotScreen() {
   }
 
   const addon = statusQ.data;
-  const settings = settingsQ.data;
+  const settings = formData || settingsQ.data;
   const st = addon ? STATUS[addon.status] : null;
   const active = addon?.status === 'active';
 
@@ -169,17 +214,28 @@ export default function AIBotScreen() {
               />
               {headerChip}
             </span>
-            <span className="hint" style={{ margin: 0, fontSize: '12px' }}>
-              (Read only · managed by LUMI AI)
+            <span className="chip ok" style={{ margin: 0, fontSize: '11px' }}>
+              Manager Control
             </span>
           </div>
-          <p>Autonomous conversational intelligence for WhatsApp inquiries and incoming voice calls. Supports Sinhala, English, and Singlish.</p>
+          <p>Autonomous conversational intelligence for WhatsApp inquiries and incoming voice calls. Configure your bot settings below.</p>
         </div>
 
         <div className="acts">
           <SectionThemeToggle />
+          {formData && (
+            <button
+              type="button"
+              className="btn pri"
+              disabled={updateMutation.isPending}
+              onClick={handleSave}
+              style={{ fontWeight: 600 }}
+            >
+              {updateMutation.isPending ? 'Saving…' : 'Save AI Settings'}
+            </button>
+          )}
           {addon && !active && (
-            <button className="btn pri" onClick={() => openSheet(<ActivationSheet />)}>
+            <button className="btn sec" onClick={() => openSheet(<ActivationSheet />)}>
               {addon.requestedAt ? 'Request again' : 'Request activation'}
             </button>
           )}
@@ -189,8 +245,8 @@ export default function AIBotScreen() {
       <div className="note i">
         <span className="ic">◈</span>
         <div>
-          <b>Managed by LUMI AI</b>
-          {READ_ONLY_NOTE}
+          <b>Manager Control Panel</b>
+          You can customize and configure the AI Chat and Voice Assistant settings for your company below. Click &quot;Save AI Settings&quot; to apply your changes in real-time.
         </div>
       </div>
 
@@ -265,14 +321,18 @@ export default function AIBotScreen() {
       )}
 
       {/* TAB 1: WhatsApp & Messages Bot */}
-      {activeTab === 'chat' && settings && (
+      {activeTab === 'chat' && formData && (
         <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '16px' }}>
           <div className="card">
             <div className="card-h">
               <h2>WhatsApp Bot Engine &amp; Behavior</h2>
               <span className="sp" />
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px' }}>
-                <input type="checkbox" checked={settings.chatBotEnabled} disabled readOnly />
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={formData.chatBotEnabled}
+                  onChange={e => updateField('chatBotEnabled', e.target.checked)}
+                />
                 <b>Enable WhatsApp AI</b>
               </label>
             </div>
@@ -290,11 +350,19 @@ export default function AIBotScreen() {
                         gap: '10px',
                         padding: '10px 12px',
                         borderRadius: '8px',
-                        border: `1px solid ${settings.chatBotMode === mode.id ? 'var(--blue)' : 'var(--rule)'}`,
-                        background: settings.chatBotMode === mode.id ? 'var(--info-bg)' : 'var(--card-2)'
+                        border: `1px solid ${formData.chatBotMode === mode.id ? 'var(--blue)' : 'var(--rule)'}`,
+                        background: formData.chatBotMode === mode.id ? 'var(--info-bg)' : 'var(--card-2)',
+                        cursor: 'pointer'
                       }}
+                      onClick={() => updateField('chatBotMode', mode.id)}
                     >
-                      <input type="radio" name="botMode" checked={settings.chatBotMode === mode.id} disabled readOnly style={{ marginTop: '3px' }} />
+                      <input
+                        type="radio"
+                        name="botMode"
+                        checked={formData.chatBotMode === mode.id}
+                        onChange={() => updateField('chatBotMode', mode.id)}
+                        style={{ marginTop: '3px' }}
+                      />
                       <div>
                         <b style={{ fontSize: '13.5px', color: 'var(--ink)' }}>{mode.label}</b>
                         <p style={{ fontSize: '12px', color: 'var(--ink-2)', margin: '2px 0 0' }}>{mode.desc}</p>
@@ -307,77 +375,173 @@ export default function AIBotScreen() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>Bot Persona Name</label>
-                  <Value>{settings.personaName}</Value>
+                  <input
+                    className="f-in"
+                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--rule)', background: 'var(--card-2)', fontSize: '13px' }}
+                    value={formData.personaName}
+                    onChange={e => updateField('personaName', e.target.value)}
+                    placeholder="e.g. Assistant"
+                  />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>Language Intelligence</label>
-                  <Value>{LANG[settings.languageMode]}</Value>
+                  <select
+                    className="f-in"
+                    style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--rule)', background: 'var(--card-2)', fontSize: '13px' }}
+                    value={formData.languageMode}
+                    onChange={e => updateField('languageMode', e.target.value as any)}
+                  >
+                    <option value="trilingual">Trilingual (Sinhala, English, Singlish)</option>
+                    <option value="sinhala">Sinhala Priority (සිංහල)</option>
+                    <option value="english">English Only</option>
+                  </select>
                 </div>
               </div>
 
               <div style={{ marginBottom: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <label style={{ fontSize: '13px', fontWeight: 600 }}>AI Knowledge Base &amp; Instructions</label>
+                  <label style={{ fontSize: '13px', fontWeight: 600 }}>System Instructions &amp; Prompt</label>
                   <span className="hint" style={{ margin: 0, fontSize: '11.5px' }}>
-                    Kept by LUMI AI
+                    Company instructions
                   </span>
                 </div>
-                <Value>
-                  {settings.knowledgeDocuments} knowledge documents and {settings.trainingExamples} approved example answers. The instructions are kept private by LUMI AI.
-                </Value>
+                <textarea
+                  className="f-in"
+                  rows={4}
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--rule)', background: 'var(--card-2)', fontSize: '13px', resize: 'vertical' }}
+                  value={formData.systemPrompt ?? ''}
+                  onChange={e => updateField('systemPrompt', e.target.value)}
+                  placeholder="Instructions for your bot: company details, prices, delivery terms, tone of voice..."
+                />
               </div>
 
               <div style={{ marginBottom: '16px', background: 'var(--card-2)', padding: '12px', borderRadius: '8px', border: '1px solid var(--rule)' }}>
-                <b style={{ fontSize: '13px', display: 'block', marginBottom: '8px' }}>Safety &amp; Human Escalation Triggers</b>
+                <b style={{ fontSize: '13px', display: 'block', marginBottom: '10px' }}>Safety &amp; Human Escalation Triggers</b>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <Check on={settings.autoHandoffOnNegotiation}>Hand over to staff when customer asks for custom price discount or negotiation</Check>
-                  <Check on={settings.autoHandoffOnComplaint}>Hand over immediately on negative sentiment or complaint</Check>
-                  <Check on={settings.autoHandoffOnStaffRequest}>Hand over when customer requests human agent (&quot;talk to staff&quot;)</Check>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.autoHandoffOnNegotiation}
+                      onChange={e => updateField('autoHandoffOnNegotiation', e.target.checked)}
+                    />
+                    <span>Hand over to staff when customer asks for custom price discount or negotiation</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.autoHandoffOnComplaint}
+                      onChange={e => updateField('autoHandoffOnComplaint', e.target.checked)}
+                    />
+                    <span>Hand over immediately on negative sentiment or complaint</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12.5px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.autoHandoffOnStaffRequest}
+                      onChange={e => updateField('autoHandoffOnStaffRequest', e.target.checked)}
+                    />
+                    <span>Hand over when customer requests human agent (&quot;talk to staff&quot;)</span>
+                  </label>
                 </div>
               </div>
 
-              <p className="hint" style={{ margin: 0 }}>
-                {READ_ONLY_NOTE}
-              </p>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn pri sm"
+                  disabled={updateMutation.isPending}
+                  onClick={handleSave}
+                >
+                  {updateMutation.isPending ? 'Saving…' : 'Save Chat Bot Settings'}
+                </button>
+              </div>
             </div>
           </div>
 
           <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
             <div className="card-h">
-              <h2>Bot Replies</h2>
+              <h2>Bot Replies &amp; Model</h2>
               <span className="sp" />
-              <span className="chip">Read only</span>
+              <button
+                type="button"
+                className="btn sm pri"
+                disabled={updateMutation.isPending}
+                onClick={handleSave}
+              >
+                {updateMutation.isPending ? 'Saving…' : 'Save'}
+              </button>
             </div>
             <div className="card-b" style={{ padding: '16px' }}>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>Welcome message</label>
-              <Value>{settings.welcomeMessage}</Value>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, margin: '14px 0 6px' }}>When the bot is not sure</label>
-              <Value>{settings.fallbackMessage}</Value>
-              <div className="ln" style={{ marginTop: '14px' }}>
-                <span>Hand over below confidence</span>
-                <b>{settings.confidenceThreshold}%</b>
+              <input
+                className="f-in"
+                style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--rule)', background: 'var(--card-2)', fontSize: '13px', marginBottom: '14px' }}
+                value={formData.welcomeMessage}
+                onChange={e => updateField('welcomeMessage', e.target.value)}
+                placeholder="Leave blank for natural AI start"
+              />
+
+              <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>Fallback message (when unsure)</label>
+              <input
+                className="f-in"
+                style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--rule)', background: 'var(--card-2)', fontSize: '13px', marginBottom: '14px' }}
+                value={formData.fallbackMessage}
+                onChange={e => updateField('fallbackMessage', e.target.value)}
+              />
+
+              <div style={{ marginTop: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
+                  <span>Hand over below confidence:</span>
+                  <b>{formData.confidenceThreshold}%</b>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={formData.confidenceThreshold}
+                  onChange={e => updateField('confidenceThreshold', Number(e.target.value))}
+                  style={{ width: '100%', accentColor: 'var(--blue)' }}
+                />
               </div>
-              <div className="ln">
+
+              <div className="ln" style={{ marginTop: '16px' }}>
+                <span>Knowledge Base</span>
+                <b>{formData.knowledgeDocuments} documents · {formData.trainingExamples} examples</b>
+              </div>
+
+              <div className="ln" style={{ marginTop: '8px' }}>
                 <span>AI model</span>
-                <b>{settings.model || 'Chosen by LUMI AI'}</b>
+                <b>{formData.model || 'Platform default (Gemini)'}</b>
               </div>
-              <p className="hint" style={{ marginTop: '12px' }}>
-                Testing the bot is done by LUMI AI. {READ_ONLY_NOTE}
-              </p>
+
+              <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn pri sm"
+                  disabled={updateMutation.isPending}
+                  onClick={handleSave}
+                >
+                  {updateMutation.isPending ? 'Saving…' : 'Save Changes'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {/* TAB 2: Voice & Call Assistant */}
-      {activeTab === 'voice' && settings && (
+      {activeTab === 'voice' && formData && (
         <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '16px' }}>
           <div className="card">
             <div className="card-h">
               <h2>AI Voice Receptionist &amp; Call Handling</h2>
               <span className="sp" />
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px' }}>
-                <input type="checkbox" checked={settings.voiceBotEnabled} disabled readOnly />
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={formData.voiceBotEnabled}
+                  onChange={e => updateField('voiceBotEnabled', e.target.checked)}
+                />
                 <b>Enable AI Call Receptionist</b>
               </label>
             </div>
@@ -385,7 +549,13 @@ export default function AIBotScreen() {
             <div className="card-b" style={{ padding: '16px' }}>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>AI Voice Model &amp; Tone</label>
-                <Value>{settings.voiceModel}</Value>
+                <input
+                  className="f-in"
+                  style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--rule)', background: 'var(--card-2)', fontSize: '13px' }}
+                  value={formData.voiceModel}
+                  onChange={e => updateField('voiceModel', e.target.value)}
+                  placeholder="e.g. gemini-2.5-flash-preview-tts"
+                />
               </div>
 
               <div style={{ marginBottom: '16px' }}>
@@ -395,62 +565,144 @@ export default function AIBotScreen() {
                     Spoken automatically when customer calls
                   </span>
                 </div>
-                <Value>{settings.voiceGreeting}</Value>
+                <textarea
+                  className="f-in"
+                  rows={3}
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--rule)', background: 'var(--card-2)', fontSize: '13px', resize: 'vertical' }}
+                  value={formData.voiceGreeting}
+                  onChange={e => updateField('voiceGreeting', e.target.value)}
+                  placeholder="Hello! Welcome to our company. How can I help you today?"
+                />
               </div>
 
               <div style={{ background: 'var(--card-2)', padding: '14px', borderRadius: '8px', border: '1px solid var(--rule)', marginBottom: '16px' }}>
                 <b style={{ fontSize: '13px', display: 'block', marginBottom: '10px' }}>Real-time Call Automation Features</b>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <Check on={settings.autoTranscribeCalls}>
-                    <b>Live Speech-to-Text Transcription</b>
-                    <p style={{ margin: 0, fontSize: '11.5px', color: 'var(--ink-2)' }}>Transcribes Sinhala and English speech for call logs.</p>
-                  </Check>
-                  <Check on={settings.autoSummarizeCalls}>
-                    <b>Automatic Call Summaries &amp; Next Steps</b>
-                    <p style={{ margin: 0, fontSize: '11.5px', color: 'var(--ink-2)' }}>A short summary with action items after every call.</p>
-                  </Check>
-                  <Check on={settings.missedCallAutoFollowup}>
-                    <b>Missed-Call Instant WhatsApp Recovery</b>
-                    <p style={{ margin: 0, fontSize: '11.5px', color: 'var(--ink-2)' }}>
-                      If a caller hangs up before answering or lines are busy, a WhatsApp message is sent.
-                    </p>
-                  </Check>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12.5px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.autoTranscribeCalls}
+                      onChange={e => updateField('autoTranscribeCalls', e.target.checked)}
+                      style={{ marginTop: '2px' }}
+                    />
+                    <div>
+                      <b>Live Speech-to-Text Transcription</b>
+                      <p style={{ margin: 0, fontSize: '11.5px', color: 'var(--ink-2)' }}>Transcribes Sinhala and English speech for call logs.</p>
+                    </div>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12.5px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.autoSummarizeCalls}
+                      onChange={e => updateField('autoSummarizeCalls', e.target.checked)}
+                      style={{ marginTop: '2px' }}
+                    />
+                    <div>
+                      <b>Automatic Call Summaries &amp; Next Steps</b>
+                      <p style={{ margin: 0, fontSize: '11.5px', color: 'var(--ink-2)' }}>A short summary with action items after every call.</p>
+                    </div>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', fontSize: '12.5px', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.missedCallAutoFollowup}
+                      onChange={e => updateField('missedCallAutoFollowup', e.target.checked)}
+                      style={{ marginTop: '2px' }}
+                    />
+                    <div>
+                      <b>Missed-Call Instant WhatsApp Recovery</b>
+                      <p style={{ margin: 0, fontSize: '11.5px', color: 'var(--ink-2)' }}>
+                        If a caller hangs up before answering or lines are busy, a WhatsApp message is sent.
+                      </p>
+                    </div>
+                  </label>
                 </div>
               </div>
 
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>Missed Call Recovery WhatsApp Message</label>
-                <Value>{settings.missedCallMessageTemplate}</Value>
+                <textarea
+                  className="f-in"
+                  rows={3}
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--rule)', background: 'var(--card-2)', fontSize: '13px', resize: 'vertical' }}
+                  value={formData.missedCallMessageTemplate}
+                  onChange={e => updateField('missedCallMessageTemplate', e.target.value)}
+                  placeholder="Sorry we missed your call! How can our team help you today?"
+                />
               </div>
 
-              <p className="hint" style={{ margin: 0 }}>
-                {READ_ONLY_NOTE}
-              </p>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn pri sm"
+                  disabled={updateMutation.isPending}
+                  onClick={handleSave}
+                >
+                  {updateMutation.isPending ? 'Saving…' : 'Save Voice Settings'}
+                </button>
+              </div>
             </div>
           </div>
 
           <div className="card">
             <div className="card-h">
-              <h2>Voice Settings</h2>
+              <h2>Voice Configuration</h2>
               <span className="sp" />
-              <span className="chip">Read only</span>
+              <button
+                type="button"
+                className="btn sm pri"
+                disabled={updateMutation.isPending}
+                onClick={handleSave}
+              >
+                {updateMutation.isPending ? 'Saving…' : 'Save'}
+              </button>
             </div>
             <div className="card-b" style={{ padding: '16px' }}>
-              <div className="ln">
-                <span>Voice language</span>
-                <b>{LANG[settings.voiceLanguage]}</b>
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>Voice language</label>
+                <select
+                  className="f-in"
+                  style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--rule)', background: 'var(--card-2)', fontSize: '13px' }}
+                  value={formData.voiceLanguage}
+                  onChange={e => updateField('voiceLanguage', e.target.value as any)}
+                >
+                  <option value="trilingual">Trilingual (Sinhala, English, Tamil)</option>
+                  <option value="sinhala">Sinhala (සිංහල)</option>
+                  <option value="english">English</option>
+                </select>
               </div>
-              <div className="ln">
-                <span>Speaking speed</span>
-                <b>{settings.voiceSpeed}×</b>
+
+              <div style={{ marginTop: '14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
+                  <span>Speaking speed:</span>
+                  <b>{formData.voiceSpeed.toFixed(2)}×</b>
+                </div>
+                <input
+                  type="range"
+                  min={0.8}
+                  max={1.2}
+                  step={0.05}
+                  value={formData.voiceSpeed}
+                  onChange={e => updateField('voiceSpeed', Number(e.target.value))}
+                  style={{ width: '100%', accentColor: 'var(--blue)' }}
+                />
               </div>
-              <div className="ln">
+
+              <div className="ln" style={{ marginTop: '16px' }}>
                 <span>AI call receptionist</span>
-                <b>{settings.voiceBotEnabled ? 'On' : 'Off'}</b>
+                <b>{formData.voiceBotEnabled ? 'Enabled' : 'Disabled'}</b>
               </div>
-              <p className="hint" style={{ marginTop: '12px' }}>
-                The AI answers live calls once the call media server is added. Testing the voice bot is done by LUMI AI. {READ_ONLY_NOTE}
-              </p>
+
+              <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn pri sm"
+                  disabled={updateMutation.isPending}
+                  onClick={handleSave}
+                >
+                  {updateMutation.isPending ? 'Saving…' : 'Save Changes'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

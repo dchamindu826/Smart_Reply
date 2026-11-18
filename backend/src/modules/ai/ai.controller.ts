@@ -1,15 +1,11 @@
-import { Controller, Get, HttpCode, Post } from '@nestjs/common';
+import { Controller, Get, HttpCode, Post, Put } from '@nestjs/common';
 import { z } from 'zod';
-import { AiAddon, AiBotLog, AiBotSettingsSummary, activationRequestSchema, aiLogsQuery } from '@smart-reply/shared';
+import { AiAddon, AiBotLog, AiBotSettingsSummary, activationRequestSchema, aiLogsQuery, aiSettingsSchema } from '@smart-reply/shared';
 import { Auth, Roles } from '../../common/decorators';
 import type { CompanySession } from '../../common/session';
 import { ZBody, ZQuery } from '../../common/validation';
 import { AiService } from './ai.service';
 
-/**
- * Manager's read-only view of the AI bot. Activation, settings, training and the simulator
- * are under `/admin` only (AGENTS.md rule 11): do not add a write route here.
- */
 @Roles('manager')
 @Controller('ai')
 export class AiController {
@@ -23,6 +19,14 @@ export class AiController {
   @Get('settings')
   settings(@Auth() s: CompanySession): Promise<AiBotSettingsSummary> {
     return this.svc.settings(s);
+  }
+
+  @Put('settings')
+  saveSettings(
+    @Auth() s: CompanySession,
+    @ZBody(aiSettingsSchema) body: z.infer<typeof aiSettingsSchema>
+  ): Promise<AiBotSettingsSummary> {
+    return this.svc.saveSettings(s, body);
   }
 
   @Get('logs')

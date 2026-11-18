@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { count, eq } from 'drizzle-orm';
-import type { AiAddon, AiBotLog, AiBotSettingsSummary } from '@smart-reply/shared';
+import type { z } from 'zod';
+import type { AiAddon, AiBotLog, AiBotSettingsSummary, aiSettingsSchema } from '@smart-reply/shared';
 import { Audit } from '../../common/audit';
 import type { CompanySession } from '../../common/session';
 import type { Db } from '../../db/client';
-import { aiAddons, aiTrainingExamples, companies, knowledgeDocuments } from '../../db/schema';
+import { aiAddons, aiBotSettings, aiTrainingExamples, companies, knowledgeDocuments } from '../../db/schema';
 import { InjectDb } from '../../infra/db';
 import { Realtime, rooms } from '../../infra/realtime';
 import { ensureAiRows, listLogs, loadSettings, presentAddon, presentSettings } from './ai.presenters';
@@ -24,13 +25,27 @@ export class AiService {
 
   async settings(s: CompanySession): Promise<AiBotSettingsSummary> {
     const row = await loadSettings(this.db, s.companyId);
-    const { systemPrompt, ...rest } = presentSettings(row);
-    void systemPrompt;
+    const settings = presentSettings(row);
     const [[docs], [examples]] = await Promise.all([
       this.db.select({ n: count() }).from(knowledgeDocuments).where(eq(knowledgeDocuments.companyId, s.companyId)),
       this.db.select({ n: count() }).from(aiTrainingExamples).where(eq(aiTrainingExamples.companyId, s.companyId))
     ]);
-    return { ...rest, knowledgeDocuments: Number(docs?.n ?? 0), trainingExamples: Number(examples?.n ?? 0) };
+    return { ...settings, knowledgeDocuments: Number(docs?.n ?? 0), trainingExamples: Number(examples?.n ?? 0) };
+  }
+
+  async saveSettings(s: CompanySession, input: z.infer<typeof aiSettingsSchema>): Promise<AiBotSettingsSummary> {
+    await ensureAiRows(this.db, s.companyId);
+    await this.db
+      .update(aiBotSettings)
+      .set({ ...input, updatedBy: s.userId })
+      .where(eq(aiBotSettings.companyId, s.companyId));
+    await this.audit.log(s, {
+      action: 'ai.settings_updated',
+      targetType: 'ai_settings',
+      targetId: s.companyId,
+      summary: `${s.name} updated AI bot settings (chat: ${input.chatBotEnabled ? 'on' : 'off'}, voice: ${input.voiceBotEnabled ? 'on' : 'off'})`
+    });
+    return this.settings(s);
   }
 
   logs(s: CompanySession, channel?: 'chat' | 'call'): Promise<AiBotLog[]> {

@@ -40,6 +40,10 @@ export class ProviderError extends Error {
 
 const answerSchema = z.object({
   reply: z.coerce.string().default(''),
+  response: z.coerce.string().optional(),
+  message: z.coerce.string().optional(),
+  text: z.coerce.string().optional(),
+  answer: z.coerce.string().optional(),
   intent: z.coerce.string().default('unknown'),
   confidence: z.coerce.number().default(0),
   handoff: z
@@ -69,8 +73,9 @@ export function parseAnswer(text: string): BotAnswer | null {
     let confidence = Number.isFinite(a.confidence) ? a.confidence : 0;
     // Some models answer 0–1 instead of 0–100.
     if (confidence > 0 && confidence <= 1 && !Number.isInteger(confidence)) confidence *= 100;
+    const replyText = a.reply || a.response || a.message || a.text || a.answer || '';
     return {
-      reply: a.reply.trim(),
+      reply: replyText.trim(),
       intent: a.intent.trim().slice(0, 60) || 'unknown',
       confidence: Math.max(0, Math.min(100, Math.round(confidence))),
       handoff: a.handoff,

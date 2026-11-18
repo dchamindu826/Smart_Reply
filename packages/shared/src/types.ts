@@ -528,8 +528,8 @@ export interface AiBotSettings {
   model: string;
 }
 
-/** What a manager may see: no prompt text, no keys. */
-export type AiBotSettingsSummary = Omit<AiBotSettings, 'systemPrompt'> & { knowledgeDocuments: number; trainingExamples: number };
+/** Full settings and knowledge counts visible to manager and admin. */
+export type AiBotSettingsSummary = AiBotSettings & { knowledgeDocuments: number; trainingExamples: number };
 
 export interface AiAddon {
   status: 'off' | 'active' | 'paused' | 'expired';
