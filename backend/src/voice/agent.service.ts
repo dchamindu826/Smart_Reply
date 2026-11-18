@@ -32,7 +32,7 @@ import { ToolContext, VoiceTools, toolDeclarations } from './tools';
 
 type AiSettingsRow = Awaited<ReturnType<typeof loadSettings>>;
 
-export const DEFAULT_BRAIN_MODEL = 'gemini-3.8-flash';
+export const DEFAULT_BRAIN_MODEL = 'gemini-3.5-flash-lite';
 const GREETING_WAIT_MS = 4000;
 /** A call older than this is not answered any more (Meta gives up on ringing calls). */
 const STALE_MS = 75_000;

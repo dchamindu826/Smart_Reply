@@ -34,7 +34,7 @@ export interface StudioOptions {
 }
 
 export class StudioSession implements AgentSession {
-  private readonly vad = new Vad({ endSilenceMs: 650, startMs: 100 });
+  private readonly vad = new Vad({ endSilenceMs: 450, startMs: 100 });
   private history: Content[] = [];
   private turn = 0;
   private abort: AbortController | null = null;
@@ -179,8 +179,8 @@ export class StudioSession implements AgentSession {
       contents,
       tools: this.d.declarations.length ? [{ functionDeclarations: this.d.declarations }] : undefined,
       generationConfig: {
-        temperature: 0.5,
-        maxOutputTokens: 400,
+        temperature: 0.4,
+        maxOutputTokens: 150,
         ...(mode === 'level' ? { thinkingConfig: { thinkingLevel: 'minimal' } } : mode === 'budget' ? { thinkingConfig: { thinkingBudget: 0 } } : {})
       }
     });
