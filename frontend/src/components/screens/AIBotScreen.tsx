@@ -548,13 +548,13 @@ export default function AIBotScreen() {
 
             <div className="card-b" style={{ padding: '16px' }}>
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>AI Voice Model &amp; Tone</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, marginBottom: '6px' }}>AI Thinking Model (Brain)</label>
                 <input
                   className="f-in"
                   style={{ width: '100%', padding: '7px 10px', borderRadius: '6px', border: '1px solid var(--rule)', background: 'var(--card-2)', fontSize: '13px' }}
                   value={formData.voiceModel}
                   onChange={e => updateField('voiceModel', e.target.value)}
-                  placeholder="e.g. gemini-2.5-flash-preview-tts"
+                  placeholder="e.g. gemini-3.8-flash"
                 />
               </div>
 

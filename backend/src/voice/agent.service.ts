@@ -64,7 +64,10 @@ export function withVoiceDefaults<T extends Pick<AiSettingsRow, 'voiceLiveModel'
     voiceLiveVoice: s.voiceLiveVoice.trim() || 'Kore',
     voiceTtsModel: s.voiceTtsModel.trim() || 'gemini-3.8-flash-tts',
     voiceTtsVoice: s.voiceTtsVoice.trim() || 'Hali',
-    voiceModel: s.voiceModel.trim() || DEFAULT_BRAIN_MODEL
+    voiceModel:
+      s.voiceModel.trim() && !s.voiceModel.includes('-tts') && !s.voiceModel.includes('-live')
+        ? s.voiceModel.trim()
+        : DEFAULT_BRAIN_MODEL
   };
 }
 
@@ -294,7 +297,10 @@ export class VoiceAgent {
     };
     const studio = () =>
       new StudioSession(deps, {
-        brainModel: prep.settings.voiceModel.trim() || DEFAULT_BRAIN_MODEL,
+        brainModel:
+          prep.settings.voiceModel.trim() && !prep.settings.voiceModel.includes('-tts')
+            ? prep.settings.voiceModel.trim()
+            : DEFAULT_BRAIN_MODEL,
         ttsModel: prep.settings.voiceTtsModel,
         voice: prep.settings.voiceTtsVoice,
         style: prep.style,
