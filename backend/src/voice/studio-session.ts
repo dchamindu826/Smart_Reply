@@ -12,13 +12,12 @@
  */
 import { Content, GeminiError, Part } from './gemini';
 import { Vad, wav } from './audio';
-import { sentences } from './prompt';
 import { AgentSession, addLine, EndReason, SessionDeps } from './session';
 
 export const FAST_MODEL = 'gemini-3.5-flash-lite';
 /** Keep the history small: audio of past turns is replaced by text. */
 const MAX_HISTORY = 30;
-const BARGE_IN_MS = 600;
+const BARGE_IN_MS = 700;
 
 /** Which thinking setting the brain model accepts; learned on the first call and kept. */
 let thinkingMode: 'level' | 'budget' | 'none' = 'level';
@@ -34,12 +33,11 @@ export interface StudioOptions {
 }
 
 export class StudioSession implements AgentSession {
-  private readonly vad = new Vad({ endSilenceMs: 450, startMs: 100 });
+  private readonly vad = new Vad({ endSilenceMs: 800, startMs: 100 });
   private history: Content[] = [];
   private turn = 0;
   private abort: AbortController | null = null;
   private speechStartedAt = 0;
-  private busy = false;
   private failures = 0;
   private ending = false;
   private closed = false;
@@ -87,15 +85,15 @@ export class StudioSession implements AgentSession {
     if (this.closed || this.ending) return;
     const ev = this.vad.push(pcm);
     if (ev?.kind === 'start') this.speechStartedAt = Date.now();
-    // Barge-in: the caller has been talking for a moment while we speak.
-    if (this.vad.speaking && (this.d.media.playing || (this.busy && Date.now() - this.speechStartedAt > 1000)) && Date.now() - this.speechStartedAt > BARGE_IN_MS && this.abort) {
+    // Barge-in: the caller has been talking for a moment while we are speaking.
+    // Only abort if we are actively playing media (never abort while merely thinking, to avoid background noise cancelling replies).
+    if (this.vad.speaking && this.d.media.playing && Date.now() - this.speechStartedAt > BARGE_IN_MS && this.abort) {
       this.d.log('Caller interrupted');
       this.abort.abort();
       this.abort = null;
-      this.busy = false;
       this.d.media.clearPlayback();
     }
-    if (ev?.kind === 'end' && ev.audio.length > 16000 * 0.3) {
+    if (ev?.kind === 'end' && ev.audio.length > 16000 * 0.4) {
       const turn = ++this.turn;
       void this.reply(turn, null, ev.audio).catch(err => {
         if (!this.closed) this.d.log('Turn reply error', { error: err instanceof Error ? err.message : String(err) });
@@ -108,7 +106,6 @@ export class StudioSession implements AgentSession {
     this.abort?.abort();
     const abort = new AbortController();
     this.abort = abort;
-    this.busy = true;
     const started = Date.now();
     try {
       const userParts: Part[] = audio
@@ -168,7 +165,6 @@ export class StudioSession implements AgentSession {
     } finally {
       if (this.abort === abort || !this.abort) {
         this.abort = null;
-        this.busy = false;
       }
     }
   }
@@ -218,45 +214,25 @@ export class StudioSession implements AgentSession {
     );
   }
 
-  /** Speak text: the first sentence streams straight to the caller; the next is made meanwhile. */
+  /** Speak text: streams straight to the caller via SSE audio chunks. */
   private async say(text: string, turn: number, signal?: AbortSignal): Promise<void> {
-    const lines = sentences(text);
-    if (!lines.length) return;
+    const trimmed = text.trim();
+    if (!trimmed) return;
     const ok = () => !signal?.aborted && turn === this.turn && !this.closed;
-    const next: Promise<{ pcm: Int16Array; rate: number }[]>[] = [];
-    if (lines[1]) next[1] = this.synth(lines[1], signal);
-    next[1]?.catch(() => undefined);
-    await this.d.gemini
-      .speak(this.opts.ttsModel, this.opts.voice, lines[0], (pcm, rate) => ok() && this.d.media.play(pcm, rate), signal)
-      .catch(err => {
-        if (signal?.aborted || (err instanceof Error && err.name === 'AbortError')) return;
-        throw err;
-      });
-    for (let i = 1; i < lines.length; i++) {
-      let chunks: { pcm: Int16Array; rate: number }[] = [];
-      try {
-        chunks = (await next[i]) ?? [];
-      } catch {
-        if (!ok()) return;
-      }
-      if (lines[i + 1]) {
-        next[i + 1] = this.synth(lines[i + 1], signal);
-        next[i + 1]?.catch(() => undefined);
-      }
-      if (!ok()) return;
-      for (const c of chunks) this.d.media.play(c.pcm, c.rate);
-    }
-  }
-
-  private async synth(line: string, signal?: AbortSignal): Promise<{ pcm: Int16Array; rate: number }[]> {
-    const chunks: { pcm: Int16Array; rate: number }[] = [];
     try {
-      await this.d.gemini.speak(this.opts.ttsModel, this.opts.voice, line, (pcm, rate) => chunks.push({ pcm, rate }), signal);
+      await this.d.gemini.speak(
+        this.opts.ttsModel,
+        this.opts.voice,
+        trimmed,
+        (pcm, rate) => {
+          if (ok()) this.d.media.play(pcm, rate);
+        },
+        signal
+      );
     } catch (err) {
-      if (signal?.aborted || (err instanceof Error && err.name === 'AbortError')) return chunks;
+      if (signal?.aborted || (err instanceof Error && err.name === 'AbortError')) return;
       throw err;
     }
-    return chunks;
   }
 }
 
