@@ -15,7 +15,7 @@ import { InjectDb } from '../../infra/db';
 import { Queues } from '../../infra/queues';
 import { Platform } from '../../meta/platform';
 import { loadSettings } from '../ai/ai.presenters';
-import { speakingStyle, withVoiceDefaults } from '../../voice/agent.service';
+import { withVoiceDefaults } from '../../voice/agent.service';
 import { concatPcm, wav } from '../../voice/audio';
 import { VoiceBus } from '../../voice/bus';
 import { Gemini, GeminiError, liveSetup } from '../../voice/gemini';

@@ -265,7 +265,7 @@ export async function synthAll(
   gemini: SessionDeps['gemini'],
   model: string,
   voice: string,
-  style: string,
+  _style: string,
   text: string
 ): Promise<{ pcm: Int16Array; rate: number }[]> {
   const out: { pcm: Int16Array; rate: number }[] = [];
