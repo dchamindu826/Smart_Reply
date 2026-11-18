@@ -54,7 +54,9 @@ export class StudioSession implements AgentSession {
     if (this.opts.greetingAudio?.length) {
       for (const c of this.opts.greetingAudio) this.d.media.play(c.pcm, c.rate);
     } else {
-      await this.say(this.d.greeting, this.turn);
+      await this.say(this.d.greeting, this.turn).catch(err => {
+        this.d.log('Greeting say failed', { error: err instanceof Error ? err.message : String(err) });
+      });
     }
   }
 

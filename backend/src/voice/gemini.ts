@@ -106,6 +106,12 @@ export class Gemini {
       signal: signal ?? AbortSignal.timeout(30_000)
     });
     if (!res.ok || !res.body) {
+      if (res.status === 429 && model === 'gemini-3.8-flash-tts') {
+        return this.speak('gemini-3.8-flash-lite-tts', voice, prompt, onAudio, signal);
+      }
+      if (res.status === 429 && model === 'gemini-3.8-flash-lite-tts') {
+        return this.speak('gemini-3.8-flash-tts', voice, prompt, onAudio, signal);
+      }
       const data = (await res.json().catch(() => ({}))) as GenerateResponse;
       throw new GeminiError(`Gemini TTS HTTP ${res.status}: ${(data.error?.message ?? '').slice(0, 300)}`, res.status);
     }
