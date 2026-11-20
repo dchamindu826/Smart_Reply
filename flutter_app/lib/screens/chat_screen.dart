@@ -103,11 +103,11 @@ class _ChatScreenState extends State<ChatScreen> {
     if (choice == null) return;
     final caption = _text.text.trim();
     if (choice == 'doc') {
-      final res = await FilePicker.platform.pickFiles();
-      final path = res?.files.single.path;
-      if (path == null) return;
+      final file = await FilePicker.pickFile();
+      final path = file?.path;
+      if (file == null || path == null) return;
       _text.clear();
-      await _sendFile(File(path), caption: caption, name: res!.files.single.name);
+      await _sendFile(File(path), caption: caption, name: file.name);
       return;
     }
     final picker = ImagePicker();
