@@ -1,0 +1,55 @@
+# One-time: makes flutter_app/android and flutter_app/ios (Flutter creates them) with
+# Smart Reply's app id, name, permissions and push settings, then commits them here.
+# Start it from GitHub → Actions → "Flutter app setup (run once)" → Run workflow.
+# Safe to run again: it only adds what is missing.
+
+name: Flutter app setup (run once)
+
+on: workflow_dispatch
+
+permissions:
+  contents: write
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: flutter_app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Create android/ and ios/
+        run: |
+          flutter create . --org lk.lumiai --project-name smart_reply --platforms android,ios
+          # Flutter's counter-app sample test does not belong to this app
+          if grep -q "MyApp" test/widget_test.dart 2>/dev/null; then rm test/widget_test.dart; fi
+
+      - name: Smart Reply settings (app id, permissions, push)
+        run: python3 ../.github/scripts/flutter_platform_setup.py
+
+      - name: Packages
+        run: flutter pub get
+
+      - name: Code check (problems are listed, they do not stop the setup)
+        run: |
+          flutter analyze --no-fatal-infos --no-fatal-warnings > analyze.txt 2>&1 || true
+          cat analyze.txt
+          { echo '### flutter analyze'; echo '```'; tail -n 80 analyze.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          rm analyze.txt
+
+      - name: Commit the new folders
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A .
+          if git diff --cached --quiet; then echo "Nothing new to commit."; exit 0; fi
+          git commit -m "chore(flutter_app): add android and ios folders"
+          git push
+          echo "Done. Pull on your PC: git pull" >> "$GITHUB_STEP_SUMMARY"

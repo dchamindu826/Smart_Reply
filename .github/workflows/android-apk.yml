@@ -1,0 +1,50 @@
+# Build the Smart Reply Android app (APK) on GitHub — no Flutter needed on your PC.
+# Start it from GitHub → Actions → "Android APK" → Run workflow.
+# When it finishes, open the run and download "smart-reply-apk" under Artifacts.
+# Run "Flutter app setup (run once)" first.
+
+name: Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: Server the app talks to
+        default: https://smartreply.lumi-automation.com
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: flutter_app
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the app is set up
+        run: |
+          if [ ! -d android ]; then echo "::error::flutter_app/android is missing. Run the 'Flutter app setup (run once)' workflow first."; exit 1; fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Build APK
+        run: |
+          flutter pub get
+          flutter build apk --release \
+            --build-number=$((100 + GITHUB_RUN_NUMBER)) \
+            --dart-define=API_URL=${{ github.event.inputs.api_url }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smart-reply-apk
+          path: flutter_app/build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 14

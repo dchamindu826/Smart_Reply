@@ -1,0 +1,117 @@
+# Build the Smart Reply iOS app on GitHub's Mac and upload it to TestFlight.
+# Start it from GitHub → Actions → "iOS → TestFlight" → Run workflow. No Mac needed.
+#
+# One-time setup (GitHub → repo → Settings → Secrets and variables → Actions):
+#   Secrets:   ASC_KEY_ID        App Store Connect API key ID (key with Admin access)
+#              ASC_ISSUER_ID     Issuer ID shown above the keys list
+#              ASC_KEY_P8        the whole text of the AuthKey_XXXX.p8 file
+#   Variables: APPLE_TEAM_ID     developer.apple.com → Membership → Team ID
+#              BUNDLE_ID         lk.lumiai.smartreply
+# Signing is automatic: Xcode creates the certificate and profile with the API key.
+
+name: iOS → TestFlight
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: Server the app talks to
+        default: https://smartreply.lumi-automation.com
+
+jobs:
+  ios:
+    runs-on: macos-26
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: flutter_app
+    env:
+      BUNDLE_ID: ${{ vars.BUNDLE_ID }}
+      TEAM_ID: ${{ vars.APPLE_TEAM_ID }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # Apple needs apps built with Xcode 26 or later
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Check settings
+        run: |
+          # TestFlight needs a higher build number every time.
+          echo "BUILD_NUMBER=$((100 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
+          for v in BUNDLE_ID TEAM_ID ASC_KEY_ID ASC_ISSUER_ID; do
+            if [ -z "${!v}" ]; then echo "::error::$v is not set. See the top of this file."; exit 1; fi
+          done
+
+      - name: App Store Connect key
+        run: |
+          mkdir -p ~/private_keys
+          printf '%s' "${{ secrets.ASC_KEY_P8 }}" > ~/private_keys/AuthKey_${ASC_KEY_ID}.p8
+          echo "ASC_KEY_PATH=$HOME/private_keys/AuthKey_${ASC_KEY_ID}.p8" >> "$GITHUB_ENV"
+
+      - name: Bundle ID
+        run: |
+          if [ ! -d ios ]; then echo "::error::flutter_app/ios is missing. Run the 'Flutter app setup (run once)' workflow first."; exit 1; fi
+          sed -i '' "s/lk\.lumiai\.smartreply/${BUNDLE_ID}/g" ios/Runner.xcodeproj/project.pbxproj
+
+      - name: Packages
+        run: |
+          flutter pub get
+          # Firebase versions are chosen fresh every build (an old Podfile.lock pins old ones)
+          cd ios && rm -f Podfile.lock && pod install --repo-update
+
+      - name: Flutter build settings
+        run: |
+          flutter build ios --config-only --release \
+            --build-number=${BUILD_NUMBER} \
+            --dart-define=API_URL=${{ github.event.inputs.api_url }}
+
+      - name: Archive (automatic signing)
+        run: |
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID" \
+            CODE_SIGN_STYLE=Automatic DEVELOPMENT_TEAM="$TEAM_ID" \
+            archive | tail -n 200
+
+      - name: Upload to TestFlight
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>${TEAM_ID}</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+            <key>uploadSymbols</key><true/>
+          </dict>
+          </plist>
+          PLIST
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/Runner.xcarchive" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$ASC_KEY_PATH" \
+            -authenticationKeyID "$ASC_KEY_ID" \
+            -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+          echo "Uploaded build ${BUILD_NUMBER}. It shows in TestFlight after Apple processes it (10–30 min)."
+
+      - name: Remove the key
+        if: always()
+        run: rm -rf ~/private_keys

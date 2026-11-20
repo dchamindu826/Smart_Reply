@@ -6,11 +6,12 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import '../firebase_options.dart';
 import 'api.dart';
 
 /// Push notifications through Firebase Cloud Messaging (Android and iOS).
-/// Needs `google-services.json` (Android) and `GoogleService-Info.plist` (iOS) from your
-/// Firebase project; without them the app works and simply gets no push.
+/// Settings live in lib/firebase_options.dart; while they are empty the app works
+/// and simply gets no push.
 class Push {
   static bool ready = false;
   static final _local = FlutterLocalNotificationsPlugin();
@@ -19,7 +20,12 @@ class Push {
 
   static Future<void> init() async {
     try {
-      await Firebase.initializeApp();
+      final options = FirebaseConfig.current;
+      if (options == null) {
+        debugPrint('Push off: fill lib/firebase_options.dart');
+        return;
+      }
+      await Firebase.initializeApp(options: options);
       await _local.initialize(
         const InitializationSettings(
           android: AndroidInitializationSettings('@mipmap/ic_launcher'),
@@ -68,6 +74,12 @@ class Push {
     try {
       final settings = await FirebaseMessaging.instance.requestPermission();
       if (settings.authorizationStatus == AuthorizationStatus.denied) return;
+      if (Platform.isIOS) {
+        // iOS gives the Apple push token a moment after permission; FCM needs it first
+        for (var i = 0; i < 15 && await FirebaseMessaging.instance.getAPNSToken() == null; i++) {
+          await Future<void>.delayed(const Duration(seconds: 1));
+        }
+      }
       final token = await FirebaseMessaging.instance.getToken();
       if (token == null) return;
       await api.post('/me/devices', {'platform': Platform.isIOS ? 'ios' : 'android', 'pushToken': token});
