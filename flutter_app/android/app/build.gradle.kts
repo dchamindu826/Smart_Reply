@@ -30,6 +30,14 @@ android {
         versionName = flutter.versionName
     }
 
+    // The release lint check crashes inside lint itself on some plugins
+    // (firebase_core: "Unexpected failure during lint analysis"). It is not
+    // needed to build the app, so release builds skip it.
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.

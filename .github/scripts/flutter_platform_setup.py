@@ -51,6 +51,9 @@ if "isCoreLibraryDesugaringEnabled" not in g:
     g = g.replace("compileOptions {", "compileOptions {\n        isCoreLibraryDesugaringEnabled = true", 1)
 if "desugar_jdk_libs" not in g:
     g += '\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n}\n'
+if "checkReleaseBuilds" not in g:
+    # release lint crashes inside lint on some plugins; it is not needed to build
+    g = g.replace("    buildTypes {", "    lint {\n        checkReleaseBuilds = false\n        abortOnError = false\n    }\n\n    buildTypes {", 1)
 gradle.write_text(g)
 
 # ─── iOS ───────────────────────────────────────────────────────
