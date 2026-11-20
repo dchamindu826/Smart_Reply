@@ -34,7 +34,7 @@ class ServerConfig {
 
 /// Access and refresh tokens, kept in the phone's secure storage.
 class TokenStore {
-  static const _storage = FlutterSecureStorage(aOptions: AndroidOptions(encryptedSharedPreferences: true));
+  static const _storage = FlutterSecureStorage();
   String? access;
   String? refresh;
 
