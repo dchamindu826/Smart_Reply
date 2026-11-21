@@ -358,7 +358,7 @@ export class CallsEngine {
     });
     // Devices rung in an earlier round stop ringing.
     if (round > 0) await this.core.emitUpdated(u);
-    await this.push.notify(userIds, call.contact.name, 'Incoming WhatsApp call', { kind: 'call', callId: u.id });
+    await this.push.ringing(userIds, { id: u.id, name: call.contact.name, phone: call.contact.phone });
     const st = await this.core.settings(u.companyId);
     const remaining = RING_WINDOW_MS + 10_000 - (Date.now() - u.startedAt.getTime());
     const delay = Math.max(5_000, Math.min(st.ringSeconds * 1000, remaining));

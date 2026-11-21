@@ -56,6 +56,14 @@ const envSchema = z.object({
   META_GRAPH_URL: z.string().default('https://graph.facebook.com'),
   /** Firebase service account JSON (one line) for push notifications. Empty disables push. */
   FCM_SERVICE_ACCOUNT_JSON: z.string().default(''),
+  /** Apple VoIP push (iOS incoming calls when the app is closed). APNs auth key from developer.apple.com → Keys. */
+  APNS_KEY_ID: z.string().default(''),
+  APNS_TEAM_ID: z.string().default(''),
+  /** The .p8 file as one line of base64: `base64 -w0 AuthKey_XXXX.p8`. */
+  APNS_KEY_P8_BASE64: z.string().default(''),
+  APNS_BUNDLE_ID: z.string().default('lk.lumiai.smartreply'),
+  /** true only for apps run from Xcode (development); TestFlight and App Store use production. */
+  APNS_SANDBOX: bool,
   /** Expo push (mobile app). Empty access token still works for Expo's public endpoint. */
   EXPO_ACCESS_TOKEN: z.string().default(''),
   /** Google Gemini key for the AI voice agent. The admin console setting wins over this. */

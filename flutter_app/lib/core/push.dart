@@ -8,6 +8,33 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../firebase_options.dart';
 import 'api.dart';
+import 'callkit.dart';
+
+/// Runs in its own isolate when a push arrives while the app is in the background or closed.
+/// An incoming call shows the phone's full-screen call screen; a stop closes it.
+@pragma('vm:entry-point')
+Future<void> pushInBackground(RemoteMessage m) async {
+  await _handleCallPush(m.data);
+}
+
+Future<bool> _handleCallPush(Map<String, dynamic> d) async {
+  final callId = d['callId'] as String?;
+  if (callId == null || callId.isEmpty) return false;
+  if (d['kind'] == 'call' && d['ring'] == '1') {
+    await CallKit.show(
+      id: callId,
+      name: (d['name'] as String?) ?? 'WhatsApp call',
+      phone: (d['phone'] as String?) ?? '',
+      seconds: int.tryParse('${d['ttl'] ?? ''}') ?? 45,
+    );
+    return true;
+  }
+  if (d['kind'] == 'call_end') {
+    await CallKit.end(callId);
+    return true;
+  }
+  return false;
+}
 
 /// Push notifications through Firebase Cloud Messaging (Android and iOS).
 /// Settings live in lib/firebase_options.dart; while they are empty the app works
@@ -26,6 +53,7 @@ class Push {
         return;
       }
       await Firebase.initializeApp(options: options);
+      FirebaseMessaging.onBackgroundMessage(pushInBackground);
       await _local.initialize(
         const InitializationSettings(
           android: AndroidInitializationSettings('@mipmap/ic_launcher'),
@@ -41,6 +69,11 @@ class Push {
       await android?.createNotificationChannel(const AndroidNotificationChannel('calls', 'Calls', importance: Importance.max));
 
       FirebaseMessaging.onMessage.listen((m) {
+        // App open: the live connection already shows the call, so only a stop matters here.
+        if (m.data['kind'] == 'call_end') {
+          unawaited(_handleCallPush(m.data));
+          return;
+        }
         final n = m.notification;
         if (n == null) return;
         final channel = m.data['kind'] == 'call' ? 'calls' : 'messages';
@@ -68,6 +101,20 @@ class Push {
     }
   }
 
+  static String? _token;
+
+  /// FCM token plus, on iOS, the VoIP token that wakes the phone for calls.
+  static Future<void> _send(Api api) async {
+    final token = _token;
+    if (token == null) return;
+    final voip = await CallKit.voipToken();
+    await api.post('/me/devices', {
+      'platform': Platform.isIOS ? 'ios' : 'android',
+      'pushToken': token,
+      if (voip != null) 'voipToken': voip,
+    });
+  }
+
   /// Ask permission and tell the API where to send pushes for this person.
   static Future<void> register(Api api) async {
     if (!ready) return;
@@ -82,11 +129,16 @@ class Push {
       }
       final token = await FirebaseMessaging.instance.getToken();
       if (token == null) return;
-      await api.post('/me/devices', {'platform': Platform.isIOS ? 'ios' : 'android', 'pushToken': token});
+      _token = token;
+      await _send(api);
       _tokenRefresh?.cancel();
       _tokenRefresh = FirebaseMessaging.instance.onTokenRefresh.listen((t) {
-        api.post('/me/devices', {'platform': Platform.isIOS ? 'ios' : 'android', 'pushToken': t}).catchError((Object e) => debugPrint('Push token update failed: $e'));
+        _token = t;
+        _send(api).catchError((Object e) => debugPrint('Push token update failed: $e'));
       });
+      // iOS: the VoIP token for calls can arrive after the FCM token.
+      CallKit.onVoipToken = () => _send(api).catchError((Object e) => debugPrint('VoIP token update failed: $e'));
+      await CallKit.askPermissions();
     } catch (e) {
       debugPrint('Push registration failed: $e');
     }

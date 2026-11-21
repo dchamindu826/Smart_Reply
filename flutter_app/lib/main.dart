@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'core/api.dart';
 import 'core/appearance.dart';
+import 'core/callkit.dart';
 import 'core/push.dart';
 import 'core/theme.dart';
 import 'screens/chat_screen.dart';
@@ -23,6 +24,11 @@ Future<void> main() async {
   state.addListener(() {
     if (!state.booting && state.me == null) navigatorKey.currentState?.popUntil((r) => r.isFirst);
   });
+  // The phone's own call screen (rings when the app is closed): answer, decline and hang up here.
+  CallKit.onAccept = (id) => state.answerFromSystem(id);
+  CallKit.onDecline = (id) => state.declineFromSystem(id);
+  CallKit.onEnded = (id) => state.hangUpFromSystem(id);
+  await CallKit.init();
   Push.onOpenChat = (id) => state.me == null
       ? null
       : navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => ChatScreen(conversationId: id)));

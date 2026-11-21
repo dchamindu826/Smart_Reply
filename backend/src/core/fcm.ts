@@ -81,3 +81,22 @@ export async function sendFcm(
   if (res.status === 404 || text.includes('UNREGISTERED')) return 'unregistered';
   throw new Error(`FCM send failed (${res.status})`);
 }
+
+/**
+ * A data-only push (no notification shown by the system) that wakes the app's background handler,
+ * which shows the full-screen incoming call. High priority and a short life: a ring is useless later.
+ */
+export async function sendFcmData(token: string, data: Record<string, string>, ttlSeconds: number): Promise<'ok' | 'unregistered'> {
+  const sa = serviceAccount();
+  if (!sa) return 'ok';
+  const res = await fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${await accessToken(sa)}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ message: { token, data, android: { priority: 'HIGH', ttl: `${ttlSeconds}s` } } }),
+    signal: AbortSignal.timeout(15_000)
+  });
+  if (res.ok) return 'ok';
+  const text = await res.text();
+  if (res.status === 404 || text.includes('UNREGISTERED')) return 'unregistered';
+  throw new Error(`FCM send failed (${res.status})`);
+}

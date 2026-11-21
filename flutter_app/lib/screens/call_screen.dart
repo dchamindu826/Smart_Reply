@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/api.dart';
+import '../core/callkit.dart';
 import '../core/format.dart';
 import '../core/theme.dart';
 import '../core/webrtc.dart';
@@ -15,6 +16,9 @@ import '../widgets/avatar.dart';
 class CallScreen extends StatefulWidget {
   const CallScreen._({this.ringing, this.contact});
   factory CallScreen.incoming(RingingCall ringing) => CallScreen._(ringing: ringing);
+
+  /// A call answered on the phone's own call screen; its audio is already running in AppState.
+  factory CallScreen.system(RingingCall ringing) => CallScreen._(ringing: ringing);
   factory CallScreen.outgoing(Contact contact) => CallScreen._(contact: contact);
 
   final RingingCall? ringing;
@@ -38,6 +42,7 @@ class _CallScreenState extends State<CallScreen> {
   String? _error;
   StreamSubscription<Call>? _updates;
   StreamSubscription<({String callId, String sdpAnswer})>? _signals;
+  StreamSubscription<String>? _systemHangups;
 
   bool get _incoming => widget.ringing != null;
   String get _name => widget.ringing?.call.contactName ?? widget.contact?.name ?? 'Customer';
@@ -50,6 +55,11 @@ class _CallScreenState extends State<CallScreen> {
     _state = context.read<AppState>();
     _callId = widget.ringing?.call.id;
     _updates = _state.callUpdates.listen(_onCallUpdate);
+    _systemHangups = _state.systemHangups.listen((id) {
+      if (id == _callId) _hangUp();
+    });
+    _state.addListener(_takeSystemCall);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _takeSystemCall());
     _signals = _state.callSignals.listen((s) async {
       if (s.callId != _callId || _peer == null) return;
       try {
@@ -64,8 +74,26 @@ class _CallScreenState extends State<CallScreen> {
     }
   }
 
+  /// Answered on the system call screen: take over its audio and show the live call.
+  void _takeSystemCall() {
+    final id = _callId;
+    if (id == null || _peer != null || !mounted || _phase == _Phase.ended || _phase == _Phase.live) return;
+    final c = _state.takeSystemCall(id);
+    if (c == null) {
+      if (_incoming && _phase == _Phase.ringing && _state.answeringFromSystem(id)) setState(() => _phase = _Phase.connecting);
+      return;
+    }
+    _peer = c.peer;
+    _goLive();
+  }
+
   void _onCallUpdate(Call call) {
     if (call.id != _callId || !mounted) return;
+    if (_incoming && _state.answeringFromSystem(call.id) && _peer == null && call.outcome == 'ongoing') {
+      // Being answered on the system call screen; the audio arrives in a moment.
+      if (_phase == _Phase.ringing) setState(() => _phase = _Phase.connecting);
+      return;
+    }
     if (_incoming && _phase == _Phase.ringing) {
       // Not answered here yet: stop ringing when a colleague took it, it ended, or it moved on.
       if (!call.isRinging(_state.me?.user.id)) {
@@ -142,6 +170,7 @@ class _CallScreenState extends State<CallScreen> {
 
   Future<void> _answer() async {
     final r = widget.ringing!;
+    if (_phase != _Phase.ringing || _state.answeringFromSystem(r.call.id)) return;
     if (r.sdpOffer == null) {
       _fail(ApiException(0, 'NO_OFFER', 'This call has no audio offer. Answer it on the phone.'));
       return;
@@ -155,6 +184,8 @@ class _CallScreenState extends State<CallScreen> {
       }
       _peer = peer;
       await _state.api.post('/calls/${r.call.id}/answer', {'sdpAnswer': sdpAnswer});
+      // Answered here: the system ringing screen (if it is up) goes away.
+      unawaited(CallKit.end(r.call.id));
       _state.clearRinging();
       _goLive();
     } catch (e) {
@@ -195,6 +226,11 @@ class _CallScreenState extends State<CallScreen> {
   }
 
   void _end({bool remote = false, required String label}) {
+    final id = _callId;
+    if (id != null) {
+      _state.systemAccepted.remove(id);
+      unawaited(CallKit.end(id));
+    }
     _ticker?.cancel();
     _peer?.close();
     _peer = null;
@@ -215,6 +251,8 @@ class _CallScreenState extends State<CallScreen> {
     _ticker?.cancel();
     _updates?.cancel();
     _signals?.cancel();
+    _systemHangups?.cancel();
+    _state.removeListener(_takeSystemCall);
     _peer?.close();
     super.dispose();
   }

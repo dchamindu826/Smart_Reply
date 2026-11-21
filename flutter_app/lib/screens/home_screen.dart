@@ -60,6 +60,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Open the incoming-call screen once per ringing call.
   void _onState() {
+    // Answered on the system call screen with no call screen open yet.
+    final sc = _state.systemCall;
+    if (sc != null && sc.ringing.call.id != _shownCallId && mounted) {
+      _shownCallId = sc.ringing.call.id;
+      Navigator.of(context).push(MaterialPageRoute(fullscreenDialog: true, builder: (_) => CallScreen.system(sc.ringing)));
+      return;
+    }
     final ringing = _state.ringing;
     if (ringing == null || ringing.call.id == _shownCallId || !mounted) return;
     _shownCallId = ringing.call.id;

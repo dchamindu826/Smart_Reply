@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 import '../core/api.dart';
+import '../core/callkit.dart';
+import '../core/webrtc.dart';
 import '../models/models.dart';
 
 /// Everything the signed-in person sees: the session, chats, team and live call state.
@@ -31,6 +33,19 @@ class AppState extends ChangeNotifier {
 
   /// A call ringing for this person right now.
   RingingCall? ringing;
+
+  /// A call answered on the phone's own call screen (app closed or in the background), with its
+  /// audio already running, waiting for the call screen to take it over.
+  ({RingingCall ringing, CallPeer peer})? systemCall;
+
+  /// Calls answered on the system call screen: the system screen stays until hang-up.
+  final Set<String> systemAccepted = {};
+  final Set<String> _answering = {};
+  final _booted = Completer<void>();
+
+  /// Hang-ups pressed on the system call screen (the open call screen ends the call).
+  final _systemHangups = StreamController<String>.broadcast();
+  Stream<String> get systemHangups => _systemHangups.stream;
 
   /// Updates to calls (for the call screen).
   final _callUpdates = StreamController<Call>.broadcast();
@@ -64,7 +79,97 @@ class AppState extends ChangeNotifier {
       }
     }
     booting = false;
+    if (!_booted.isCompleted) _booted.complete();
     notifyListeners();
+  }
+
+  /* ───────── The phone's own call screen ───────── */
+
+  /// Answer pressed on the system call screen: answer with audio here, then show the call screen.
+  Future<void> answerFromSystem(String callId) async {
+    await _booted.future;
+    if (me == null) return CallKit.end(callId);
+    if (!_answering.add(callId)) return;
+    systemAccepted.add(callId);
+    try {
+      var r = ringing?.call.id == callId ? ringing : null;
+      if (r == null) {
+        await _loadActiveCalls();
+        r = ringing?.call.id == callId ? ringing : null;
+      }
+      if (r == null || r.sdpOffer == null) {
+        systemAccepted.remove(callId);
+        await CallKit.end(callId);
+        _notices.add('That call is no longer ringing.');
+        notifyListeners();
+        return;
+      }
+      final (peer, sdpAnswer) = await CallPeer.answer(r.sdpOffer!);
+      try {
+        await api.post('/calls/$callId/answer', {'sdpAnswer': sdpAnswer});
+      } catch (e) {
+        await peer.close();
+        rethrow;
+      }
+      await CallKit.connected(callId);
+      systemCall = (ringing: r, peer: peer);
+      ringing = null;
+      notifyListeners();
+    } catch (e) {
+      systemAccepted.remove(callId);
+      await CallKit.end(callId);
+      _notices.add(errorText(e));
+      notifyListeners();
+    } finally {
+      _answering.remove(callId);
+    }
+  }
+
+  /// Answered (or being answered) on the system call screen.
+  bool answeringFromSystem(String callId) => _answering.contains(callId) || systemAccepted.contains(callId);
+
+  /// The call screen took over the audio of a call answered on the system screen.
+  ({RingingCall ringing, CallPeer peer})? takeSystemCall(String callId) {
+    final c = systemCall;
+    if (c == null || c.ringing.call.id != callId) return null;
+    systemCall = null;
+    return c;
+  }
+
+  Future<void> declineFromSystem(String callId) async {
+    await _booted.future;
+    if (me == null) return;
+    try {
+      await api.post('/calls/$callId/decline', {});
+    } catch (_) {}
+    if (ringing?.call.id == callId) ringing = null;
+    notifyListeners();
+  }
+
+  /// Hang-up pressed on the system call screen.
+  Future<void> hangUpFromSystem(String callId) async {
+    // A ringing screen that timed out or was dismissed is not a hang-up of a live call.
+    if (!systemAccepted.contains(callId) && systemCall?.ringing.call.id != callId) return;
+    systemAccepted.remove(callId);
+    final c = takeSystemCall(callId);
+    if (c != null) {
+      // No call screen took the call yet: end it here.
+      await c.peer.close();
+      try {
+        await api.post('/calls/$callId/hangup');
+      } catch (_) {}
+      notifyListeners();
+      return;
+    }
+    _systemHangups.add(callId);
+  }
+
+  /// Close system call screens that should not ring any more (taken by a colleague while the app started).
+  Future<void> _closeStaleSystemCalls() async {
+    for (final (id, accepted) in await CallKit.active()) {
+      if (accepted || systemAccepted.contains(id) || _answering.contains(id)) continue;
+      if (ringing?.call.id != id) await CallKit.end(id);
+    }
   }
 
   Future<void> useServer(String url) async {
@@ -201,6 +306,13 @@ class AppState extends ChangeNotifier {
     s.on('call.updated', (data) {
       final call = Call.fromJson(Map<String, dynamic>.from((data as Map)['call'] as Map));
       if (ringing?.call.id == call.id && !call.isRinging(me?.user.id)) ringing = null;
+      // The phone's own call screen: stop ringing when it moved on; close an answered call when it ends.
+      if (!call.live || (!call.isRinging(me?.user.id) && !systemAccepted.contains(call.id) && !_answering.contains(call.id))) {
+        if (!call.live) systemAccepted.remove(call.id);
+        unawaited(CallKit.end(call.id));
+        final c = !call.live ? takeSystemCall(call.id) : null;
+        if (c != null) unawaited(c.peer.close());
+      }
       _callUpdates.add(call);
       notifyListeners();
     });
@@ -279,6 +391,7 @@ class AppState extends ChangeNotifier {
       final res = Map<String, dynamic>.from(await api.get('/calls/active') as Map);
       final list = (res['ringing'] as List? ?? []).map((e) => RingingCall.fromJson(Map<String, dynamic>.from(e as Map))).toList();
       ringing = list.isEmpty ? null : list.first;
+      unawaited(_closeStaleSystemCalls());
     } catch (_) {}
   }
 

@@ -2,11 +2,12 @@
  * Shared pieces of WhatsApp Calling (Stage A): settings with defaults, the call presenter,
  * who hears about a call, call presence and the call event trail.
  */
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import { Call, ChannelPresence, ForwardingRules, PresenceStatus, formatPhone, initialsOf } from '@smart-reply/shared';
 import { FilesService } from '../../core/files.service';
 import { InboxService } from '../../core/inbox.service';
+import { PushService } from '../../core/push.service';
 import type { Db, DbOrTx } from '../../db/client';
 import { assignmentRules, callEvents, callSettings, calls, contacts, presence, userForwarding, users } from '../../db/schema';
 import { InjectDb } from '../../infra/db';
@@ -60,7 +61,8 @@ export class CallsCore {
     @InjectDb() private readonly db: Db,
     private readonly realtime: Realtime,
     private readonly inbox: InboxService,
-    private readonly files: FilesService
+    private readonly files: FilesService,
+    @Optional() private readonly push?: PushService
   ) {}
 
   /* ───────── Settings ───────── */
@@ -266,6 +268,21 @@ export class CallsCore {
   async emitUpdated(row: CallRow): Promise<Call> {
     const call = await this.presentOne(row);
     if (call) this.realtime.emit(await this.audience(row), 'call.updated', { call });
+    await this.stopRingingPhones(row);
     return call;
+  }
+
+  /** Phones rung for this call that should not ring any more close their full-screen call (app closed). */
+  private async stopRingingPhones(row: CallRow): Promise<void> {
+    if (!this.push || row.direction !== 'in') return;
+    try {
+      const rung = new Set((await this.ringRounds(row.id)).flatMap(r => r.userIds));
+      const still = row.outcome === 'ringing' ? new Set(row.ringingUserIds) : new Set<string>();
+      const stop = [...rung].filter(id => !still.has(id));
+      if (stop.length === 0) return;
+      await this.push.ringStopped(stop, row.id, `${row.outcome}-${[...still].sort().join('.').slice(0, 300) || 'none'}`);
+    } catch {
+      // Best effort: the ringing screen also gives up by itself.
+    }
   }
 }
