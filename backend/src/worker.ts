@@ -30,6 +30,10 @@ export function handlers(app: INestApplicationContext): Partial<Record<JobName, 
     'message.send': j => get(MessagingService).deliver((j.data as JobMap['message.send']).messageId, j.attemptsMade, j.opts.attempts ?? 1),
     'automation.inbound': j => get(AutomationService).onInbound((j.data as JobMap['automation.inbound']).messageId),
     'ai.reply': j => get(AiEngine).maybeReply((j.data as JobMap['ai.reply']).messageId),
+    'ai.summary': j => {
+      const d = j.data as JobMap['ai.summary'];
+      return get(AiEngine).summarize(d.conversationId, d.reason);
+    },
     'broadcast.run': j => get(BroadcastRunner).run((j.data as JobMap['broadcast.run']).broadcastId),
     'templates.sync': j => get(TemplateSync).syncCompany((j.data as JobMap['templates.sync']).companyId),
     'call.ring_timeout': j => {

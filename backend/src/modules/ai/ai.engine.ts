@@ -8,6 +8,7 @@ import { formatMoney } from '@smart-reply/shared';
 import type { AiSimulateResponse, CallHours } from '@smart-reply/shared';
 import { AppError } from '../../common/errors';
 import { AutomationService } from '../../core/automation.service';
+import { PushService } from '../../core/push.service';
 import { isOpen } from '../../core/hours';
 import { ContactRow, ConversationRow, InboxService, MessageRow } from '../../core/inbox.service';
 import { MessagingService } from '../../core/messaging.service';
@@ -29,10 +30,11 @@ import {
 } from '../../db/schema';
 import { InjectDb } from '../../infra/db';
 import { logger } from '../../infra/logger';
+import { Queues } from '../../infra/queues';
 import { Platform, PlatformSecrets } from '../../meta/platform';
 import { loadSettings, usageMonth } from './ai.presenters';
 import type { AiSettingsRow } from './ai.presenters';
-import { BotAnswer, ChatTurn, ProviderConfig, ProviderError, complete } from './ai.provider';
+import { BotAnswer, ChatTurn, ProviderConfig, ProviderError, complete, completeJson } from './ai.provider';
 import { INTENT_RULE, RULE_REASON, matchRule } from './ai.rules';
 import type { HandoffRule } from './ai.rules';
 
@@ -42,6 +44,10 @@ const KNOWLEDGE_CAP = 12_000;
 const CATALOG_CAP = 4_000;
 const EXAMPLES_CAP = 4_000;
 const CAPTIONED = new Set(['image', 'video', 'document']);
+/** After the bot answers, wait this long for the conversation to settle before writing the handover note. */
+const SUMMARY_DELAY_MS = 10 * 60_000;
+const SUMMARY_HISTORY = 40;
+const NOTE_PREFIX = '🤖 AI summary';
 
 export interface Decision {
   handoff: boolean;
@@ -73,7 +79,9 @@ export class AiEngine {
     private readonly inbox: InboxService,
     private readonly messaging: MessagingService,
     // Global in the worker; the API only uses the simulator, which never assigns.
-    @Optional() private readonly automation?: AutomationService
+    @Optional() private readonly automation?: AutomationService,
+    @Optional() private readonly queues?: Queues,
+    @Optional() private readonly push?: PushService
   ) {}
 
   /* ───────── Prompt ───────── */
@@ -315,8 +323,10 @@ export class AiEngine {
     if (decision.handoff) {
       const agent = await this.handOff(companyId, conv, contact, output, decision.reason);
       if (agent) await this.db.update(aiBotLogs).set({ agentUserId: agent }).where(eq(aiBotLogs.id, log.id));
+      await this.queueSummary(conv.id, 'handoff', m.id);
     } else {
       await this.send(companyId, conv.id, contact, output);
+      await this.queueSummary(conv.id, 'handled');
     }
     logger.info({ companyId, messageId: m.id, status: decision.handoff ? 'handed_off' : 'handled', tokensUsed, latencyMs }, 'AI bot ran');
     return true;
@@ -352,6 +362,111 @@ export class AiEngine {
     await this.inbox.emitMessage(companyId, note.id);
     await this.inbox.emitConversation(companyId, conv.id, previousOwner);
     return contact.ownerUserId;
+  }
+
+  /* ───────── Handover note and reminder ───────── */
+
+  /**
+   * One note per quiet spell: while the bot keeps answering, the same delayed job stands (its id is
+   * the conversation and the time slot), so a busy chat gets one summary, not one per reply.
+   */
+  private async queueSummary(conversationId: string, reason: 'handled' | 'handoff', messageId?: string): Promise<void> {
+    if (!this.queues) return;
+    const slot = Math.floor(Date.now() / SUMMARY_DELAY_MS);
+    const jobId = reason === 'handoff' ? `ai-summary-${conversationId}-h-${messageId ?? slot}` : `ai-summary-${conversationId}-${slot}`;
+    try {
+      await this.queues.add('ai.summary', { conversationId, reason }, { jobId, delay: reason === 'handoff' ? 0 : SUMMARY_DELAY_MS });
+    } catch (err) {
+      logger.warn({ conversationId, err: err instanceof Error ? err.message : 'error' }, 'AI summary not queued');
+    }
+  }
+
+  /**
+   * Worker side of `ai.summary`: reads what happened since the last AI note, writes a note in the
+   * chat (what the AI did, what the agent should do next) and reminds the owner, or the people on
+   * duty when nobody owns the customer. Skips when a person already took over.
+   */
+  async summarize(conversationId: string, reason: 'handled' | 'handoff'): Promise<void> {
+    const [row] = await this.db
+      .select({ conv: conversations, contact: contacts })
+      .from(conversations)
+      .innerJoin(contacts, eq(contacts.id, conversations.contactId))
+      .where(eq(conversations.id, conversationId))
+      .limit(1);
+    if (!row) return;
+    const { conv, contact } = row;
+    const companyId = conv.companyId;
+
+    const recent = await this.inbox.recentMessages(conv.id, SUMMARY_HISTORY);
+    const lastNoteAt = [...recent]
+      .reverse()
+      .find(r => r.type === 'note' && r.senderKind === 'bot' && r.body.startsWith(NOTE_PREFIX))?.createdAt;
+    const fresh = recent.filter(r => !lastNoteAt || r.createdAt > lastNoteAt);
+    const botReplies = fresh.filter(r => r.direction === 'out' && r.senderKind === 'bot');
+    if (botReplies.length === 0 && reason !== 'handoff') return;
+    const lastBot = botReplies[botReplies.length - 1];
+    const humanAfter = fresh.some(r => r.direction === 'out' && r.senderKind === 'user' && (!lastBot || r.createdAt > lastBot.createdAt));
+    if (humanAfter && reason !== 'handoff') return;
+
+    const lines = fresh
+      .filter(r => r.direction === 'in' || r.direction === 'out')
+      .map(r => {
+        const who = r.direction === 'in' ? 'Customer' : r.senderKind === 'bot' ? 'AI' : 'Staff';
+        const t = r.direction === 'in' ? botText(r) || `[${r.type}]` : r.body.trim() || `[${r.type}]`;
+        return `${who}: ${t}`;
+      });
+    if (lines.length === 0) return;
+
+    let did = `Answered ${botReplies.length} message${botReplies.length === 1 ? '' : 's'} from the customer.`;
+    let next = reason === 'handoff' ? 'The AI handed this chat to you. Read the chat and reply to the customer.' : 'Read the chat and follow up with the customer if needed.';
+    let urgent = reason === 'handoff';
+    const p = await this.platform.get();
+    const settings = await loadSettings(this.db, companyId);
+    const cfg = p.ai.globalOff ? null : this.providerConfig(p, settings);
+    if (cfg) {
+      try {
+        const res = await completeJson(
+          cfg,
+          'You write a short handover note for the staff of a business. The AI assistant has been chatting with a customer on WhatsApp ' +
+            'while the staff were away. Write in simple English. Answer with STRICT JSON only: ' +
+            '{"did": string (one or two sentences: what the customer wanted and what the AI told or did for them), ' +
+            '"next": string (one or two sentences: exactly what the staff member should do now for this customer, such as confirm an order, ' +
+            'send a price, call back, or nothing), "urgent": boolean (true when the customer is waiting for a person, is upset, or wants to buy now)}',
+          [{ role: 'user', content: `${reason === 'handoff' ? 'The AI handed the chat to a person.\n' : ''}${lines.join('\n').slice(-12_000)}` }]
+        );
+        const d = res.data;
+        if (d && typeof d.did === 'string' && d.did.trim()) did = d.did.trim().slice(0, 600);
+        if (d && typeof d.next === 'string' && d.next.trim()) next = d.next.trim().slice(0, 600);
+        if (d && typeof d.urgent === 'boolean') urgent = urgent || d.urgent;
+      } catch (err) {
+        logger.warn({ companyId, conversationId, err: err instanceof ProviderError ? err.message : 'AI provider unreachable' }, 'AI summary failed');
+      }
+    }
+
+    const body = `${NOTE_PREFIX}${urgent ? ' · needs you' : ''}\nWhat the AI did: ${did}\nWhat you should do: ${next}`;
+    const note = await this.inbox.addInternal(companyId, conv.id, 'note', body, null, undefined, true);
+    await this.inbox.emitMessage(companyId, note.id);
+
+    if (!this.push) return;
+    const to = new Set<string>();
+    if (contact.ownerUserId) to.add(contact.ownerUserId);
+    else {
+      const onDuty = await this.db
+        .select({ id: users.id })
+        .from(presence)
+        .innerJoin(users, eq(users.id, presence.userId))
+        .where(and(eq(presence.companyId, companyId), eq(presence.channel, 'chat'), inArray(presence.status, ['available', 'oncall']), eq(users.status, 'active')));
+      onDuty.forEach(u => to.add(u.id));
+      if (to.size === 0) {
+        const managers = await this.db
+          .select({ id: users.id })
+          .from(users)
+          .where(and(eq(users.companyId, companyId), eq(users.role, 'manager'), eq(users.status, 'active')));
+        managers.forEach(u => to.add(u.id));
+      }
+    }
+    const name = contact.name || contact.profileName || 'A customer';
+    await this.push.notify([...to], `${urgent ? '⚠️ ' : ''}AI chatted with ${name}`, next, { kind: 'ai', conversationId: conv.id });
   }
 
   /* ───────── Simulator (system admin) ───────── */

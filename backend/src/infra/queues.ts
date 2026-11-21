@@ -10,6 +10,8 @@ export interface JobMap {
   'media.download': { messageId: string; waMediaId: string; companyId: string; mime: string; fileName: string | null; voice: boolean };
   'broadcast.run': { broadcastId: string };
   'ai.reply': { messageId: string };
+  /** Handover note in the chat and a reminder push after the AI bot looked after a customer. */
+  'ai.summary': { conversationId: string; reason: 'handled' | 'handoff' };
   'automation.inbound': { messageId: string };
   'templates.sync': { companyId: string };
   'call.ring_timeout': { callId: string; round: number };
@@ -31,6 +33,7 @@ export const JOB_QUEUE: Record<JobName, QueueName> = {
   'media.download': 'media',
   'broadcast.run': 'broadcasts',
   'ai.reply': 'ai',
+  'ai.summary': 'ai',
   'automation.inbound': 'automation',
   'templates.sync': 'maintenance',
   'call.ring_timeout': 'calls',

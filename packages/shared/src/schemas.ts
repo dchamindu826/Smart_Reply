@@ -570,6 +570,11 @@ export const setAiAddonSchema = z.object({
   monthlyReplyLimit: z.number().int().min(0).max(10_000_000)
 });
 
+/** The manager's quick switch (mobile app): turn the chat bot and the voice agent on or off. */
+export const aiSwitchSchema = z
+  .object({ chatBotEnabled: z.boolean().optional(), voiceBotEnabled: z.boolean().optional() })
+  .refine(v => v.chatBotEnabled !== undefined || v.voiceBotEnabled !== undefined, { message: 'Send chatBotEnabled or voiceBotEnabled.' });
+
 export const aiSettingsSchema = z.object({
   chatBotEnabled: z.boolean(),
   voiceBotEnabled: z.boolean(),

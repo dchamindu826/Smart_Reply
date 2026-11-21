@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { count, eq } from 'drizzle-orm';
 import type { z } from 'zod';
-import type { AiAddon, AiBotLog, AiBotSettingsSummary, aiSettingsSchema } from '@smart-reply/shared';
+import type { AiAddon, AiBotLog, AiBotSettingsSummary, aiSettingsSchema, aiSwitchSchema } from '@smart-reply/shared';
 import { Audit } from '../../common/audit';
 import type { CompanySession } from '../../common/session';
 import type { Db } from '../../db/client';
@@ -44,6 +44,25 @@ export class AiService {
       targetType: 'ai_settings',
       targetId: s.companyId,
       summary: `${s.name} updated AI bot settings (chat: ${input.chatBotEnabled ? 'on' : 'off'}, voice: ${input.voiceBotEnabled ? 'on' : 'off'})`
+    });
+    return this.settings(s);
+  }
+
+  async switchBots(s: CompanySession, input: z.infer<typeof aiSwitchSchema>): Promise<AiBotSettingsSummary> {
+    await ensureAiRows(this.db, s.companyId);
+    const set: Partial<typeof aiBotSettings.$inferInsert> = { updatedBy: s.userId };
+    if (input.chatBotEnabled !== undefined) set.chatBotEnabled = input.chatBotEnabled;
+    if (input.voiceBotEnabled !== undefined) set.voiceBotEnabled = input.voiceBotEnabled;
+    await this.db.update(aiBotSettings).set(set).where(eq(aiBotSettings.companyId, s.companyId));
+    const parts = [
+      input.chatBotEnabled !== undefined ? `chat bot ${input.chatBotEnabled ? 'on' : 'off'}` : null,
+      input.voiceBotEnabled !== undefined ? `voice agent ${input.voiceBotEnabled ? 'on' : 'off'}` : null
+    ].filter(Boolean);
+    await this.audit.log(s, {
+      action: 'ai.settings_updated',
+      targetType: 'ai_settings',
+      targetId: s.companyId,
+      summary: `${s.name} turned the ${parts.join(' and ')} from the app`
     });
     return this.settings(s);
   }

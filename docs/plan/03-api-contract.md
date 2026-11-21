@@ -174,6 +174,7 @@ same schemas and published at `/api/docs` in non-production environments.
 |---|---|---|
 | `GET /ai/status` | M | Add-on state (`off`, `active`, `paused`, `expired`), plan, expiry, usage this month against the limit |
 | `GET /ai/settings` | M | Read-only summary of what the bot is set to do. No prompt text, no keys |
+| `PATCH /ai/switch` | M | Body `{ chatBotEnabled?, voiceBotEnabled? }`. Turn the chat bot or voice agent on or off (mobile app). Nothing else changes |
 | `GET /ai/logs?channel=` | M | Logs tab, read only |
 | `POST /ai/activation-request` | M | Ask LUMI AI to activate or renew the add-on. Notifies system admins |
 | `POST /conversations/:id/bot` | M, S | Body `{ active: boolean }`. Take over from the bot or hand back |

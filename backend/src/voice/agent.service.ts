@@ -6,14 +6,14 @@
  * The same session code runs browser test calls from the admin console (`dryRun`: nothing saved).
  */
 import { Injectable } from '@nestjs/common';
-import { and, eq, sql } from 'drizzle-orm';
+import { and, eq, inArray, sql } from 'drizzle-orm';
 import { maskPhone } from '@smart-reply/shared';
 import { env } from '../config';
 import { InboxService } from '../core/inbox.service';
 import { MessagingService, windowOpen } from '../core/messaging.service';
 import { PushService } from '../core/push.service';
 import type { Db } from '../db/client';
-import { aiAddons, calls, companies, contacts, users } from '../db/schema';
+import { aiAddons, calls, companies, contacts, presence, users } from '../db/schema';
 import { InjectDb } from '../infra/db';
 import { logger } from '../infra/logger';
 import { Platform, WhatsappAccounts } from '../meta/platform';
@@ -382,7 +382,7 @@ export class VoiceAgent {
     if (contact) {
       const conv = await this.inbox.ensureConversation(row.companyId, contact.id);
       if (summary) {
-        const note = await this.inbox.addInternal(row.companyId, conv.id, 'note', `AI call summary: ${summary}`, null);
+        const note = await this.inbox.addInternal(row.companyId, conv.id, 'note', `🤖 AI call summary\n${summary}`, null, undefined, true);
         await this.inbox.emitMessage(row.companyId, note.id);
       }
       for (const b of tools.results.bookings) {
@@ -401,6 +401,7 @@ export class VoiceAgent {
         }
       }
       if (tools.results.callback) await this.askForCallback(row.companyId, contact, tools.results.callback, row.id);
+      else if (summary) await this.remindAfterCall(row.companyId, contact, conv.id, summary);
     }
     if (saved) await this.core.emitUpdated(saved);
   }
@@ -415,6 +416,30 @@ export class VoiceAgent {
     if (contact.ownerUserId) to.add(contact.ownerUserId);
     const name = contact.name || contact.profileName || 'A caller';
     await this.push.notify([...to], `${cb.urgent ? 'Urgent call back' : 'Call back'}: ${name}`, cb.reason, { kind: 'call', callId });
+  }
+
+  /** A separate reminder after the AI answered a call: to the owner, or the people on duty, else the managers. */
+  private async remindAfterCall(companyId: string, contact: typeof contacts.$inferSelect, conversationId: string, summary: string): Promise<void> {
+    const to = new Set<string>();
+    if (contact.ownerUserId) to.add(contact.ownerUserId);
+    else {
+      const onDuty = await this.db
+        .select({ id: users.id })
+        .from(presence)
+        .innerJoin(users, eq(users.id, presence.userId))
+        .where(and(eq(presence.companyId, companyId), inArray(presence.status, ['available', 'oncall']), eq(users.status, 'active')));
+      onDuty.forEach(u => to.add(u.id));
+    }
+    if (to.size === 0) {
+      const managers = await this.db
+        .select({ id: users.id })
+        .from(users)
+        .where(and(eq(users.companyId, companyId), eq(users.role, 'manager'), eq(users.status, 'active')));
+      managers.forEach(m => to.add(m.id));
+    }
+    const next = /What you should do:\s*(.+)/i.exec(summary)?.[1]?.trim() || summary;
+    const name = contact.name || contact.profileName || 'A caller';
+    await this.push.notify([...to], `AI answered a call from ${name}`, next, { kind: 'ai', conversationId });
   }
 
   private async summarise(prep: Prepared, transcript: TranscriptLine[], tools: VoiceTools): Promise<string | null> {
@@ -434,8 +459,10 @@ export class VoiceAgent {
               parts: [
                 {
                   text:
-                    'Summarise this phone call between a customer and our AI agent for the staff, in English, in two to four short sentences: ' +
-                    'what the caller wanted, what was done, and any follow-up needed. Plain text only.\n\n' +
+                    'Write a handover note for the staff about this phone call between a customer and our AI agent, in simple English, ' +
+                    'as exactly two lines and plain text only:\n' +
+                    'What the AI did: <one or two sentences: what the caller wanted and what the AI told or did for them>\n' +
+                    'What you should do: <one or two sentences: exactly what the staff member should do now for this customer, or "Nothing"> \n\n' +
                     `${facts ? `${facts}\n\n` : ''}${text.slice(0, 20_000)}`
                 }
               ]

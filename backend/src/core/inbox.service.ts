@@ -315,7 +315,9 @@ export class InboxService {
     kind: 'note' | 'system',
     body: string,
     senderUserId: string | null,
-    tx?: DbOrTx
+    tx?: DbOrTx,
+    /** A note the AI bot wrote: shown as "AI bot" instead of "Team". */
+    byBot = false
   ): Promise<MessageRow> {
     const [row] = await (tx ?? this.db)
       .insert(messages)
@@ -326,7 +328,7 @@ export class InboxService {
         type: kind,
         body,
         senderUserId,
-        senderKind: kind === 'note' && senderUserId ? 'user' : 'system',
+        senderKind: kind === 'note' && senderUserId ? 'user' : kind === 'note' && byBot ? 'bot' : 'system',
         status: 'sent'
       })
       .returning();

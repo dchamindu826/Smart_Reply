@@ -114,6 +114,34 @@ function errorMessage(body: Record<string, unknown>, status: number): string {
 }
 
 export async function complete(cfg: ProviderConfig, system: string, turns: ChatTurn[]): Promise<CompletionResult> {
+  const res = await completeRaw(cfg, system, turns);
+  return { answer: parseAnswer(res.text), tokensUsed: res.tokensUsed };
+}
+
+/** Any JSON object the model returns (fences and text around it are ignored), or null. */
+export function parseJsonObject(text: string): Record<string, unknown> | null {
+  const cleaned = text.replace(/```(?:json)?/gi, '').trim();
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  for (const c of [cleaned, start >= 0 && end > start ? cleaned.slice(start, end + 1) : '']) {
+    if (!c) continue;
+    try {
+      const data: unknown = JSON.parse(c);
+      if (data && typeof data === 'object' && !Array.isArray(data)) return data as Record<string, unknown>;
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
+/** One completion that answers in JSON, for jobs other than the reply (the AI handover note). */
+export async function completeJson(cfg: ProviderConfig, system: string, turns: ChatTurn[]): Promise<{ data: Record<string, unknown> | null; tokensUsed: number }> {
+  const res = await completeRaw(cfg, system, turns);
+  return { data: parseJsonObject(res.text), tokensUsed: res.tokensUsed };
+}
+
+async function completeRaw(cfg: ProviderConfig, system: string, turns: ChatTurn[]): Promise<{ text: string; tokensUsed: number }> {
   const signal = AbortSignal.timeout(45_000);
   if (cfg.provider === 'openai') {
     const base = (cfg.baseUrl || 'https://api.openai.com/v1').replace(/\/$/, '');
@@ -134,7 +162,7 @@ export async function complete(cfg: ProviderConfig, system: string, turns: ChatT
     const usage = body.usage as { total_tokens?: number; prompt_tokens?: number; completion_tokens?: number } | undefined;
     const text = choices?.[0]?.message?.content ?? '';
     return {
-      answer: parseAnswer(text),
+      text,
       tokensUsed: usage?.total_tokens ?? (usage?.prompt_tokens ?? 0) + (usage?.completion_tokens ?? 0)
     };
   }
@@ -153,5 +181,5 @@ export async function complete(cfg: ProviderConfig, system: string, turns: ChatT
     .filter(c => c.type === 'text')
     .map(c => c.text ?? '')
     .join('');
-  return { answer: parseAnswer(text), tokensUsed: (usage?.input_tokens ?? 0) + (usage?.output_tokens ?? 0) };
+  return { text, tokensUsed: (usage?.input_tokens ?? 0) + (usage?.output_tokens ?? 0) };
 }

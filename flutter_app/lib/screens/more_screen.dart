@@ -23,6 +23,8 @@ class MoreScreen extends StatefulWidget {
 
 class _MoreScreenState extends State<MoreScreen> {
   Map<String, dynamic>? _ai;
+  Map<String, dynamic>? _aiSettings;
+  bool _aiSaving = false;
   Map<String, dynamic>? _perf;
   MyBreaks? _breaks;
 
@@ -49,8 +51,54 @@ class _MoreScreenState extends State<MoreScreen> {
       try {
         final ai = await api.get('/ai/status');
         if (mounted) setState(() => _ai = Map<String, dynamic>.from(ai as Map));
+        if (state.me?.isManager == true) {
+          final settings = await api.get('/ai/settings');
+          if (mounted) setState(() => _aiSettings = Map<String, dynamic>.from(settings as Map));
+        }
       } catch (_) {}
     }
+  }
+
+  /// Manager's on/off switch for the chat bot or the voice agent.
+  Future<void> _switchAi(String key, bool on) async {
+    final before = _aiSettings;
+    setState(() {
+      _aiSaving = true;
+      _aiSettings = {...?_aiSettings, key: on};
+    });
+    try {
+      final res = await context.read<AppState>().api.patch('/ai/switch', {key: on});
+      if (mounted) setState(() => _aiSettings = Map<String, dynamic>.from(res as Map));
+      _toast('${key == 'chatBotEnabled' ? 'AI chat bot' : 'AI voice agent'} turned ${on ? 'on' : 'off'}.');
+    } catch (e) {
+      if (mounted) setState(() => _aiSettings = before);
+      _toast(errorText(e));
+    } finally {
+      if (mounted) setState(() => _aiSaving = false);
+    }
+  }
+
+  Widget _aiSwitch(String label, String sub, String key) {
+    final on = _aiSettings?[key] == true;
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(children: [
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(label, style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 13.5)),
+            Text(sub, style: const TextStyle(fontSize: 11.5, color: Color(0xFFB9C8E2))),
+          ]),
+        ),
+        Switch(
+          value: on,
+          activeThumbColor: Colors.white,
+          activeTrackColor: const Color(0xFF1FAE55),
+          inactiveThumbColor: Colors.white,
+          inactiveTrackColor: Colors.white.withValues(alpha: .18),
+          onChanged: _aiSaving || _aiSettings == null ? null : (v) => _switchAi(key, v),
+        ),
+      ]),
+    );
   }
 
   void _toast(String t) {
@@ -208,7 +256,8 @@ class _MoreScreenState extends State<MoreScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(color: Colors.white.withValues(alpha: .10), borderRadius: BorderRadius.circular(18)),
-                  child: Row(children: [
+                  child: Column(children: [
+                  Row(children: [
                     Container(
                       width: 38,
                       height: 38,
@@ -236,6 +285,13 @@ class _MoreScreenState extends State<MoreScreen> {
                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: _ai?['status'] == 'active' ? const Color(0xFF8BF0C3) : Colors.white),
                       ),
                     ),
+                  ]),
+                  if (manager && _ai?['status'] == 'active') ...[
+                    const SizedBox(height: 4),
+                    Divider(color: Colors.white.withValues(alpha: .14), height: 12),
+                    _aiSwitch('Chat bot', 'Replies to WhatsApp chats when your team is away', 'chatBotEnabled'),
+                    _aiSwitch('Voice agent', 'Answers WhatsApp calls nobody picks up', 'voiceBotEnabled'),
+                  ],
                   ]),
                 ),
               ],

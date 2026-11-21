@@ -1,6 +1,6 @@
-import { Controller, Get, HttpCode, Post, Put } from '@nestjs/common';
+import { Controller, Get, HttpCode, Patch, Post, Put } from '@nestjs/common';
 import { z } from 'zod';
-import { AiAddon, AiBotLog, AiBotSettingsSummary, activationRequestSchema, aiLogsQuery, aiSettingsSchema } from '@smart-reply/shared';
+import { AiAddon, AiBotLog, AiBotSettingsSummary, activationRequestSchema, aiLogsQuery, aiSettingsSchema, aiSwitchSchema } from '@smart-reply/shared';
 import { Auth, Roles } from '../../common/decorators';
 import type { CompanySession } from '../../common/session';
 import { ZBody, ZQuery } from '../../common/validation';
@@ -27,6 +27,12 @@ export class AiController {
     @ZBody(aiSettingsSchema) body: z.infer<typeof aiSettingsSchema>
   ): Promise<AiBotSettingsSummary> {
     return this.svc.saveSettings(s, body);
+  }
+
+  /** On/off only, for the mobile app. Everything else stays as LUMI AI set it. */
+  @Patch('switch')
+  switchBots(@Auth() s: CompanySession, @ZBody(aiSwitchSchema) body: z.infer<typeof aiSwitchSchema>): Promise<AiBotSettingsSummary> {
+    return this.svc.switchBots(s, body);
   }
 
   @Get('logs')
