@@ -7,6 +7,7 @@ import '../core/theme.dart';
 import '../models/models.dart';
 import '../state/app_state.dart';
 import '../widgets/avatar.dart';
+import '../widgets/ui.dart';
 import 'chat_screen.dart';
 
 const _filters = [
@@ -58,32 +59,42 @@ class _ChatsScreenState extends State<ChatsScreen> {
   @override
   Widget build(BuildContext context) {
     final state = context.watch<AppState>();
+    final ui = Ui.of(context);
     final list = _filtered ?? state.conversations;
     return Scaffold(
-      appBar: AppBar(title: Text(state.me?.company?.name ?? 'Chats')),
+      appBar: AppBar(
+        toolbarHeight: 64,
+        title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('Chats', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, letterSpacing: -.4)),
+          if (state.me?.company?.name != null) Text(state.me!.company!.name, style: TextStyle(fontSize: 12, color: ui.muted, fontWeight: FontWeight.w500)),
+        ]),
+      ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+          Container(
+            color: ui.card,
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
             child: TextField(
               decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search name, number or message', isDense: true),
+              textInputAction: TextInputAction.search,
               onSubmitted: (v) {
                 _search = v.trim();
                 _load();
               },
             ),
           ),
-          SizedBox(
-            height: 48,
+          Container(
+            color: ui.card,
+            height: 52,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               children: [
                 for (final (key, label) in _filters)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: ChoiceChip(
-                      label: Text(state.counts[key == 'pool' ? 'no_owner' : key] > 0 ? '$label ${state.counts[key == 'pool' ? 'no_owner' : key]}' : label),
+                      label: Text(state.counts[key == 'pool' ? 'no_owner' : key] > 0 ? '$label · ${state.counts[key == 'pool' ? 'no_owner' : key]}' : label),
                       selected: _filter == key,
                       onSelected: (_) {
                         setState(() => _filter = key);
@@ -94,6 +105,7 @@ class _ChatsScreenState extends State<ChatsScreen> {
               ],
             ),
           ),
+          Divider(height: 1, color: ui.rule),
           if (_loading) const LinearProgressIndicator(minHeight: 2),
           Expanded(
             child: RefreshIndicator(
@@ -102,10 +114,11 @@ class _ChatsScreenState extends State<ChatsScreen> {
                 await state.loadCounts();
               },
               child: list.isEmpty
-                  ? ListView(children: const [SizedBox(height: 120), Center(child: Text('No chats here yet.'))])
+                  ? ListView(children: [const SizedBox(height: 120), Center(child: Text('No chats here yet.', style: TextStyle(color: ui.muted)))])
                   : ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 110),
                       itemCount: list.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1, indent: 76),
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
                       itemBuilder: (context, i) => _ChatTile(conv: state.conversation(list[i].id) ?? list[i]),
                     ),
             ),
@@ -123,47 +136,71 @@ class _ChatTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = context.read<AppState>();
+    final ui = Ui.of(context);
     final left = windowLeft(conv.windowExpiresAt);
     final soon = closingSoon(conv.windowExpiresAt);
+    final unread = conv.unreadCount > 0;
     String? ownerName;
     if (state.me?.isManager == true) {
       final id = conv.contact.ownerUserId;
-      ownerName = 'Team queue';
+      ownerName = 'No owner';
       for (final s in state.staff) {
         if (s.id == id) ownerName = s.name.split(' ').first;
       }
     }
-    return ListTile(
-      leading: Avatar(initials: conv.contact.initials, color: conv.contact.avatarColor),
-      title: Row(
-        children: [
-          Expanded(child: Text(conv.contact.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600))),
-          Text(listTime(conv.lastMessageAt), style: TextStyle(fontSize: 12, color: conv.unreadCount > 0 ? Brand.green : Colors.grey)),
-        ],
-      ),
-      subtitle: Row(
-        children: [
-          Expanded(child: Text(conv.lastPreview, maxLines: 1, overflow: TextOverflow.ellipsis)),
-          if (soon && left != null)
-            Padding(
-              padding: const EdgeInsets.only(left: 6),
-              child: Text('⏱ $left', style: const TextStyle(color: Colors.orange, fontSize: 12)),
-            ),
-          if (ownerName != null)
-            Padding(
-              padding: const EdgeInsets.only(left: 6),
-              child: Text(ownerName, style: const TextStyle(fontSize: 11, color: Colors.grey)),
-            ),
-          if (conv.unreadCount > 0)
-            Container(
-              margin: const EdgeInsets.only(left: 6),
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              decoration: BoxDecoration(color: Brand.green, borderRadius: BorderRadius.circular(10)),
-              child: Text('${conv.unreadCount}', style: const TextStyle(color: Colors.white, fontSize: 12)),
-            ),
-        ],
-      ),
+    return Panel(
+      padding: const EdgeInsets.all(12),
       onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => ChatScreen(conversationId: conv.id))),
+      child: Row(children: [
+        Stack(clipBehavior: Clip.none, children: [
+          Avatar(initials: conv.contact.initials, color: conv.contact.avatarColor, size: 50),
+          Positioned(
+            right: -2,
+            bottom: -2,
+            child: Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(color: const Color(0xFF25D366), shape: BoxShape.circle, border: Border.all(color: ui.card, width: 2)),
+              child: const Icon(Icons.chat, size: 10, color: Colors.white),
+            ),
+          ),
+        ]),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Expanded(child: Text(conv.contact.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15))),
+              Text(listTime(conv.lastMessageAt),
+                  style: TextStyle(fontSize: 12, color: unread ? Brand.magenta : ui.muted, fontWeight: unread ? FontWeight.w800 : FontWeight.w500)),
+            ]),
+            const SizedBox(height: 1),
+            Text(conv.lastPreview,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 13, color: unread ? ui.ink : ui.muted, fontWeight: unread ? FontWeight.w600 : FontWeight.w400)),
+            const SizedBox(height: 6),
+            Row(children: [
+              Expanded(
+                child: Wrap(spacing: 6, runSpacing: 4, children: [
+                  for (final l in conv.contact.labels.take(2)) TonePill(l.name, tone: labelTone(l.color)),
+                  if (conv.botActive) const TonePill('AI is replying', tone: 'violet'),
+                  if (soon && left != null) TonePill('$left left', tone: 'warn'),
+                  if (ownerName != null) TonePill(ownerName, tone: ownerName == 'No owner' ? 'bad' : 'grey'),
+                ]),
+              ),
+              if (unread)
+                Container(
+                  constraints: const BoxConstraints(minWidth: 20),
+                  height: 20,
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(color: Brand.pink, borderRadius: BorderRadius.circular(10)),
+                  child: Text('${conv.unreadCount}', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
+                ),
+            ]),
+          ]),
+        ),
+      ]),
     );
   }
 }

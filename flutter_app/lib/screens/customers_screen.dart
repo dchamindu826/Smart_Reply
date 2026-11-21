@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../core/api.dart';
 import '../models/models.dart';
 import '../state/app_state.dart';
+import '../core/theme.dart';
 import '../widgets/avatar.dart';
+import '../widgets/ui.dart';
 import 'chat_screen.dart';
 import 'contact_sheet.dart';
 import 'template_sheet.dart';
@@ -87,14 +89,29 @@ class _CustomersScreenState extends State<CustomersScreen> {
   @override
   Widget build(BuildContext context) {
     final list = _list;
+    final ui = Ui.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Customers')),
-      floatingActionButton: FloatingActionButton(onPressed: _add, child: const Icon(Icons.person_add_alt_1)),
+      appBar: AppBar(
+        title: const Text('Customers'),
+        toolbarHeight: 64,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: IconButton.filled(
+              tooltip: 'Add customer',
+              onPressed: _add,
+              style: IconButton.styleFrom(backgroundColor: Brand.blue),
+              icon: const Icon(Icons.person_add_alt_1, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
       body: Column(children: [
         Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
           child: TextField(
             decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search customers', isDense: true),
+            textInputAction: TextInputAction.search,
             onSubmitted: (v) {
               _search = v.trim();
               _load();
@@ -109,17 +126,34 @@ class _CustomersScreenState extends State<CustomersScreen> {
                 : list == null
                     ? const Center(child: CircularProgressIndicator())
                     : list.isEmpty
-                        ? ListView(children: const [SizedBox(height: 120), Center(child: Text('No customers found.'))])
-                        : ListView.builder(
+                        ? ListView(children: [const SizedBox(height: 120), Center(child: Text('No customers found.', style: TextStyle(color: ui.muted)))])
+                        : ListView.separated(
+                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 110),
                             itemCount: list.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 8),
                             itemBuilder: (_, i) {
                               final c = list[i];
-                              return ListTile(
-                                leading: Avatar(initials: c.initials, color: c.avatarColor),
-                                title: Text(c.name),
-                                subtitle: Text([c.phone, if (c.city.isNotEmpty) c.city, ...c.labels.map((l) => l.name)].join(' · ')),
+                              return Panel(
                                 onTap: () => _open(c),
-                                trailing: IconButton(icon: const Icon(Icons.info_outline), onPressed: () => showContactSheet(context, c)),
+                                padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
+                                child: Row(children: [
+                                  Avatar(initials: c.initials, color: c.avatarColor, size: 46),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                      Text(c.name, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                                      Text([c.phone, if (c.city.isNotEmpty) c.city].join(' · '), style: TextStyle(fontSize: 12.5, color: ui.muted)),
+                                      if (c.labels.isNotEmpty)
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 6),
+                                          child: Wrap(spacing: 6, runSpacing: 4, children: [
+                                            for (final l in c.labels.take(3)) TonePill(l.name, tone: labelTone(l.color)),
+                                          ]),
+                                        ),
+                                    ]),
+                                  ),
+                                  IconButton(tooltip: 'Customer info', icon: Icon(Icons.info_outline, color: ui.muted), onPressed: () => showContactSheet(context, c)),
+                                ]),
                               );
                             },
                           ),

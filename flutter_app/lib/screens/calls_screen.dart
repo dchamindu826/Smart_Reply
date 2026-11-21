@@ -11,6 +11,7 @@ import '../core/theme.dart';
 import '../models/models.dart';
 import '../state/app_state.dart';
 import '../widgets/avatar.dart';
+import '../widgets/ui.dart';
 import 'call_screen.dart';
 
 class CallsScreen extends StatefulWidget {
@@ -93,14 +94,16 @@ class _CallsScreenState extends State<CallsScreen> {
   @override
   Widget build(BuildContext context) {
     final calls = _calls;
+    final ui = Ui.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Calls')),
+      appBar: AppBar(title: const Text('Calls', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800)), toolbarHeight: 64),
       body: RefreshIndicator(
         onRefresh: _load,
-        child: ListView(children: [
-          SizedBox(
+        child: ListView(padding: const EdgeInsets.only(bottom: 110), children: [
+          Container(
+            color: ui.card,
             height: 52,
-            child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.all(8), children: [
+            child: ListView(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8), children: [
               for (final (k, label) in _filters)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -117,53 +120,79 @@ class _CallsScreenState extends State<CallsScreen> {
           ),
           if (_error != null) Padding(padding: const EdgeInsets.all(16), child: Text(_error!)),
           if ((_scheduled ?? []).isNotEmpty) ...[
-            const Padding(padding: EdgeInsets.fromLTRB(16, 8, 16, 4), child: Text('Scheduled', style: TextStyle(fontWeight: FontWeight.w600))),
+            const Padding(padding: EdgeInsets.fromLTRB(16, 16, 16, 0), child: SectionTitle('Scheduled call-backs')),
             for (final s in _scheduled!)
-              ListTile(
-                leading: const Icon(Icons.event, color: Brand.green),
-                title: Text(s.contactName),
-                subtitle: Text('${DateFormat('d MMM, HH:mm').format(s.scheduledAt)}${s.note.isEmpty ? '' : ' · ${s.note}'}'),
-                trailing: PopupMenuButton<String>(
-                  onSelected: (a) => a == 'call' ? _callBack(s.contactId) : _scheduledAction(s, a),
-                  itemBuilder: (_) => const [
-                    PopupMenuItem(value: 'call', child: Text('Call now')),
-                    PopupMenuItem(value: 'done', child: Text('Mark done')),
-                    PopupMenuItem(value: 'cancel', child: Text('Cancel')),
-                  ],
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+                child: Panel(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
+                  child: Row(children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(color: ui.tone('blue').$1, borderRadius: BorderRadius.circular(14)),
+                      child: Icon(Icons.event_outlined, color: ui.tone('blue').$2),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text(s.contactName, style: const TextStyle(fontWeight: FontWeight.w700)),
+                        Text('${DateFormat('d MMM, h:mm a').format(s.scheduledAt)}${s.note.isEmpty ? '' : ' · ${s.note}'}', style: TextStyle(fontSize: 12.5, color: ui.muted)),
+                      ]),
+                    ),
+                    PopupMenuButton<String>(
+                      onSelected: (a) => a == 'call' ? _callBack(s.contactId) : _scheduledAction(s, a),
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(value: 'call', child: Text('Call now')),
+                        PopupMenuItem(value: 'done', child: Text('Mark done')),
+                        PopupMenuItem(value: 'cancel', child: Text('Cancel')),
+                      ],
+                    ),
+                  ]),
                 ),
               ),
-            const Divider(),
           ],
+          const Padding(padding: EdgeInsets.fromLTRB(16, 16, 16, 0), child: SectionTitle('Recent')),
           if (calls == null && _error == null) const Padding(padding: EdgeInsets.all(24), child: Center(child: CircularProgressIndicator())),
-          if (calls != null && calls.isEmpty) const Padding(padding: EdgeInsets.all(32), child: Center(child: Text('No calls yet.'))),
+          if (calls != null && calls.isEmpty) Padding(padding: const EdgeInsets.all(32), child: Center(child: Text('No calls yet.', style: TextStyle(color: ui.muted)))),
           for (final c in calls ?? const <Call>[])
-            ListTile(
-              leading: Avatar(initials: c.contactInitials, color: 'a1'),
-              title: Text(c.contactName),
-              subtitle: Row(children: [
-                Icon(_icon(c), size: 16, color: c.outcome == 'missed' ? Brand.danger : Colors.grey),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    '${listTime(c.startedAt)} ${clock(c.startedAt)}${c.durationSeconds != null ? ' · ${duration(c.durationSeconds)}' : ''}${c.handledByName != null ? ' · ${c.handledByName}' : ''}',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ]),
-              trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                if (c.recordingUrl != null)
-                  IconButton(icon: const Icon(Icons.play_circle_outline), onPressed: () => launchUrl(Uri.parse(c.recordingUrl!))),
-                IconButton(icon: const Icon(Icons.call, color: Brand.green), onPressed: () => _callBack(c.contactId)),
-              ]),
-              onTap: c.note.isEmpty && c.summary == null
-                  ? null
-                  : () => showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: Text(c.contactName),
-                          content: Text([if (c.note.isNotEmpty) 'Note: ${c.note}', if (c.summary != null) 'Summary: ${c.summary}'].join('\n\n')),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+              child: Panel(
+                padding: const EdgeInsets.fromLTRB(12, 10, 4, 10),
+                onTap: c.note.isEmpty && c.summary == null
+                    ? null
+                    : () => showDialog(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: Text(c.contactName),
+                            content: Text([if (c.note.isNotEmpty) 'Note: ${c.note}', if (c.summary != null) 'Summary: ${c.summary}'].join('\n\n')),
+                          ),
                         ),
-                      ),
+                child: Row(children: [
+                  Avatar(initials: c.contactInitials, color: 'a1', size: 46),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(c.contactName, style: TextStyle(fontWeight: FontWeight.w700, color: c.outcome == 'missed' ? Brand.danger : null)),
+                      Row(children: [
+                        Icon(_icon(c), size: 15, color: c.outcome == 'missed' ? Brand.danger : const Color(0xFF1FAE55)),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            '${listTime(c.startedAt)} ${clock(c.startedAt)}${c.durationSeconds != null ? ' · ${duration(c.durationSeconds)}' : ''}${c.handledByName != null ? ' · ${c.handledByName}' : ''}',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 12.5, color: ui.muted),
+                          ),
+                        ),
+                      ]),
+                    ]),
+                  ),
+                  if (c.recordingUrl != null)
+                    IconButton(tooltip: 'Play recording', icon: Icon(Icons.play_circle_outline, color: ui.muted), onPressed: () => launchUrl(Uri.parse(c.recordingUrl!))),
+                  IconButton(tooltip: 'Call back', icon: const Icon(Icons.call, color: Color(0xFF1FAE55)), onPressed: () => _callBack(c.contactId)),
+                ]),
+              ),
             ),
         ]),
       ),

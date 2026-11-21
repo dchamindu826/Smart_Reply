@@ -234,60 +234,117 @@ class _CallScreenState extends State<CallScreen> {
     }
   }
 
-  Widget _round(IconData icon, String label, Color color, VoidCallback? onTap, {bool active = false}) {
+  Widget _round(IconData icon, String label, Color color, VoidCallback? onTap, {bool active = false, double size = 72}) {
     return Column(mainAxisSize: MainAxisSize.min, children: [
-      RawMaterialButton(
-        onPressed: onTap,
-        shape: const CircleBorder(),
-        fillColor: active ? Colors.white : color,
-        padding: const EdgeInsets.all(18),
-        child: Icon(icon, color: active ? Colors.black87 : Colors.white, size: 28),
+      SizedBox(
+        width: size,
+        height: size,
+        child: RawMaterialButton(
+          onPressed: onTap,
+          shape: const CircleBorder(),
+          fillColor: active ? Colors.white : color,
+          elevation: 0,
+          child: Icon(icon, color: active ? Brand.ink : Colors.white, size: size * .4),
+        ),
       ),
-      const SizedBox(height: 6),
-      Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+      const SizedBox(height: 8),
+      Text(label, style: const TextStyle(color: Color(0xFFDCE6F5), fontSize: 13)),
     ]);
   }
 
+  Widget _ring(double size, double alpha) => IgnorePointer(
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white.withValues(alpha: alpha))),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
+    final contact = widget.contact;
+    final labels = contact?.labels ?? const <LabelRef>[];
     return PopScope(
       canPop: _phase == _Phase.ended,
       child: Scaffold(
-        backgroundColor: Brand.dark,
-        body: SafeArea(
-          child: Column(children: [
-            const SizedBox(height: 48),
-            Avatar(initials: _initials, color: 'a2', size: 104),
-            const SizedBox(height: 16),
-            Text(_name, style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 4),
-            Text(_phone, style: const TextStyle(color: Colors.white70)),
-            const SizedBox(height: 12),
-            Text(_statusText, style: const TextStyle(color: Colors.white, fontSize: 16)),
-            const Spacer(),
-            if (_phase == _Phase.ringing)
-              Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                _round(Icons.call_end, 'Decline', Brand.danger, () => _decline()),
-                _round(Icons.message_outlined, 'Message', Colors.blueGrey, _declineWithMessage),
-                _round(Icons.call, 'Answer', Brand.green, _answer),
-              ])
-            else if (_phase != _Phase.ended)
-              Column(children: [
-                Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                  _round(_muted ? Icons.mic_off : Icons.mic, _muted ? 'Unmute' : 'Mute', Colors.white24, () {
-                    setState(() => _muted = !_muted);
-                    _peer?.setMuted(_muted);
-                  }, active: _muted),
-                  _round(Icons.volume_up, 'Speaker', Colors.white24, () {
-                    setState(() => _speaker = !_speaker);
-                    _peer?.setSpeaker(_speaker);
-                  }, active: _speaker),
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [Brand.deepNavy, Color(0xFF1B1060), Color(0xFF3A0D58)]),
+          ),
+          child: SafeArea(
+            child: Column(children: [
+              const SizedBox(height: 24),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(color: const Color(0x2E25D366), borderRadius: BorderRadius.circular(14)),
+                child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.chat, size: 14, color: Color(0xFF7CF0A9)),
+                  SizedBox(width: 6),
+                  Text('WhatsApp voice call', style: TextStyle(color: Color(0xFF7CF0A9), fontSize: 12.5, fontWeight: FontWeight.w800)),
                 ]),
-                const SizedBox(height: 28),
-                _round(Icons.call_end, 'End', Brand.danger, _hangUp),
-              ]),
-            const SizedBox(height: 48),
-          ]),
+              ),
+              const SizedBox(height: 40),
+              SizedBox(
+                height: 230,
+                child: Stack(alignment: Alignment.center, children: [
+                  _ring(230, .08),
+                  _ring(180, .14),
+                  Container(
+                    width: 150,
+                    height: 150,
+                    decoration: BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: [Brand.magenta.withValues(alpha: .35), Brand.magenta.withValues(alpha: 0)])),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Colors.white.withValues(alpha: .25), width: 4)),
+                    child: Avatar(initials: _initials, color: 'a1', size: 108, solid: true),
+                  ),
+                ]),
+              ),
+              const SizedBox(height: 10),
+              Text(_name, style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 2),
+              Text(_phone, style: const TextStyle(color: Color(0xFFB9C8E2), fontSize: 15)),
+              if (labels.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Wrap(spacing: 6, children: [
+                  for (final l in labels.take(3))
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: .12), borderRadius: BorderRadius.circular(10)),
+                      child: Text(l.name, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                    ),
+                ]),
+              ],
+              const SizedBox(height: 16),
+              Text(_statusText, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w600)),
+              const Spacer(),
+              if (_phase == _Phase.ringing)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 28),
+                  child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, crossAxisAlignment: CrossAxisAlignment.end, children: [
+                    _round(Icons.call_end, 'Decline', const Color(0xFFE53935), () => _decline()),
+                    _round(Icons.message_outlined, 'Message', Colors.white.withValues(alpha: .14), _declineWithMessage, size: 56),
+                    _round(Icons.call, 'Answer', const Color(0xFF1FAE55), _answer),
+                  ]),
+                )
+              else if (_phase != _Phase.ended)
+                Column(children: [
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+                    _round(_muted ? Icons.mic_off : Icons.mic, _muted ? 'Unmute' : 'Mute', Colors.white.withValues(alpha: .14), () {
+                      setState(() => _muted = !_muted);
+                      _peer?.setMuted(_muted);
+                    }, active: _muted, size: 62),
+                    _round(Icons.volume_up, 'Speaker', Colors.white.withValues(alpha: .14), () {
+                      setState(() => _speaker = !_speaker);
+                      _peer?.setSpeaker(_speaker);
+                    }, active: _speaker, size: 62),
+                  ]),
+                  const SizedBox(height: 28),
+                  _round(Icons.call_end, 'End', const Color(0xFFE53935), _hangUp),
+                ]),
+              const SizedBox(height: 48),
+            ]),
+          ),
         ),
       ),
     );

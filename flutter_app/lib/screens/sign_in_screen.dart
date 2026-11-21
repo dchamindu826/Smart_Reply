@@ -5,6 +5,7 @@ import '../core/api.dart';
 import '../core/push.dart';
 import '../core/theme.dart';
 import '../state/app_state.dart';
+import '../widgets/ui.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -74,60 +75,90 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     final server = context.watch<AppState>().api.baseUrl;
+    final ui = Ui.of(context);
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: AutofillGroup(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Icon(Icons.forum_rounded, size: 64, color: Brand.green),
-                    const SizedBox(height: 8),
-                    const Text('Smart Reply', textAlign: TextAlign.center, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700)),
-                    const Text('by LUMI AI', textAlign: TextAlign.center),
-                    const SizedBox(height: 32),
-                    TextField(
-                      controller: _email,
-                      keyboardType: TextInputType.emailAddress,
-                      autofillHints: const [AutofillHints.username],
-                      decoration: const InputDecoration(labelText: 'Email'),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _password,
-                      obscureText: true,
-                      autofillHints: const [AutofillHints.password],
-                      decoration: const InputDecoration(labelText: 'Password'),
-                      onSubmitted: (_) => _submit(),
-                    ),
-                    if (_error != null) ...[
-                      const SizedBox(height: 12),
-                      Text(_error!, style: const TextStyle(color: Brand.danger)),
-                    ],
-                    const SizedBox(height: 20),
-                    FilledButton(
-                      onPressed: _busy ? null : _submit,
-                      style: FilledButton.styleFrom(backgroundColor: Brand.green, padding: const EdgeInsets.all(14)),
-                      child: Text(_busy ? 'Signing in…' : 'Sign in'),
-                    ),
-                    TextButton(onPressed: _forgot, child: const Text('Forgot password?')),
+      backgroundColor: ui.dark ? Brand.darkPaper : Colors.white,
+      body: Stack(children: [
+        Positioned(top: -120, right: -110, child: _circle(330, Brand.magenta, ui.dark ? .30 : .20)),
+        Positioned(top: 60, left: -95, child: _circle(250, Brand.blue, ui.dark ? .30 : .20)),
+        SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 420),
+                child: AutofillGroup(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                     const SizedBox(height: 24),
+                    Center(child: Image.asset('assets/logo_mark.png', width: 76, semanticLabel: 'Smart Reply')),
+                    const SizedBox(height: 10),
+                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Text('Smart', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, letterSpacing: -.6, color: ui.dark ? Colors.white : Brand.navy)),
+                      ShaderMask(
+                        blendMode: BlendMode.srcIn,
+                        shaderCallback: (r) => const LinearGradient(colors: [Brand.blue, Brand.magenta]).createShader(r),
+                        child: const Text('Reply', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w800, letterSpacing: -.6, color: Colors.white)),
+                      ),
+                    ]),
+                    Text('WhatsApp chats & calls for your team', textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: ui.muted)),
+                    const SizedBox(height: 30),
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 14),
+                      decoration: BoxDecoration(
+                        color: ui.card,
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(color: ui.rule),
+                        boxShadow: [BoxShadow(color: ui.shadow, blurRadius: 40, offset: const Offset(0, 18))],
+                      ),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                        const Text('Sign in', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 4),
+                        Text('Use the login your company manager gave you.', style: TextStyle(fontSize: 13, color: ui.muted)),
+                        const SizedBox(height: 18),
+                        TextField(
+                          controller: _email,
+                          keyboardType: TextInputType.emailAddress,
+                          autofillHints: const [AutofillHints.username],
+                          decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.alternate_email, color: Brand.blue)),
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: _password,
+                          obscureText: true,
+                          autofillHints: const [AutofillHints.password],
+                          decoration: const InputDecoration(labelText: 'Password', prefixIcon: Icon(Icons.lock_outline, color: Brand.magenta)),
+                          onSubmitted: (_) => _submit(),
+                        ),
+                        if (_error != null) ...[
+                          const SizedBox(height: 12),
+                          Text(_error!, style: const TextStyle(color: Brand.danger)),
+                        ],
+                        const SizedBox(height: 20),
+                        GradientButton(label: _busy ? 'Signing in…' : 'Sign in', icon: _busy ? null : Icons.arrow_forward, onPressed: _busy ? null : _submit),
+                        const SizedBox(height: 6),
+                        TextButton(onPressed: _forgot, child: const Text('Forgot password?', style: TextStyle(fontWeight: FontWeight.w700))),
+                      ]),
+                    ),
+                    const SizedBox(height: 18),
                     TextButton.icon(
                       onPressed: _changeServer,
-                      icon: const Icon(Icons.dns_outlined, size: 18),
-                      label: Text('Server: $server · Change', overflow: TextOverflow.ellipsis),
+                      icon: Icon(Icons.dns_outlined, size: 16, color: ui.muted),
+                      label: Text('Server: $server · Change', overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: ui.muted)),
                     ),
-                  ],
+                    Text('Secured by LUMI AI', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: ui.muted)),
+                  ]),
                 ),
               ),
             ),
           ),
         ),
-      ),
+      ]),
     );
   }
+
+  Widget _circle(double size, Color c, double alpha) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(shape: BoxShape.circle, gradient: RadialGradient(colors: [c.withValues(alpha: alpha), c.withValues(alpha: alpha * .4)])),
+      );
 }
